@@ -4,11 +4,10 @@ import { RouterOutlet } from '@angular/router';
 import { PredictionToolComponent } from './prediction-tool/prediction-tool.component';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet, PredictionToolComponent],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+    selector: 'app-root',
+    imports: [RouterOutlet, PredictionToolComponent],
+    templateUrl: './app.component.html',
+    styleUrl: './app.component.css'
 })
 export class AppComponent {
   title = 'prediction-tool-ng';

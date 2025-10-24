@@ -18,11 +18,10 @@ import { storey_range_list } from '../lists';
 import { flat_model_list } from '../lists';
 
 @Component({
-  selector: 'app-prediction-tool',
-  standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatToolbarModule, MatSelectModule, MatInputModule, MatDatepickerModule, MatNativeDateModule, MatButtonModule, NgChartsModule],
-  templateUrl: './prediction-tool.component.html',
-  styleUrl: './prediction-tool.component.css'
+    selector: 'app-prediction-tool',
+    imports: [ReactiveFormsModule, MatFormFieldModule, MatToolbarModule, MatSelectModule, MatInputModule, MatDatepickerModule, MatNativeDateModule, MatButtonModule, NgChartsModule],
+    templateUrl: './prediction-tool.component.html',
+    styleUrl: './prediction-tool.component.css'
 })
 export class PredictionToolComponent {
   ml_models = ml_model_list;
