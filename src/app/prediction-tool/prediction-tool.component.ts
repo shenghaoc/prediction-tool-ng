@@ -9,13 +9,14 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
 import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, CommonModule, DecimalPipe } from '@angular/common';
 
 import { ml_model_list } from '../lists';
 import { town_list } from '../lists';
 import { storey_range_list } from '../lists';
 import { flat_model_list } from '../lists';
 import { StorageService } from '../services/storage.service';
+import { TranslationService } from '../services/translation.service';
 
 @Component({
     selector: 'app-prediction-tool',
@@ -30,13 +31,16 @@ import { StorageService } from '../services/storage.service';
         MatDatepickerModule,
         MatNativeDateModule,
         MatButtonModule,
-        NgChartsModule
+    NgChartsModule,
+    CommonModule,
+    DecimalPipe
     ]
 })
 export class PredictionToolComponent implements OnInit {
   protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly storageService = inject(StorageService);
   private readonly formBuilder = inject(FormBuilder);
+  private readonly translationService: TranslationService = inject(TranslationService);
 
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
@@ -57,6 +61,10 @@ export class PredictionToolComponent implements OnInit {
     leaseCommenceDate: new Date("2022-02-01"),
   });
 
+  // UI state
+  loading = false;
+  predictedPrice = 0;
+
   ngOnInit() {
     if (this.isBrowser) {
       // Load saved form data if available (only in browser)
@@ -75,12 +83,53 @@ export class PredictionToolComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.predictionForm.valid) {
-      const formData = this.predictionForm.value;
-      console.log('Form submitted:', formData);
-      // Handle form submission logic here
-      this.updateChart([/* new data */]);
-    }
+    if (!this.predictionForm.valid || !this.isBrowser) return;
+    this.loading = true;
+    this.predictedPrice = 0;
+
+    (async () => {
+      try {
+        const values: any = this.predictionForm.value;
+
+        const monthEnd = formatYYYYMM(values.leaseCommenceDate);
+        const monthStart = formatYYYYMM(subtractMonths(values.leaseCommenceDate, 12));
+
+        const fd = new FormData();
+        fd.append('ml_model', values.mlModel);
+        fd.append('month_start', monthStart);
+        fd.append('month_end', monthEnd);
+        fd.append('town', values.town);
+        fd.append('storey_range', values.storeyRange);
+        fd.append('flat_model', values.flatModel);
+        fd.append('floor_area_sqm', (values.floorAreaSqm ?? '').toString());
+        fd.append('lease_commence_date', (new Date(values.leaseCommenceDate)).getFullYear().toString());
+
+        const response = await fetch('https://ee4802-g20-tool.shenghaoc.workers.dev/api/prices', {
+          method: 'POST',
+          body: fd
+        });
+
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`API request failed: ${text}`);
+        }
+
+        const server_data: Array<{ labels: string; data: number }> = await response.json();
+
+        // Update chart labels and data
+        this.chartData.labels = server_data.map(x => x.labels);
+        this.chartData.datasets[0].data = server_data.map(x => x.data);
+        this.predictedPrice = server_data[server_data.length - 1]?.data ?? 0;
+
+        // Refresh chart
+        this.chart?.update();
+      } catch (err: any) {
+        console.error(err);
+        alert(err?.message || 'Failed to fetch prediction.');
+      } finally {
+        this.loading = false;
+      }
+    })();
   }
 
   private updateChart(newData: number[]) {
@@ -127,14 +176,37 @@ export class PredictionToolComponent implements OnInit {
     }
   };
 
-  protected chartData: ChartConfiguration<'bar'>['data'] = {
+  protected chartData: ChartConfiguration<'line'>['data'] = {
     labels: [],
     datasets: [{
       data: [],
       label: 'Predicted Price',
-      backgroundColor: 'rgba(25, 118, 210, 0.5)',
       borderColor: 'rgb(25, 118, 210)',
-      borderWidth: 1
+      backgroundColor: 'rgba(25, 118, 210, 0.2)',
+      tension: 0.3,
+      fill: true
     }]
   };
+
+  // Helper wrapper for template translations
+  t(key: string): string {
+    return this.translationService.translate(key);
+  }
+
+  toggleLanguage() {
+    this.translationService.toggleLanguage();
+  }
+}
+
+function formatYYYYMM(dateLike: any) {
+  const d = new Date(dateLike);
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  return `${y}-${m.toString().padStart(2, '0')}`;
+}
+
+function subtractMonths(dateLike: any, months: number) {
+  const d = new Date(dateLike);
+  d.setMonth(d.getMonth() - months);
+  return d;
 }

@@ -4,13 +4,15 @@
 
         <p>
             <mat-toolbar>
-                <span>Prediction Tool</span>
+                <span>{{ t('title') }}</span>
+                <span style="flex:1 1 auto"></span>
+                <button mat-button type="button" (click)="toggleLanguage()">{{ t('switch_language') }}</button>
             </mat-toolbar>
         </p>
 
         <div>
             <mat-form-field>
-                <mat-label for="ml-model">ML Model</mat-label>
+                <mat-label for="ml-model">{{ t('ml_model') }}</mat-label>
                 <mat-select id="ml-model" required formControlName="mlModel">
                     @for (ml_model of ml_models; track ml_model) {
                     <mat-option [value]="ml_model">{{ml_model}}</mat-option>
@@ -21,7 +23,7 @@
 
         <div>
             <mat-form-field>
-                <mat-label for="town">Town</mat-label>
+                <mat-label for="town">{{ t('town') }}</mat-label>
                 <mat-select id="town" required formControlName="town">
                     @for (town of towns; track town) {
                     <mat-option [value]="town">{{town}}</mat-option>
@@ -32,7 +34,7 @@
 
         <div>
             <mat-form-field>
-                <mat-label for="storey-range">Storey Range</mat-label>
+                <mat-label for="storey-range">{{ t('storey_range') }}</mat-label>
                 <mat-select id="storey-range" required formControlName="storeyRange">
                     @for (storey_range of storey_ranges; track storey_range) {
                     <mat-option [value]="storey_range">{{storey_range}}</mat-option>
@@ -43,7 +45,7 @@
 
         <div>
             <mat-form-field>
-                <mat-label for="flat-model">Flat Model</mat-label>
+                <mat-label for="flat-model">{{ t('flat_model') }}</mat-label>
                 <mat-select id="flat-model" required formControlName="flatModel">
                     @for (flat_model of flat_models; track flat_model) {
                     <mat-option [value]="flat_model">{{flat_model}}</mat-option>
@@ -54,14 +56,14 @@
 
         <div>
             <mat-form-field>
-                <mat-label>Floor Area</mat-label>
-                <input matInput id="floor-area-sqm" type="number" min=0 required formControlName="floorAreaSqm">
+                <mat-label>{{ t('floor_area') }}</mat-label>
+                <input matInput id="floor-area-sqm" type="number" min=0 required formControlName="floorAreaSqm" placeholder="{{ t('enter_floor_area') }}">
             </mat-form-field>
         </div>
 
         <div>
             <mat-form-field>
-                <mat-label>Lease Commence Date</mat-label>
+                <mat-label>{{ t('lease_commence_date') }}</mat-label>
                 <input matInput [min]="minDate" [max]="maxDate" [matDatepicker]="picker" id="lease-commence-date"
                     required formControlName="leaseCommenceDate">
                 <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
@@ -70,16 +72,19 @@
         </div>
 
         <div>
-            <button mat-raised-button color="primary" type="submit" [disabled]="!predictionForm.valid">Submit</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="!predictionForm.valid || loading">{{ t('get_prediction') }}{{ loading ? '…' : '' }}</button>
         </div>
     </form>
     @if (isBrowser) {
     <div class="chart-container">
         <canvas baseChart
-            [type]="'bar'"
+            [type]="'line'"
             [data]="chartData"
             [options]="chartOptions">
         </canvas>
     </div>
     }
+    <div *ngIf="predictedPrice">
+        <h3 style="text-align:center">{{ t('predicted_price') }}: {{ predictedPrice | number:'1.0-0' }}</h3>
+    </div>
 </div>
