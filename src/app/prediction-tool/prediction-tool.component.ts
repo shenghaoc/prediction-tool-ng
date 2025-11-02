@@ -21,7 +21,6 @@ import { StorageService } from '../services/storage.service';
     selector: 'app-prediction-tool',
     templateUrl: './prediction-tool.component.html',
     styleUrl: './prediction-tool.component.css',
-    standalone: true,
     imports: [
         ReactiveFormsModule,
         MatFormFieldModule,
