@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID, ViewChild } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSelectModule } from '@angular/material/select';
@@ -7,8 +7,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
-import { NgChartsModule } from 'ng2-charts';
-import { ChartConfiguration, ChartData, ChartEvent, ChartType } from 'chart.js';
+import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration } from 'chart.js';
 import { isPlatformBrowser } from '@angular/common';
 
 import { ml_model_list } from '../lists';
@@ -19,14 +19,27 @@ import { StorageService } from '../services/storage.service';
 
 @Component({
     selector: 'app-prediction-tool',
-    imports: [ReactiveFormsModule, MatFormFieldModule, MatToolbarModule, MatSelectModule, MatInputModule, MatDatepickerModule, MatNativeDateModule, MatButtonModule, NgChartsModule],
     templateUrl: './prediction-tool.component.html',
-    styleUrl: './prediction-tool.component.css'
+    styleUrl: './prediction-tool.component.css',
+    standalone: true,
+    imports: [
+        ReactiveFormsModule,
+        MatFormFieldModule,
+        MatToolbarModule,
+        MatSelectModule,
+        MatInputModule,
+        MatDatepickerModule,
+        MatNativeDateModule,
+        MatButtonModule,
+        NgChartsModule
+    ]
 })
 export class PredictionToolComponent implements OnInit {
   protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly storageService = inject(StorageService);
   private readonly formBuilder = inject(FormBuilder);
+
+  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
   ml_models = ml_model_list;
   towns = town_list;
@@ -67,37 +80,62 @@ export class PredictionToolComponent implements OnInit {
       const formData = this.predictionForm.value;
       console.log('Form submitted:', formData);
       // Handle form submission logic here
+      this.updateChart([/* new data */]);
     }
   }
 
-  public barChartOptions: ChartConfiguration['options'] = {
+  private updateChart(newData: number[]) {
+    if (this.chart && this.chart.chart) {
+      this.chart.chart.data.datasets[0].data = newData;
+      this.chart.chart.update();
+    }
+  }
+
+  protected readonly chartOptions: ChartConfiguration['options'] = {
     responsive: true,
+    maintainAspectRatio: true,
     plugins: {
       legend: {
-        position: 'top' as const,
-        display: true
+        display: true,
+        position: 'top'
       },
       title: {
         display: true,
-        text: 'Predicted Trends'
+        text: 'Predicted Housing Prices'
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
       }
     },
-    // Ensure animations are disabled during SSR
+    scales: {
+      y: {
+        beginAtZero: false,
+        title: {
+          display: true,
+          text: 'Price (SGD)'
+        }
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Month'
+        }
+      }
+    },
     animation: {
       duration: this.isBrowser ? 400 : 0
     }
   };
 
-  public barChartData: ChartData<'bar'> = {
-    labels: ['2006', '2007', '2008', '2009', '2010', '2011', '2012'],
-    datasets: [
-      { 
-        data: [65, 59, 80, 81, 56, 55, 40], 
-        label: 'Predicted Price',
-        backgroundColor: 'rgba(25, 118, 210, 0.5)',
-        borderColor: 'rgb(25, 118, 210)',
-        borderWidth: 1
-      }
-    ],
+  protected chartData: ChartConfiguration<'bar'>['data'] = {
+    labels: [],
+    datasets: [{
+      data: [],
+      label: 'Predicted Price',
+      backgroundColor: 'rgba(25, 118, 210, 0.5)',
+      borderColor: 'rgb(25, 118, 210)',
+      borderWidth: 1
+    }]
   };
 }

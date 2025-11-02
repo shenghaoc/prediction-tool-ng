@@ -1,10 +1,19 @@
 .wrapper {
     display: flex;
-    flex-wrap: wrap;
     flex-direction: column;
-    flex: 200px;
+    gap: 2rem;
+    padding: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 .wrapper>div {
-    flex: 1 1 150px;
+    width: 100%;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+    margin-top: 2rem;
 }
