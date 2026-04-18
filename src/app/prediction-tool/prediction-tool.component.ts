@@ -62,6 +62,17 @@ type ApiResponse = Array<{
   data: number;
 }>;
 
+type PredictionRequestPayload = {
+  ml_model: MlModel;
+  month_start: string;
+  month_end: string;
+  town: Town;
+  storey_range: StoreyRange;
+  flat_model: FlatModel;
+  floor_area_sqm: string;
+  lease_commence_date: string;
+};
+
 const MIN_YEAR = 1960;
 const MAX_YEAR = 2022;
 const DEFAULT_BASE_MONTH = 2;
@@ -318,39 +329,45 @@ export class PredictionToolComponent implements OnInit {
       });
     }
 
-    const formData = new FormData();
-    formData.append('ml_model', formValue.mlModel);
-    formData.append('month_start', predictionWindow.monthStart);
-    formData.append('month_end', predictionWindow.monthEnd);
-    formData.append('town', formValue.town);
-    formData.append('storey_range', formValue.storeyRange);
-    formData.append('flat_model', formValue.flatModel);
-    formData.append('floor_area_sqm', clampedFloorArea.toString());
-    formData.append(
-      'lease_commence_date',
-      formValue.leaseCommenceYear.toString()
-    );
+    const requestPayload: PredictionRequestPayload = {
+      ml_model: formValue.mlModel,
+      month_start: predictionWindow.monthStart,
+      month_end: predictionWindow.monthEnd,
+      town: formValue.town,
+      storey_range: formValue.storeyRange,
+      flat_model: formValue.flatModel,
+      floor_area_sqm: clampedFloorArea.toString(),
+      lease_commence_date: formValue.leaseCommenceYear.toString()
+    };
+    const formData = createPredictionFormData(requestPayload);
 
     try {
       const response = await fetch(PREDICTION_API_URL, {
         method: 'POST',
         body: formData
       });
+      const responseText = await response.text();
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API request failed: ${errorText}`);
+        throw new Error(
+          formatPredictionError(
+            `API request failed with ${response.status} ${response.statusText}`,
+            responseText,
+            requestPayload
+          )
+        );
       }
 
-      const serverData = (await response.json()) as ApiResponse;
-      if (!Array.isArray(serverData) || serverData.length === 0) {
-        throw new Error(this.t('error_fetch'));
-      }
+      const serverData = parsePredictionResponse(responseText, requestPayload);
 
       this.hasPrediction.set(true);
       this.trendData.set(normalizeTrendData(serverData));
       this.chart?.update();
     } catch (error: unknown) {
+      console.error('Prediction request failed', {
+        error,
+        requestPayload
+      });
       this.errorMessage.set(this.getErrorMessage(error));
     } finally {
       this.loading.set(false);
@@ -507,6 +524,73 @@ function normalizeTrendData(data: ApiResponse): TrendPoint[] {
     label: entry.labels,
     value: sanitizeCurrencyValue(entry.data)
   }));
+}
+
+function createPredictionFormData(
+  payload: PredictionRequestPayload
+): FormData {
+  const formData = new FormData();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    formData.append(key, value);
+  });
+
+  return formData;
+}
+
+function parsePredictionResponse(
+  responseText: string,
+  requestPayload: PredictionRequestPayload
+): ApiResponse {
+  let parsedResponse: unknown;
+
+  try {
+    parsedResponse = JSON.parse(responseText) as unknown;
+  } catch {
+    throw new Error(
+      formatPredictionError(
+        'API returned invalid JSON',
+        responseText,
+        requestPayload
+      )
+    );
+  }
+
+  if (!Array.isArray(parsedResponse) || parsedResponse.length === 0) {
+    throw new Error(
+      formatPredictionError(
+        'API returned an unexpected payload',
+        responseText,
+        requestPayload
+      )
+    );
+  }
+
+  return parsedResponse as ApiResponse;
+}
+
+function formatPredictionError(
+  summary: string,
+  responseText: string,
+  requestPayload: PredictionRequestPayload
+): string {
+  const responsePreview = formatDebugValue(responseText);
+  const requestPreview = JSON.stringify(requestPayload);
+  return `${summary}. Response: ${responsePreview}. Request: ${requestPreview}`;
+}
+
+function formatDebugValue(value: string, maxLength = 280): string {
+  const compactValue = value.replace(/\s+/g, ' ').trim();
+
+  if (!compactValue) {
+    return '(empty response body)';
+  }
+
+  if (compactValue.length <= maxLength) {
+    return compactValue;
+  }
+
+  return `${compactValue.slice(0, maxLength)}...`;
 }
 
 function createDefaultTrendData(baseYear: number): TrendPoint[] {
