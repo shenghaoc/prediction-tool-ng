@@ -1,27 +1,85 @@
-# PredictionToolNg
+# Prediction Tool Angular
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.0.10.
+Angular derivative of the original React `prediction-tool` repo. This variant keeps feature parity with the upgraded source app while using Angular-native state, Angular Material form controls, `ng2-charts`, and local persistence for form values, theme, and language.
 
-## Development server
+## Features
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- bilingual UI (`en` / `zh`) with persisted language preference
+- dark and light themes with persisted theme preference
+- Angular Material form controls with client-side validation
+- predicted resale price output with a 12-month trend chart
+- summary cards and a proper empty state before the first prediction
+- saved form state between visits
 
-## Code scaffolding
+## Tech stack
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- Angular 21
+- TypeScript
+- Angular Material
+- Chart.js with `ng2-charts`
+- Angular SSR support
 
-## Build
+## Development
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+Install dependencies:
 
-## Running unit tests
+```bash
+npm install
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Run the app locally:
 
-## Running end-to-end tests
+```bash
+npm start
+```
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+Useful scripts:
 
-## Further help
+```bash
+npm run build
+npm run watch
+npm run test
+```
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+To run the SSR server after a production build:
+
+```bash
+npm run build
+npm run serve:ssr:prediction-tool-ng
+```
+
+## Project structure
+
+```text
+src/app/prediction-tool/                         # main prediction UI shell, form, and results view
+src/app/services/i18n.resources.ts              # translation strings and option-label resources
+src/app/services/translation.service.ts         # language signal and translation helpers
+src/app/services/storage.service.ts             # localStorage persistence wrapper
+src/app/lists.ts                                # prediction option lists
+src/app/app.component.ts                        # root Angular shell
+src/app/app.config.ts                           # application providers and hydration setup
+server.ts                                       # Node/Express SSR entrypoint
+```
+
+## Prediction API
+
+The form currently posts to:
+
+```text
+https://ee4802-g20-tool.shenghaoc.workers.dev/api/prices
+```
+
+If you want to point the Angular app at a different backend, update the `PREDICTION_API_URL` constant in `src/app/prediction-tool/prediction-tool.component.ts`.
+
+## Testing
+
+The repo currently uses Angular's default Karma + Jasmine setup:
+
+- component smoke tests for the root shell and prediction page
+- zoneless testing configuration in the Angular test bed
+
+## Notes
+
+- This repo currently keeps the prediction flow in a single feature component plus small supporting services.
+- The app uses signals for local UI state and reactive forms for the prediction form.
+- The current UI intentionally mirrors the upgraded React source app while staying Angular-native.
