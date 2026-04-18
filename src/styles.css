@@ -1,4 +1,64 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+  color-scheme: light;
+  --font-body:
+    'Avenir Next',
+    'SF Pro Text',
+    'Helvetica Neue',
+    'Segoe UI',
+    Arial,
+    sans-serif;
+  --font-body-cjk:
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Noto Sans CJK SC',
+    'Noto Sans SC',
+    'Microsoft YaHei',
+    'Source Han Sans SC',
+    'Heiti SC',
+    sans-serif;
+  --font-display:
+    'Iowan Old Style',
+    'Palatino Linotype',
+    'Book Antiqua',
+    Georgia,
+    serif;
+}
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: #f5eee5;
+  color: #1f2328;
+  font-family: var(--font-body);
+  transition:
+    background 0.35s ease,
+    color 0.25s ease;
+}
+
+body[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+html[lang='zh'] {
+  --font-display: var(--font-body-cjk);
+}
+
+html[lang='zh'] body {
+  font-family: var(--font-body-cjk);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}

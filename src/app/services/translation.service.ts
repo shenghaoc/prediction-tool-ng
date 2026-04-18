@@ -1,69 +1,46 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 
-type Lang = 'en' | 'zh';
-
-const RESOURCES: Record<Lang, Record<string, string>> = {
-  en: {
-    title: 'Prediction Tool',
-    prediction_form: 'Prediction Form',
-    ml_model: 'ML Model',
-    town: 'Town',
-    storey_range: 'Storey Range',
-    flat_model: 'Flat Model',
-    floor_area: 'Floor Area (sqm)',
-    lease_commence_date: 'Lease Commence Date',
-    get_prediction: 'Get Prediction',
-    reset_form: 'Reset',
-    switch_language: '切换语言 / Switch Language',
-    price_prediction: 'Price Prediction',
-    predicted_price: 'Predicted Price',
-    select_ml_model: 'Select ML Model',
-    select_town: 'Select Town',
-    select_storey_range: 'Select Storey Range',
-    select_flat_model: 'Select Flat Model',
-    enter_floor_area: 'Enter floor area',
-    missing_floor_area: 'Please enter floor area',
-    missing_lease_commence_date: 'Please select lease commence date'
-  },
-  zh: {
-    title: '预测工具',
-    prediction_form: '预测表单',
-    ml_model: '机器学习模型',
-    town: '地点',
-    storey_range: '楼层范围',
-    flat_model: '单位类型',
-    floor_area: '面积（平方米）',
-    lease_commence_date: '租约开始年份',
-    get_prediction: '获取预测',
-    reset_form: '重置',
-    switch_language: '切换语言 / Switch Language',
-    price_prediction: '价格预测',
-    predicted_price: '预测价格',
-    select_ml_model: '请选择模型',
-    select_town: '请选择地点',
-    select_storey_range: '请选择楼层范围',
-    select_flat_model: '请选择单位类型',
-    enter_floor_area: '请输入面积',
-    missing_floor_area: '请输入面积',
-    missing_lease_commence_date: '请选择租约开始年份'
-  }
-};
+import { StorageService } from './storage.service';
+import { TRANSLATION_RESOURCES } from './i18n.resources';
+import type { Lang, OptionGroup } from './i18n.resources';
 
 @Injectable({ providedIn: 'root' })
 export class TranslationService {
-  private lang: Lang = (typeof window !== 'undefined' && (localStorage.getItem('lang') as Lang)) || 'en';
+  private readonly storageService = inject(StorageService);
+  readonly lang = signal<Lang>(this.getInitialLanguage());
 
   translate(key: string): string {
-    return RESOURCES[this.lang]?.[key] ?? key;
+    return TRANSLATION_RESOURCES[this.lang()].labels[key] ?? key;
+  }
+
+  translateOption(group: OptionGroup, value: string): string {
+    return TRANSLATION_RESOURCES[this.lang()].options[group][value] ?? value;
   }
 
   currentLang(): Lang {
-    return this.lang;
+    return this.lang();
+  }
+
+  setLanguage(lang: Lang): void {
+    this.lang.set(lang);
+    this.storageService.setItem('lang', lang);
   }
 
   toggleLanguage(): Lang {
-    this.lang = this.lang === 'en' ? 'zh' : 'en';
-    if (typeof window !== 'undefined') localStorage.setItem('lang', this.lang);
-    return this.lang;
+    const nextLanguage = this.lang() === 'en' ? 'zh' : 'en';
+    this.setLanguage(nextLanguage);
+    return nextLanguage;
+  }
+
+  private getInitialLanguage(): Lang {
+    const storedLanguage = this.storageService.getItem<Lang>('lang');
+    if (storedLanguage === 'zh') {
+      return 'zh';
+    }
+
+    return 'en';
   }
 }
+
+export type { Lang } from './i18n.resources';
+export type { OptionGroup } from './i18n.resources';

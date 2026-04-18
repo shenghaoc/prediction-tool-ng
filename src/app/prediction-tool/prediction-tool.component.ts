@@ -1,212 +1,606 @@
-import { Component, OnInit, inject, PLATFORM_ID, ViewChild } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatNativeDateModule } from '@angular/material/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  PLATFORM_ID,
+  ViewChild,
+  computed,
+  inject,
+  signal
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { NgChartsModule, BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration } from 'chart.js';
-import { isPlatformBrowser, CommonModule, DecimalPipe } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import {
+  BaseChartDirective,
+  NgChartsModule
+} from 'ng2-charts';
+import type { ChartConfiguration } from 'chart.js';
 
-import { ml_model_list } from '../lists';
-import { town_list } from '../lists';
-import { storey_range_list } from '../lists';
-import { flat_model_list } from '../lists';
+import {
+  flat_model_list,
+  ml_model_list,
+  storey_range_list,
+  town_list
+} from '../lists';
 import { StorageService } from '../services/storage.service';
-import { TranslationService } from '../services/translation.service';
+import {
+  TranslationService
+} from '../services/translation.service';
+import type { OptionGroup } from '../services/translation.service';
+
+type MlModel = (typeof ml_model_list)[number];
+type Town = (typeof town_list)[number];
+type StoreyRange = (typeof storey_range_list)[number];
+type FlatModel = (typeof flat_model_list)[number];
+
+type PredictionFormValue = {
+  mlModel: MlModel;
+  town: Town;
+  storeyRange: StoreyRange;
+  flatModel: FlatModel;
+  floorAreaSqm: number;
+  leaseCommenceYear: number;
+};
+
+type SummaryValues = Pick<
+  PredictionFormValue,
+  'mlModel' | 'town' | 'leaseCommenceYear'
+>;
+
+type TrendPoint = {
+  label: string;
+  value: number;
+};
+
+type ApiResponse = Array<{
+  labels: string;
+  data: number;
+}>;
+
+const MIN_YEAR = 1960;
+const MAX_YEAR = 2022;
+const DEFAULT_BASE_MONTH = 2;
+const MIN_FLOOR_AREA = 20;
+const MAX_FLOOR_AREA = 300;
+const PREDICTION_API_URL =
+  'https://ee4802-g20-tool.shenghaoc.workers.dev/api/prices';
+
+const INITIAL_FORM_VALUE: PredictionFormValue = {
+  mlModel: ml_model_list[0],
+  town: town_list[0],
+  storeyRange: storey_range_list[0],
+  flatModel: flat_model_list[0],
+  floorAreaSqm: MIN_FLOOR_AREA,
+  leaseCommenceYear: MAX_YEAR
+};
 
 @Component({
-    selector: 'app-prediction-tool',
-    templateUrl: './prediction-tool.component.html',
-    styleUrl: './prediction-tool.component.css',
-    imports: [
-        ReactiveFormsModule,
-        MatFormFieldModule,
-        MatToolbarModule,
-        MatSelectModule,
-        MatInputModule,
-        MatDatepickerModule,
-        MatNativeDateModule,
-        MatButtonModule,
-    NgChartsModule,
-    CommonModule,
-    DecimalPipe
-    ]
+  selector: 'app-prediction-tool',
+  templateUrl: './prediction-tool.component.html',
+  styleUrl: './prediction-tool.component.css',
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
+    MatButtonModule,
+    NgChartsModule
+  ]
 })
 export class PredictionToolComponent implements OnInit {
   protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly document = inject(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly storageService = inject(StorageService);
   private readonly formBuilder = inject(FormBuilder);
-  private readonly translationService: TranslationService = inject(TranslationService);
+  private readonly translationService = inject(TranslationService);
 
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
-  ml_models = ml_model_list;
-  towns = town_list;
-  storey_ranges = storey_range_list;
-  flat_models = flat_model_list;
+  protected readonly lang = this.translationService.lang;
+  protected readonly mlModels = ml_model_list;
+  protected readonly towns = town_list;
+  protected readonly storeyRanges = storey_range_list;
+  protected readonly flatModels = flat_model_list;
+  protected readonly leaseYears = Array.from(
+    { length: MAX_YEAR - MIN_YEAR + 1 },
+    (_, index) => MAX_YEAR - index
+  );
 
-  minDate = new Date("1960-01-01");
-  maxDate = new Date("2022-02-01");
-
-  predictionForm = this.formBuilder.group({
-    mlModel: 'Support Vector Regression',
-    town: 'ANG MO KIO',
-    storeyRange: '01 TO 03',
-    flatModel: '2-room',
-    floorAreaSqm: 1,
-    leaseCommenceDate: new Date("2022-02-01"),
+  protected readonly loading = signal(false);
+  protected readonly darkMode = signal(false);
+  protected readonly errorMessage = signal('');
+  protected readonly hasPrediction = signal(false);
+  protected readonly trendData = signal<TrendPoint[]>(
+    createDefaultTrendData(INITIAL_FORM_VALUE.leaseCommenceYear)
+  );
+  protected readonly summaryValues = signal<SummaryValues>({
+    mlModel: INITIAL_FORM_VALUE.mlModel,
+    town: INITIAL_FORM_VALUE.town,
+    leaseCommenceYear: INITIAL_FORM_VALUE.leaseCommenceYear
   });
 
-  // UI state
-  loading = false;
-  predictedPrice = 0;
+  protected readonly predictedPrice = computed(() => {
+    const latestPoint = this.trendData().at(-1);
+    return sanitizeCurrencyValue(latestPoint?.value ?? 0);
+  });
 
-  ngOnInit() {
-    if (this.isBrowser) {
-      // Load saved form data if available (only in browser)
-      const savedForm = this.storageService.getItem<any>('predictionFormData');
-      if (savedForm) {
-        // Convert the date string back to a Date object
-        savedForm.leaseCommenceDate = new Date(savedForm.leaseCommenceDate);
-        this.predictionForm.patchValue(savedForm);
+  protected readonly chartMetrics = computed(() => {
+    const points = this.trendData();
+    const values = points.map((point) => sanitizeCurrencyValue(point.value));
+    const latestValue = values.at(-1) ?? 0;
+    const firstValue = values[0] ?? 0;
+    const lowValue = values.length ? Math.min(...values) : 0;
+    const peakValue = values.length ? Math.max(...values) : 0;
+
+    return {
+      latestValue,
+      lowValue,
+      peakValue,
+      deltaValue: latestValue - firstValue
+    };
+  });
+
+  protected readonly chartData = computed<
+    ChartConfiguration<'line'>['data']
+  >(() => ({
+    labels: this.trendData().map((point) => point.label),
+    datasets: [
+      {
+        data: this.trendData().map((point) => point.value),
+        label: this.t('predicted_price'),
+        borderColor: this.darkMode() ? '#cf8b60' : '#af6542',
+        backgroundColor: this.darkMode()
+          ? 'rgba(207, 139, 96, 0.26)'
+          : 'rgba(175, 101, 66, 0.18)',
+        pointBackgroundColor: this.darkMode() ? '#cf8b60' : '#af6542',
+        pointHoverBackgroundColor: this.darkMode() ? '#cf8b60' : '#af6542',
+        pointHoverBorderColor: this.darkMode() ? '#0f1821' : '#fffaf4',
+        fill: true,
+        tension: 0.35,
+        borderWidth: 3
       }
+    ]
+  }));
 
-      // Subscribe to form changes to save them
-      this.predictionForm.valueChanges.subscribe(value => {
-        this.storageService.setItem('predictionFormData', value);
+  protected readonly chartOptions = computed<
+    ChartConfiguration<'line'>['options']
+  >(() => {
+    const darkMode = this.darkMode();
+    const labelColor = darkMode ? '#9e998f' : '#74685b';
+    const panelColor = darkMode ? '#13202b' : '#fffaf4';
+    const tooltipBorder = darkMode
+      ? 'rgba(141, 174, 193, 0.16)'
+      : 'rgba(116, 92, 68, 0.14)';
+    const gridColor = darkMode
+      ? 'rgba(255,255,255,0.08)'
+      : 'rgba(31, 35, 40, 0.08)';
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: this.isBrowser ? 450 : 0
+      },
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          displayColors: false,
+          backgroundColor: panelColor,
+          titleColor: darkMode ? '#f2ede6' : '#1f2328',
+          bodyColor: darkMode ? '#f2ede6' : '#1f2328',
+          borderColor: tooltipBorder,
+          borderWidth: 1,
+          callbacks: {
+            label: (context) => {
+              const value = Number(context.raw ?? 0);
+              return formatCurrency(value);
+            }
+          }
+        }
+      },
+      elements: {
+        point: {
+          radius: 0,
+          hoverRadius: 6,
+          hitRadius: 18
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            color: labelColor,
+            maxRotation: 0,
+            autoSkip: true
+          }
+        },
+        y: {
+          grid: {
+            color: gridColor,
+            drawBorder: false
+          },
+          ticks: {
+            color: labelColor,
+            callback: (value) => formatCompactCurrency(Number(value))
+          }
+        }
+      }
+    };
+  });
+
+  protected readonly predictionForm = this.formBuilder.nonNullable.group({
+    mlModel: [INITIAL_FORM_VALUE.mlModel, Validators.required],
+    town: [INITIAL_FORM_VALUE.town, Validators.required],
+    storeyRange: [INITIAL_FORM_VALUE.storeyRange, Validators.required],
+    flatModel: [INITIAL_FORM_VALUE.flatModel, Validators.required],
+    floorAreaSqm: [
+      INITIAL_FORM_VALUE.floorAreaSqm,
+      [
+        Validators.required,
+        Validators.min(MIN_FLOOR_AREA),
+        Validators.max(MAX_FLOOR_AREA)
+      ]
+    ],
+    leaseCommenceYear: [
+      INITIAL_FORM_VALUE.leaseCommenceYear,
+      [
+        Validators.required,
+        Validators.min(MIN_YEAR),
+        Validators.max(MAX_YEAR)
+      ]
+    ]
+  });
+
+  ngOnInit(): void {
+    if (this.isBrowser) {
+      this.restoreTheme();
+      this.restoreFormState();
+    }
+
+    this.syncSummaryWithForm();
+    this.syncDocumentState();
+
+    this.predictionForm.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((partialValue) => {
+        const nextValue = {
+          ...this.predictionForm.getRawValue(),
+          ...partialValue
+        };
+
+        this.syncSummaryWithForm(nextValue);
+
+        if (!this.hasPrediction()) {
+          this.trendData.set(
+            createDefaultTrendData(nextValue.leaseCommenceYear)
+          );
+        }
+
+        if (this.isBrowser) {
+          this.storageService.setItem('predictionFormData', nextValue);
+        }
+      });
+  }
+
+  protected async onSubmit(): Promise<void> {
+    if (this.predictionForm.invalid || !this.isBrowser) {
+      this.predictionForm.markAllAsTouched();
+      return;
+    }
+
+    this.loading.set(true);
+    this.errorMessage.set('');
+
+    const formValue = this.predictionForm.getRawValue();
+    const clampedFloorArea = clampNumber(
+      formValue.floorAreaSqm,
+      MIN_FLOOR_AREA,
+      MAX_FLOOR_AREA,
+      MIN_FLOOR_AREA
+    );
+    const predictionWindow = getPredictionWindow(
+      formValue.leaseCommenceYear
+    );
+
+    if (clampedFloorArea !== formValue.floorAreaSqm) {
+      this.predictionForm.controls.floorAreaSqm.setValue(clampedFloorArea, {
+        emitEvent: false
       });
     }
-  }
 
-  onSubmit() {
-    if (!this.predictionForm.valid || !this.isBrowser) return;
-    this.loading = true;
-    this.predictedPrice = 0;
+    const formData = new FormData();
+    formData.append('ml_model', formValue.mlModel);
+    formData.append('month_start', predictionWindow.monthStart);
+    formData.append('month_end', predictionWindow.monthEnd);
+    formData.append('town', formValue.town);
+    formData.append('storey_range', formValue.storeyRange);
+    formData.append('flat_model', formValue.flatModel);
+    formData.append('floor_area_sqm', clampedFloorArea.toString());
+    formData.append(
+      'lease_commence_date',
+      formValue.leaseCommenceYear.toString()
+    );
 
-    (async () => {
-      try {
-        const values: any = this.predictionForm.value;
+    try {
+      const response = await fetch(PREDICTION_API_URL, {
+        method: 'POST',
+        body: formData
+      });
 
-        const monthEnd = formatYYYYMM(values.leaseCommenceDate);
-        const monthStart = formatYYYYMM(subtractMonths(values.leaseCommenceDate, 12));
-
-        const fd = new FormData();
-        fd.append('ml_model', values.mlModel);
-        fd.append('month_start', monthStart);
-        fd.append('month_end', monthEnd);
-        fd.append('town', values.town);
-        fd.append('storey_range', values.storeyRange);
-        fd.append('flat_model', values.flatModel);
-        fd.append('floor_area_sqm', (values.floorAreaSqm ?? '').toString());
-        fd.append('lease_commence_date', (new Date(values.leaseCommenceDate)).getFullYear().toString());
-
-        const response = await fetch('https://ee4802-g20-tool.shenghaoc.workers.dev/api/prices', {
-          method: 'POST',
-          body: fd
-        });
-
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`API request failed: ${text}`);
-        }
-
-        const server_data: Array<{ labels: string; data: number }> = await response.json();
-
-        // Update chart labels and data
-        this.chartData.labels = server_data.map(x => x.labels);
-        this.chartData.datasets[0].data = server_data.map(x => x.data);
-        this.predictedPrice = server_data[server_data.length - 1]?.data ?? 0;
-
-        // Refresh chart
-        this.chart?.update();
-      } catch (err: any) {
-        console.error(err);
-        alert(err?.message || 'Failed to fetch prediction.');
-      } finally {
-        this.loading = false;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API request failed: ${errorText}`);
       }
-    })();
-  }
 
-  private updateChart(newData: number[]) {
-    if (this.chart && this.chart.chart) {
-      this.chart.chart.data.datasets[0].data = newData;
-      this.chart.chart.update();
+      const serverData = (await response.json()) as ApiResponse;
+      if (!Array.isArray(serverData) || serverData.length === 0) {
+        throw new Error(this.t('error_fetch'));
+      }
+
+      this.hasPrediction.set(true);
+      this.trendData.set(normalizeTrendData(serverData));
+      this.chart?.update();
+    } catch (error: unknown) {
+      this.errorMessage.set(this.getErrorMessage(error));
+    } finally {
+      this.loading.set(false);
     }
   }
 
-  protected readonly chartOptions: ChartConfiguration['options'] = {
-    responsive: true,
-    maintainAspectRatio: true,
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top'
-      },
-      title: {
-        display: true,
-        text: 'Predicted Housing Prices'
-      },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: false,
-        title: {
-          display: true,
-          text: 'Price (SGD)'
-        }
-      },
-      x: {
-        title: {
-          display: true,
-          text: 'Month'
-        }
-      }
-    },
-    animation: {
-      duration: this.isBrowser ? 400 : 0
+  protected resetForm(): void {
+    this.predictionForm.reset(INITIAL_FORM_VALUE);
+    this.hasPrediction.set(false);
+    this.errorMessage.set('');
+    this.trendData.set(
+      createDefaultTrendData(INITIAL_FORM_VALUE.leaseCommenceYear)
+    );
+    this.syncSummaryWithForm(INITIAL_FORM_VALUE);
+
+    if (this.isBrowser) {
+      this.storageService.removeItem('predictionFormData');
     }
-  };
+  }
 
-  protected chartData: ChartConfiguration<'line'>['data'] = {
-    labels: [],
-    datasets: [{
-      data: [],
-      label: 'Predicted Price',
-      borderColor: 'rgb(25, 118, 210)',
-      backgroundColor: 'rgba(25, 118, 210, 0.2)',
-      tension: 0.3,
-      fill: true
-    }]
-  };
+  protected toggleTheme(): void {
+    const nextThemeIsDark = !this.darkMode();
+    this.darkMode.set(nextThemeIsDark);
 
-  // Helper wrapper for template translations
-  t(key: string): string {
+    if (this.isBrowser) {
+      this.storageService.setItem(
+        'predictionTheme',
+        nextThemeIsDark ? 'dark' : 'light'
+      );
+    }
+
+    this.syncDocumentState();
+  }
+
+  protected toggleLanguage(): void {
+    this.translationService.toggleLanguage();
+    this.syncDocumentState();
+  }
+
+  protected t(key: string): string {
     return this.translationService.translate(key);
   }
 
-  toggleLanguage() {
-    this.translationService.toggleLanguage();
+  protected tOption(group: OptionGroup, value: string): string {
+    return this.translationService.translateOption(group, value);
+  }
+
+  protected formatCurrency(value: number): string {
+    return formatCurrency(value);
+  }
+
+  protected formatCurrencyRange(lowValue: number, peakValue: number): string {
+    return `${formatCurrency(lowValue)} - ${formatCurrency(peakValue)}`;
+  }
+
+  protected formatDeltaCurrency(value: number): string {
+    const roundedValue = Math.abs(roundValue(value)).toLocaleString();
+    const sign = value >= 0 ? '+' : '-';
+    return `${sign}$${roundedValue}`;
+  }
+
+  private restoreTheme(): void {
+    const savedTheme =
+      this.storageService.getItem<'light' | 'dark'>('predictionTheme');
+    this.darkMode.set(savedTheme === 'dark');
+  }
+
+  private restoreFormState(): void {
+    const savedForm =
+      this.storageService.getItem<Partial<PredictionFormValue>>(
+        'predictionFormData'
+      );
+
+    if (!savedForm) {
+      this.trendData.set(
+        createDefaultTrendData(
+          this.predictionForm.controls.leaseCommenceYear.value
+        )
+      );
+      return;
+    }
+
+    const restoredFormValue: PredictionFormValue = {
+      mlModel: coerceOption(savedForm.mlModel, ml_model_list),
+      town: coerceOption(savedForm.town, town_list),
+      storeyRange: coerceOption(savedForm.storeyRange, storey_range_list),
+      flatModel: coerceOption(savedForm.flatModel, flat_model_list),
+      floorAreaSqm: clampNumber(
+        savedForm.floorAreaSqm,
+        MIN_FLOOR_AREA,
+        MAX_FLOOR_AREA,
+        MIN_FLOOR_AREA
+      ),
+      leaseCommenceYear: clampNumber(
+        savedForm.leaseCommenceYear,
+        MIN_YEAR,
+        MAX_YEAR,
+        MAX_YEAR
+      )
+    };
+
+    this.predictionForm.setValue(restoredFormValue, {
+      emitEvent: false
+    });
+    this.trendData.set(
+      createDefaultTrendData(restoredFormValue.leaseCommenceYear)
+    );
+    this.syncSummaryWithForm(restoredFormValue);
+  }
+
+  private syncSummaryWithForm(
+    value: Partial<PredictionFormValue> = this.predictionForm.getRawValue()
+  ): void {
+    this.summaryValues.set({
+      mlModel: coerceOption(value.mlModel, ml_model_list),
+      town: coerceOption(value.town, town_list),
+      leaseCommenceYear: clampNumber(
+        value.leaseCommenceYear,
+        MIN_YEAR,
+        MAX_YEAR,
+        INITIAL_FORM_VALUE.leaseCommenceYear
+      )
+    });
+  }
+
+  private syncDocumentState(): void {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    const currentLanguage = this.translationService.currentLang();
+    this.document.documentElement.lang = currentLanguage;
+    this.document.documentElement.setAttribute(
+      'data-lang',
+      currentLanguage
+    );
+    this.document.body.setAttribute(
+      'data-theme',
+      this.darkMode() ? 'dark' : 'light'
+    );
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+
+    return this.t('error_fetch');
   }
 }
 
-function formatYYYYMM(dateLike: any) {
-  const d = new Date(dateLike);
-  const y = d.getFullYear();
-  const m = d.getMonth() + 1;
-  return `${y}-${m.toString().padStart(2, '0')}`;
+function normalizeTrendData(data: ApiResponse): TrendPoint[] {
+  return data.map((entry) => ({
+    label: entry.labels,
+    value: sanitizeCurrencyValue(entry.data)
+  }));
 }
 
-function subtractMonths(dateLike: any, months: number) {
-  const d = new Date(dateLike);
-  d.setMonth(d.getMonth() - months);
-  return d;
+function createDefaultTrendData(baseYear: number): TrendPoint[] {
+  const baselineDate = new Date(Date.UTC(baseYear, DEFAULT_BASE_MONTH - 1, 1));
+
+  return Array.from({ length: 13 }, (_, index) => {
+    const pointDate = new Date(baselineDate);
+    pointDate.setUTCMonth(pointDate.getUTCMonth() - (12 - index));
+
+    return {
+      label: formatYearMonth(
+        pointDate.getUTCFullYear(),
+        pointDate.getUTCMonth() + 1
+      ),
+      value: 0
+    };
+  });
+}
+
+function getPredictionWindow(baseYear: number): {
+  monthStart: string;
+  monthEnd: string;
+} {
+  const monthEnd = formatYearMonth(baseYear, DEFAULT_BASE_MONTH);
+  const startDate = new Date(Date.UTC(baseYear, DEFAULT_BASE_MONTH - 1, 1));
+  startDate.setUTCMonth(startDate.getUTCMonth() - 12);
+
+  return {
+    monthStart: formatYearMonth(
+      startDate.getUTCFullYear(),
+      startDate.getUTCMonth() + 1
+    ),
+    monthEnd
+  };
+}
+
+function formatYearMonth(year: number, month: number): string {
+  return `${year}-${month.toString().padStart(2, '0')}`;
+}
+
+function coerceOption<T extends readonly string[]>(
+  value: unknown,
+  options: T
+): T[number] {
+  if (typeof value === 'string' && options.includes(value as T[number])) {
+    return value as T[number];
+  }
+
+  return options[0];
+}
+
+function clampNumber(
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number
+): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
+function sanitizeCurrencyValue(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.round(value));
+}
+
+function roundValue(value: number): number {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.round(value);
+}
+
+function formatCurrency(value: number): string {
+  return `$${sanitizeCurrencyValue(value).toLocaleString()}`;
+}
+
+function formatCompactCurrency(value: number): string {
+  const roundedValue = sanitizeCurrencyValue(value);
+
+  if (roundedValue >= 1_000_000) {
+    return `$${(roundedValue / 1_000_000).toFixed(1)}M`;
+  }
+
+  if (roundedValue >= 1_000) {
+    return `$${Math.round(roundedValue / 1_000)}k`;
+  }
+
+  return `$${roundedValue}`;
 }

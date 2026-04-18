@@ -20,7 +20,15 @@ export class StorageService {
   getItem<T>(key: string): T | null {
     if (this.isBrowser) {
       const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : null;
+      if (!item) {
+        return null;
+      }
+
+      try {
+        return JSON.parse(item) as T;
+      } catch {
+        return item as T;
+      }
     }
     return null;
   }
