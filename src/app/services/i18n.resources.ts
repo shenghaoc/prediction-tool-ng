@@ -56,7 +56,11 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       chart_delta: '12M Change',
       vs_12m_ago: 'vs 12 months ago',
       prediction: 'Prediction',
-      predicted_price: 'Predicted Price'
+      predicted_price: 'Predicted Price',
+      awaiting_prediction: 'Awaiting prediction',
+      results_placeholder_title: 'Run a scenario to generate a forecast',
+      results_placeholder_body:
+        'Choose a model, adjust the flat details, and submit the form to see the projected resale price and 12-month trend.'
     },
     options: {
       ml_models: {
@@ -177,7 +181,11 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       chart_delta: '12个月变化',
       vs_12m_ago: '对比12个月前',
       prediction: '预测',
-      predicted_price: '预测价格'
+      predicted_price: '预测价格',
+      awaiting_prediction: '等待预测结果',
+      results_placeholder_title: '提交一个情境后即可生成预测',
+      results_placeholder_body:
+        '选择模型并调整房屋资料后提交表单，即可查看预测转售价与过去12个月趋势。'
     },
     options: {
       ml_models: {

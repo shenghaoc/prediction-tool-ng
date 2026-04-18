@@ -14,13 +14,23 @@ describe('PredictionToolComponent', () => {
       providers: [provideZonelessChangeDetection()]
     })
     .compileComponents();
-    
+
     fixture = TestBed.createComponent(PredictionToolComponent);
     component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
-  it('should create', () => {
+  it('should create', async () => {
+    await fixture.whenStable();
     expect(component).toBeTruthy();
+  });
+
+  it('should show the empty-results placeholder before a prediction is generated', async () => {
+    await fixture.whenStable();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('.chart-placeholder-title')?.textContent)
+      .toContain('Run a scenario');
+    expect(compiled.querySelector('.price-value-placeholder')?.textContent)
+      .toContain('Awaiting prediction');
   });
 });

@@ -386,6 +386,12 @@
   letter-spacing: -0.04em;
 }
 
+.price-value-placeholder {
+  color: var(--text-muted);
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  letter-spacing: -0.02em;
+}
+
 .metric-card {
   padding: 14px 16px;
 }
@@ -460,6 +466,30 @@
   border: 1px dashed var(--line-soft);
   color: var(--text-muted);
   background: var(--placeholder-bg);
+}
+
+.chart-placeholder-empty {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  padding: 28px;
+  min-height: 220px;
+}
+
+.chart-placeholder-title {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.chart-placeholder-body {
+  margin: 0;
+  max-width: 42ch;
+  color: var(--text-muted);
+  font-size: 0.98rem;
+  line-height: 1.7;
 }
 
 .shell ::ng-deep .mat-mdc-form-field {

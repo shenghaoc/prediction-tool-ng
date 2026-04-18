@@ -223,9 +223,15 @@
 
             <div class="price-panel">
               <span class="results-label">{{ t('prediction') }}</span>
-              <strong class="price-value" aria-live="polite">{{
-                formatCurrency(predictedPrice())
-              }}</strong>
+              @if (hasPrediction()) {
+                <strong class="price-value" aria-live="polite">{{
+                  formatCurrency(predictedPrice())
+                }}</strong>
+              } @else {
+                <strong class="price-value price-value-placeholder">{{
+                  t('awaiting_prediction')
+                }}</strong>
+              }
             </div>
           </div>
 
@@ -247,50 +253,61 @@
           </div>
 
           <div class="chart-shell">
-            <div class="chart-header">
-              <div class="chart-copy">
-                <span class="chart-kicker">{{ t('predicted_trends') }}</span>
-                <h3 class="chart-title">{{ t('chart_story_title') }}</h3>
+            @if (hasPrediction()) {
+              <div class="chart-header">
+                <div class="chart-copy">
+                  <span class="chart-kicker">{{ t('predicted_trends') }}</span>
+                  <h3 class="chart-title">{{ t('chart_story_title') }}</h3>
+                </div>
+
+                <div class="chart-summary-grid">
+                  <div class="chart-summary-card">
+                    <span>{{ t('chart_latest') }}</span>
+                    <strong>{{
+                      formatCurrency(chartMetrics().latestValue)
+                    }}</strong>
+                  </div>
+                  <div class="chart-summary-card">
+                    <span>{{ t('chart_range') }}</span>
+                    <strong>{{
+                      formatCurrencyRange(
+                        chartMetrics().lowValue,
+                        chartMetrics().peakValue
+                      )
+                    }}</strong>
+                  </div>
+                  <div class="chart-summary-card">
+                    <span>{{ t('chart_delta') }}</span>
+                    <strong>{{
+                      formatDeltaCurrency(chartMetrics().deltaValue)
+                    }}</strong>
+                    <small>{{ t('vs_12m_ago') }}</small>
+                  </div>
+                </div>
               </div>
 
-              <div class="chart-summary-grid">
-                <div class="chart-summary-card">
-                  <span>{{ t('chart_latest') }}</span>
-                  <strong>{{
-                    formatCurrency(chartMetrics().latestValue)
-                  }}</strong>
+              @if (isBrowser) {
+                <div class="chart-frame">
+                  <canvas
+                    baseChart
+                    [type]="'line'"
+                    [data]="chartData()"
+                    [options]="chartOptions()"
+                  ></canvas>
                 </div>
-                <div class="chart-summary-card">
-                  <span>{{ t('chart_range') }}</span>
-                  <strong>{{
-                    formatCurrencyRange(
-                      chartMetrics().lowValue,
-                      chartMetrics().peakValue
-                    )
-                  }}</strong>
+              } @else {
+                <div class="chart-frame chart-placeholder">
+                  {{ t('loading_chart') }}
                 </div>
-                <div class="chart-summary-card">
-                  <span>{{ t('chart_delta') }}</span>
-                  <strong>{{
-                    formatDeltaCurrency(chartMetrics().deltaValue)
-                  }}</strong>
-                  <small>{{ t('vs_12m_ago') }}</small>
-                </div>
-              </div>
-            </div>
-
-            @if (isBrowser) {
-              <div class="chart-frame">
-                <canvas
-                  baseChart
-                  [type]="'line'"
-                  [data]="chartData()"
-                  [options]="chartOptions()"
-                ></canvas>
-              </div>
+              }
             } @else {
-              <div class="chart-frame chart-placeholder">
-                {{ t('loading_chart') }}
+              <div class="chart-placeholder chart-placeholder-empty">
+                <h3 class="chart-placeholder-title">
+                  {{ t('results_placeholder_title') }}
+                </h3>
+                <p class="chart-placeholder-body">
+                  {{ t('results_placeholder_body') }}
+                </p>
               </div>
             }
           </div>
