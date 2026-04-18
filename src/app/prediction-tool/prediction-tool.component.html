@@ -12,6 +12,7 @@
           mat-stroked-button
           type="button"
           class="ghost-button"
+          [attr.aria-pressed]="darkMode()"
           (click)="toggleTheme()"
         >
           {{ darkMode() ? t('switch_to_light') : t('switch_to_dark') }}
@@ -222,7 +223,7 @@
 
             <div class="price-panel">
               <span class="results-label">{{ t('prediction') }}</span>
-              <strong class="price-value">{{
+              <strong class="price-value" aria-live="polite">{{
                 formatCurrency(predictedPrice())
               }}</strong>
             </div>

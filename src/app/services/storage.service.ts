@@ -5,13 +5,9 @@ import { isPlatformBrowser } from '@angular/common';
   providedIn: 'root'
 })
 export class StorageService {
-  private readonly isBrowser: boolean;
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  constructor() {
-    this.isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  }
-
-  setItem(key: string, value: any): void {
+  setItem(key: string, value: unknown): void {
     if (this.isBrowser) {
       localStorage.setItem(key, JSON.stringify(value));
     }

@@ -1,5 +1,6 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   DestroyRef,
   OnInit,
@@ -94,6 +95,7 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
   selector: 'app-prediction-tool',
   templateUrl: './prediction-tool.component.html',
   styleUrl: './prediction-tool.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     MatFormFieldModule,
@@ -368,7 +370,7 @@ export class PredictionToolComponent implements OnInit {
         error,
         requestPayload
       });
-      this.errorMessage.set(this.getErrorMessage(error));
+      this.errorMessage.set(this.t('error_fetch'));
     } finally {
       this.loading.set(false);
     }
@@ -508,14 +510,6 @@ export class PredictionToolComponent implements OnInit {
       'data-theme',
       this.darkMode() ? 'dark' : 'light'
     );
-  }
-
-  private getErrorMessage(error: unknown): string {
-    if (error instanceof Error && error.message) {
-      return error.message;
-    }
-
-    return this.t('error_fetch');
   }
 }
 
