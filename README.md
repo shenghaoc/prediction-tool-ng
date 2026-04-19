@@ -19,6 +19,12 @@ Angular derivative of the original React `prediction-tool` repo. This variant ke
 - Chart.js with `ng2-charts`
 - Angular SSR support
 
+## Chart Strategy
+
+For the Angular variant, charts stay on `Chart.js` through the Angular wrapper `ng2-charts`.
+
+This keeps the rendering model Angular-native (bindings + change detection) instead of managing Chart.js instances manually.
+
 ## Development
 
 Install dependencies:

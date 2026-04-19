@@ -25,6 +25,7 @@ import type { ChartConfiguration } from 'chart.js';
 import {
   flat_model_list,
   ml_model_list,
+  month_list,
   storey_range_list,
   town_list
 } from '../lists';
@@ -58,29 +59,31 @@ type TrendPoint = {
   value: number;
 };
 
-type ApiResponse = Array<{
-  labels: string;
-  data: number;
-}>;
+type ApiResponse = {
+  predictions: Array<{
+    month: string;
+    predictedPrice: number;
+  }>;
+};
 
 type PredictionRequestPayload = {
-  ml_model: MlModel;
-  month_start: string;
-  month_end: string;
+  model: MlModel;
+  monthStart: string;
+  monthEnd: string;
   town: Town;
-  storey_range: StoreyRange;
-  flat_model: FlatModel;
-  floor_area_sqm: string;
-  lease_commence_date: string;
+  storeyRange: StoreyRange;
+  flatModel: FlatModel;
+  floorAreaSqm: string;
+  leaseCommenceYear: string;
 };
 
 const MIN_YEAR = 1960;
-const MAX_YEAR = 2022;
-const DEFAULT_BASE_MONTH = 2;
+const MAX_YEAR = new Date().getUTCFullYear();
 const MIN_FLOOR_AREA = 20;
 const MAX_FLOOR_AREA = 300;
 const PREDICTION_API_URL =
   'https://ee4802-g20-tool.shenghaoc.workers.dev/api/prices';
+const PREDICTION_MONTHS = [...month_list.slice(-13)];
 
 const INITIAL_FORM_VALUE: PredictionFormValue = {
   mlModel: ml_model_list[0],
@@ -130,7 +133,7 @@ export class PredictionToolComponent implements OnInit {
   protected readonly errorMessage = signal('');
   protected readonly hasPrediction = signal(false);
   protected readonly trendData = signal<TrendPoint[]>(
-    createDefaultTrendData(INITIAL_FORM_VALUE.leaseCommenceYear)
+    createDefaultTrendData()
   );
   protected readonly summaryValues = signal<SummaryValues>({
     mlModel: INITIAL_FORM_VALUE.mlModel,
@@ -295,7 +298,7 @@ export class PredictionToolComponent implements OnInit {
 
         if (!this.hasPrediction()) {
           this.trendData.set(
-            createDefaultTrendData(nextValue.leaseCommenceYear)
+            createDefaultTrendData()
           );
         }
 
@@ -321,9 +324,7 @@ export class PredictionToolComponent implements OnInit {
       MAX_FLOOR_AREA,
       MIN_FLOOR_AREA
     );
-    const predictionWindow = getPredictionWindow(
-      formValue.leaseCommenceYear
-    );
+    const predictionWindow = getPredictionWindow();
 
     if (clampedFloorArea !== formValue.floorAreaSqm) {
       this.predictionForm.controls.floorAreaSqm.setValue(clampedFloorArea, {
@@ -332,14 +333,14 @@ export class PredictionToolComponent implements OnInit {
     }
 
     const requestPayload: PredictionRequestPayload = {
-      ml_model: formValue.mlModel,
-      month_start: predictionWindow.monthStart,
-      month_end: predictionWindow.monthEnd,
+      model: formValue.mlModel,
+      monthStart: predictionWindow.monthStart,
+      monthEnd: predictionWindow.monthEnd,
       town: formValue.town,
-      storey_range: formValue.storeyRange,
-      flat_model: formValue.flatModel,
-      floor_area_sqm: clampedFloorArea.toString(),
-      lease_commence_date: formValue.leaseCommenceYear.toString()
+      storeyRange: formValue.storeyRange,
+      flatModel: formValue.flatModel,
+      floorAreaSqm: clampedFloorArea.toString(),
+      leaseCommenceYear: formValue.leaseCommenceYear.toString()
     };
     const formData = createPredictionFormData(requestPayload);
 
@@ -381,7 +382,7 @@ export class PredictionToolComponent implements OnInit {
     this.hasPrediction.set(false);
     this.errorMessage.set('');
     this.trendData.set(
-      createDefaultTrendData(INITIAL_FORM_VALUE.leaseCommenceYear)
+      createDefaultTrendData()
     );
     this.syncSummaryWithForm(INITIAL_FORM_VALUE);
 
@@ -445,9 +446,7 @@ export class PredictionToolComponent implements OnInit {
 
     if (!savedForm) {
       this.trendData.set(
-        createDefaultTrendData(
-          this.predictionForm.controls.leaseCommenceYear.value
-        )
+        createDefaultTrendData()
       );
       return;
     }
@@ -475,7 +474,7 @@ export class PredictionToolComponent implements OnInit {
       emitEvent: false
     });
     this.trendData.set(
-      createDefaultTrendData(restoredFormValue.leaseCommenceYear)
+      createDefaultTrendData()
     );
     this.syncSummaryWithForm(restoredFormValue);
   }
@@ -514,9 +513,9 @@ export class PredictionToolComponent implements OnInit {
 }
 
 function normalizeTrendData(data: ApiResponse): TrendPoint[] {
-  return data.map((entry) => ({
-    label: entry.labels,
-    value: sanitizeCurrencyValue(entry.data)
+  return data.predictions.map((entry) => ({
+    label: entry.month,
+    value: sanitizeCurrencyValue(entry.predictedPrice)
   }));
 }
 
@@ -550,7 +549,13 @@ function parsePredictionResponse(
     );
   }
 
-  if (!Array.isArray(parsedResponse) || parsedResponse.length === 0) {
+  if (
+    !parsedResponse ||
+    typeof parsedResponse !== 'object' ||
+    !('predictions' in parsedResponse) ||
+    !Array.isArray(parsedResponse.predictions) ||
+    parsedResponse.predictions.length === 0
+  ) {
     throw new Error(
       formatPredictionError(
         'API returned an unexpected payload',
@@ -587,42 +592,21 @@ function formatDebugValue(value: string, maxLength = 280): string {
   return `${compactValue.slice(0, maxLength)}...`;
 }
 
-function createDefaultTrendData(baseYear: number): TrendPoint[] {
-  const baselineDate = new Date(Date.UTC(baseYear, DEFAULT_BASE_MONTH - 1, 1));
-
-  return Array.from({ length: 13 }, (_, index) => {
-    const pointDate = new Date(baselineDate);
-    pointDate.setUTCMonth(pointDate.getUTCMonth() - (12 - index));
-
-    return {
-      label: formatYearMonth(
-        pointDate.getUTCFullYear(),
-        pointDate.getUTCMonth() + 1
-      ),
-      value: 0
-    };
-  });
+function createDefaultTrendData(): TrendPoint[] {
+  return PREDICTION_MONTHS.map((month) => ({
+    label: month,
+    value: 0
+  }));
 }
 
-function getPredictionWindow(baseYear: number): {
+function getPredictionWindow(): {
   monthStart: string;
   monthEnd: string;
 } {
-  const monthEnd = formatYearMonth(baseYear, DEFAULT_BASE_MONTH);
-  const startDate = new Date(Date.UTC(baseYear, DEFAULT_BASE_MONTH - 1, 1));
-  startDate.setUTCMonth(startDate.getUTCMonth() - 12);
-
   return {
-    monthStart: formatYearMonth(
-      startDate.getUTCFullYear(),
-      startDate.getUTCMonth() + 1
-    ),
-    monthEnd
+    monthStart: PREDICTION_MONTHS[0] ?? month_list[0],
+    monthEnd: PREDICTION_MONTHS[PREDICTION_MONTHS.length - 1] ?? month_list[month_list.length - 1]
   };
-}
-
-function formatYearMonth(year: number, month: number): string {
-  return `${year}-${month.toString().padStart(2, '0')}`;
 }
 
 function coerceOption<T extends readonly string[]>(
