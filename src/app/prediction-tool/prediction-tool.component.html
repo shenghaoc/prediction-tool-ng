@@ -73,8 +73,8 @@
               >
                 <div class="form-grid">
                   <div class="field-group">
-                    <label class="field-label">{{ t('ml_model') }}</label>
-                    <select class="field-select" formControlName="mlModel">
+                    <label class="field-label" for="field-ml-model">{{ t('ml_model') }}</label>
+                    <select id="field-ml-model" class="field-select" formControlName="mlModel">
                       @for (mlModel of mlModels; track mlModel) {
                         <option [value]="mlModel">
                           {{ tOption('ml_models', mlModel) }}
@@ -84,8 +84,8 @@
                   </div>
 
                   <div class="field-group">
-                    <label class="field-label">{{ t('town') }}</label>
-                    <select class="field-select" formControlName="town">
+                    <label class="field-label" for="field-town">{{ t('town') }}</label>
+                    <select id="field-town" class="field-select" formControlName="town">
                       @for (town of towns; track town) {
                         <option [value]="town">
                           {{ tOption('towns', town) }}
@@ -95,8 +95,8 @@
                   </div>
 
                   <div class="field-group">
-                    <label class="field-label">{{ t('storey_range') }}</label>
-                    <select class="field-select" formControlName="storeyRange">
+                    <label class="field-label" for="field-storey-range">{{ t('storey_range') }}</label>
+                    <select id="field-storey-range" class="field-select" formControlName="storeyRange">
                       @for (storeyRange of storeyRanges; track storeyRange) {
                         <option [value]="storeyRange">
                           {{ tOption('storey_ranges', storeyRange) }}
@@ -106,8 +106,8 @@
                   </div>
 
                   <div class="field-group">
-                    <label class="field-label">{{ t('flat_model') }}</label>
-                    <select class="field-select" formControlName="flatModel">
+                    <label class="field-label" for="field-flat-model">{{ t('flat_model') }}</label>
+                    <select id="field-flat-model" class="field-select" formControlName="flatModel">
                       @for (flatModel of flatModels; track flatModel) {
                         <option [value]="flatModel">
                           {{ tOption('flat_models', flatModel) }}
@@ -117,9 +117,10 @@
                   </div>
 
                   <div class="field-group field-full">
-                    <label class="field-label">{{ t('floor_area') }}</label>
+                    <label class="field-label" for="field-floor-area">{{ t('floor_area') }}</label>
                     <div class="unit-wrap">
                       <input
+                        id="field-floor-area"
                         class="field-input"
                         type="number"
                         formControlName="floorAreaSqm"
@@ -145,8 +146,8 @@
                   </div>
 
                   <div class="field-group field-full">
-                    <label class="field-label">{{ t('lease_commence_date') }}</label>
-                    <select class="field-select" formControlName="leaseCommenceYear">
+                    <label class="field-label" for="field-lease-year">{{ t('lease_commence_date') }}</label>
+                    <select id="field-lease-year" class="field-select" formControlName="leaseCommenceYear">
                       @for (year of leaseYears; track year) {
                         <option [value]="year">{{ year }}</option>
                       }
