@@ -336,13 +336,16 @@
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.unit-wrap .field-input {
+  border-radius: 16px 0 0 16px;
+}
+
 .unit-tag {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 4px;
   padding: 0 18px;
-  min-height: 56px;
+  min-height: 52px;
   border: 1px solid var(--line-soft);
   border-left: none;
   border-radius: 0 16px 16px 0;
@@ -633,77 +636,76 @@
   animation: pulse 1s ease-in-out infinite alternate;
 }
 
-/* --- Angular Material Form Field Overrides --- */
-.shell ::ng-deep .mat-mdc-form-field {
-  width: 100%;
+/* --- Form Fields --- */
+.field-group {
+  display: flex;
+  flex-direction: column;
 }
 
-.shell ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-  padding-inline: 4px;
-}
-
-.shell ::ng-deep .mat-mdc-text-field-wrapper {
-  background: var(--field-bg);
-  border-radius: 16px;
-}
-
-.shell ::ng-deep .mat-mdc-form-field-flex {
-  align-items: center;
-}
-
-.shell ::ng-deep .mdc-notched-outline__leading,
-.shell ::ng-deep .mdc-notched-outline__notch,
-.shell ::ng-deep .mdc-notched-outline__trailing {
-  border-color: var(--line-soft) !important;
-}
-
-.shell ::ng-deep
-  .mdc-text-field--outlined.mdc-text-field--focused
-  .mdc-notched-outline__leading,
-.shell ::ng-deep
-  .mdc-text-field--outlined.mdc-text-field--focused
-  .mdc-notched-outline__notch,
-.shell ::ng-deep
-  .mdc-text-field--outlined.mdc-text-field--focused
-  .mdc-notched-outline__trailing,
-.shell ::ng-deep
-  .mdc-text-field--outlined:hover
-  .mdc-notched-outline__leading,
-.shell ::ng-deep
-  .mdc-text-field--outlined:hover
-  .mdc-notched-outline__notch,
-.shell ::ng-deep
-  .mdc-text-field--outlined:hover
-  .mdc-notched-outline__trailing {
-  border-color: var(--primary-color) !important;
-}
-
-.shell ::ng-deep .mdc-floating-label,
-.shell ::ng-deep .mat-mdc-select-value-text,
-.shell ::ng-deep .mat-mdc-input-element,
-.shell ::ng-deep .mat-mdc-select-arrow,
-.shell ::ng-deep .mat-mdc-form-field-icon-suffix {
-  color: var(--text-color) !important;
-}
-
-.shell ::ng-deep .mdc-floating-label {
+.field-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-color);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1.1px;
+  transition: color 0.3s ease;
 }
 
-.shell ::ng-deep .mat-mdc-form-field-error {
-  color: var(--accent-color) !important;
+.field-select,
+.field-input {
+  width: 100%;
+  padding: 14px 16px;
+  min-height: 52px;
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  background: var(--field-bg);
+  color: var(--text-color);
+  font: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 200ms ease, box-shadow 200ms ease, background 0.3s ease, color 0.3s ease;
+  cursor: pointer;
 }
 
-.shell ::ng-deep .mat-mdc-select-placeholder,
-.shell ::ng-deep .mat-mdc-input-element::placeholder {
-  color: var(--text-muted) !important;
+.field-select {
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2374685b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
 }
 
-.shell ::ng-deep .mat-mdc-form-field-focus-overlay {
-  background: transparent;
+.theme-dark .field-select {
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%239e998f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.field-select:hover,
+.field-input:hover {
+  border-color: var(--primary-color);
+}
+
+.field-select:focus,
+.field-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.field-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  color: var(--accent-color);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  transition: color 0.3s ease;
 }
 
 /* --- Responsive --- */
