@@ -74,7 +74,7 @@ type PredictionRequestPayload = {
 };
 
 const MIN_YEAR = 1960;
-const MAX_YEAR = 2022;
+const MAX_YEAR = parseInt(month_list[month_list.length - 1].substring(0, 4), 10);
 const MIN_FLOOR_AREA = 20;
 const MAX_FLOOR_AREA = 300;
 const PREDICTION_API_URL =
