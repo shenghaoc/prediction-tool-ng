@@ -9,18 +9,16 @@
 
       <div class="actions">
         <button
-          mat-stroked-button
           type="button"
-          class="ghost-button"
+          class="ghost-btn"
           [attr.aria-pressed]="darkMode()"
           (click)="toggleTheme()"
         >
           {{ darkMode() ? t('switch_to_light') : t('switch_to_dark') }}
         </button>
         <button
-          mat-stroked-button
           type="button"
-          class="ghost-button"
+          class="ghost-btn"
           (click)="toggleLanguage()"
         >
           {{ t('switch_language') }}
@@ -185,16 +183,16 @@
 
                   <div class="button-row field-full">
                     <button
-                      mat-flat-button
-                      class="primary-button"
+                      class="btn-primary"
                       type="submit"
                       [disabled]="predictionForm.invalid || loading()"
                     >
-                      {{ loading() ? t('predicting') : t('get_prediction') }}
+                      <span [class.loading-pulse]="loading()">
+                        {{ loading() ? t('predicting') : t('get_prediction') }}
+                      </span>
                     </button>
                     <button
-                      mat-stroked-button
-                      class="reset-button"
+                      class="btn-reset"
                       type="button"
                       [disabled]="loading()"
                       (click)="resetForm()"
@@ -224,11 +222,11 @@
             <div class="price-panel">
               <span class="results-label">{{ t('prediction') }}</span>
               @if (hasPrediction()) {
-                <strong class="price-value" aria-live="polite">{{
+                <strong class="price-value has-value" aria-live="polite">{{
                   formatCurrency(predictedPrice())
                 }}</strong>
               } @else {
-                <strong class="price-value price-value-placeholder">{{
+                <strong class="price-value awaiting">{{
                   t('awaiting_prediction')
                 }}</strong>
               }
