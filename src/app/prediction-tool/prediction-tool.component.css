@@ -170,7 +170,8 @@
 .btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
 .btn-primary:active:not(:disabled) { transform: translateY(0); }
 .btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
-.btn-primary:disabled { opacity: 0.6; cursor: progress; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-primary:disabled:has(.loading-pulse) { cursor: progress; }
 
 .btn-reset {
   min-height: 54px;
@@ -185,8 +186,8 @@
   cursor: pointer;
   transition: transform 160ms ease, background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
-.btn-reset:hover { transform: translateY(-1px); }
-.btn-reset:active { transform: translateY(0); }
+.btn-reset:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-reset:active:not(:disabled) { transform: translateY(0); }
 .btn-reset:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
 
 /* --- Layout --- */

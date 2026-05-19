@@ -128,26 +128,32 @@
                         max="300"
                         step="1"
                         [placeholder]="t('enter_floor_area')"
+                        aria-describedby="floor-area-unit floor-area-error"
                       />
-                      <span class="unit-tag">sqm</span>
+                      <span id="floor-area-unit" class="unit-tag">sqm</span>
                     </div>
                     @if (
                       predictionForm.controls.floorAreaSqm.hasError('required') &&
                       predictionForm.controls.floorAreaSqm.touched
                     ) {
-                      <span class="field-error">{{ t('missing_floor_area') }}</span>
+                      <span id="floor-area-error" class="field-error">{{ t('missing_floor_area') }}</span>
                     } @else if (
                       (predictionForm.controls.floorAreaSqm.hasError('min') ||
                         predictionForm.controls.floorAreaSqm.hasError('max')) &&
                       predictionForm.controls.floorAreaSqm.touched
                     ) {
-                      <span class="field-error">{{ t('floor_area_range') }}</span>
+                      <span id="floor-area-error" class="field-error">{{ t('floor_area_range') }}</span>
                     }
                   </div>
 
                   <div class="field-group field-full">
                     <label class="field-label" for="field-lease-year">{{ t('lease_commence_date') }}</label>
-                    <select id="field-lease-year" class="field-select" formControlName="leaseCommenceYear">
+                    <select
+                      id="field-lease-year"
+                      class="field-select"
+                      formControlName="leaseCommenceYear"
+                      aria-describedby="lease-year-error"
+                    >
                       @for (year of leaseYears; track year) {
                         <option [value]="year">{{ year }}</option>
                       }
@@ -156,7 +162,7 @@
                       predictionForm.controls.leaseCommenceYear.hasError('required') &&
                       predictionForm.controls.leaseCommenceYear.touched
                     ) {
-                      <span class="field-error">{{ t('missing_lease_commence_date') }}</span>
+                      <span id="lease-year-error" class="field-error">{{ t('missing_lease_commence_date') }}</span>
                     }
                   </div>
 
