@@ -9,18 +9,16 @@
 
       <div class="actions">
         <button
-          mat-stroked-button
           type="button"
-          class="ghost-button"
+          class="ghost-btn"
           [attr.aria-pressed]="darkMode()"
           (click)="toggleTheme()"
         >
           {{ darkMode() ? t('switch_to_light') : t('switch_to_dark') }}
         </button>
         <button
-          mat-stroked-button
           type="button"
-          class="ghost-button"
+          class="ghost-btn"
           (click)="toggleLanguage()"
         >
           {{ t('switch_language') }}
@@ -74,127 +72,112 @@
                 novalidate
               >
                 <div class="form-grid">
-                  <mat-form-field
-                    appearance="outline"
-                    class="app-field"
-                  >
-                    <mat-label>{{ t('ml_model') }}</mat-label>
-                    <mat-select formControlName="mlModel">
+                  <div class="field-group">
+                    <label class="field-label" for="field-ml-model">{{ t('ml_model') }}</label>
+                    <select id="field-ml-model" class="field-select" formControlName="mlModel">
                       @for (mlModel of mlModels; track mlModel) {
-                        <mat-option [value]="mlModel">
+                        <option [value]="mlModel">
                           {{ tOption('ml_models', mlModel) }}
-                        </mat-option>
+                        </option>
                       }
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field
-                    appearance="outline"
-                    class="app-field"
-                  >
-                    <mat-label>{{ t('town') }}</mat-label>
-                    <mat-select formControlName="town">
-                      @for (town of towns; track town) {
-                        <mat-option [value]="town">
-                          {{ tOption('towns', town) }}
-                        </mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field
-                    appearance="outline"
-                    class="app-field"
-                  >
-                    <mat-label>{{ t('storey_range') }}</mat-label>
-                    <mat-select formControlName="storeyRange">
-                      @for (storeyRange of storeyRanges; track storeyRange) {
-                        <mat-option [value]="storeyRange">
-                          {{ tOption('storey_ranges', storeyRange) }}
-                        </mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
-
-                  <mat-form-field
-                    appearance="outline"
-                    class="app-field"
-                  >
-                    <mat-label>{{ t('flat_model') }}</mat-label>
-                    <mat-select formControlName="flatModel">
-                      @for (flatModel of flatModels; track flatModel) {
-                        <mat-option [value]="flatModel">
-                          {{ tOption('flat_models', flatModel) }}
-                        </mat-option>
-                      }
-                    </mat-select>
-                  </mat-form-field>
-
-                  <div class="field-full">
-                    <div class="unit-wrap">
-                      <mat-form-field
-                        appearance="outline"
-                        class="app-field"
-                      >
-                        <mat-label>{{ t('floor_area') }}</mat-label>
-                        <input
-                          matInput
-                          type="number"
-                          formControlName="floorAreaSqm"
-                          min="20"
-                          max="300"
-                          step="1"
-                          [placeholder]="t('enter_floor_area')"
-                        />
-                        @if (
-                          predictionForm.controls.floorAreaSqm.hasError('required') &&
-                          predictionForm.controls.floorAreaSqm.touched
-                        ) {
-                          <mat-error>{{ t('missing_floor_area') }}</mat-error>
-                        } @else if (
-                          (predictionForm.controls.floorAreaSqm.hasError('min') ||
-                            predictionForm.controls.floorAreaSqm.hasError('max')) &&
-                          predictionForm.controls.floorAreaSqm.touched
-                        ) {
-                          <mat-error>{{ t('floor_area_range') }}</mat-error>
-                        }
-                      </mat-form-field>
-                      <span class="unit-tag">sqm</span>
-                    </div>
+                    </select>
                   </div>
 
-                  <mat-form-field
-                    appearance="outline"
-                    class="app-field field-full"
-                  >
-                    <mat-label>{{ t('lease_commence_date') }}</mat-label>
-                    <mat-select formControlName="leaseCommenceYear">
-                      @for (year of leaseYears; track year) {
-                        <mat-option [value]="year">{{ year }}</mat-option>
+                  <div class="field-group">
+                    <label class="field-label" for="field-town">{{ t('town') }}</label>
+                    <select id="field-town" class="field-select" formControlName="town">
+                      @for (town of towns; track town) {
+                        <option [value]="town">
+                          {{ tOption('towns', town) }}
+                        </option>
                       }
-                    </mat-select>
+                    </select>
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-label" for="field-storey-range">{{ t('storey_range') }}</label>
+                    <select id="field-storey-range" class="field-select" formControlName="storeyRange">
+                      @for (storeyRange of storeyRanges; track storeyRange) {
+                        <option [value]="storeyRange">
+                          {{ tOption('storey_ranges', storeyRange) }}
+                        </option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="field-group">
+                    <label class="field-label" for="field-flat-model">{{ t('flat_model') }}</label>
+                    <select id="field-flat-model" class="field-select" formControlName="flatModel">
+                      @for (flatModel of flatModels; track flatModel) {
+                        <option [value]="flatModel">
+                          {{ tOption('flat_models', flatModel) }}
+                        </option>
+                      }
+                    </select>
+                  </div>
+
+                  <div class="field-group field-full">
+                    <label class="field-label" for="field-floor-area">{{ t('floor_area') }}</label>
+                    <div class="unit-wrap">
+                      <input
+                        id="field-floor-area"
+                        class="field-input"
+                        type="number"
+                        formControlName="floorAreaSqm"
+                        min="20"
+                        max="300"
+                        step="1"
+                        [placeholder]="t('enter_floor_area')"
+                        aria-describedby="floor-area-unit floor-area-error"
+                      />
+                      <span id="floor-area-unit" class="unit-tag">sqm</span>
+                    </div>
+                    @if (
+                      predictionForm.controls.floorAreaSqm.hasError('required') &&
+                      predictionForm.controls.floorAreaSqm.touched
+                    ) {
+                      <span id="floor-area-error" class="field-error">{{ t('missing_floor_area') }}</span>
+                    } @else if (
+                      (predictionForm.controls.floorAreaSqm.hasError('min') ||
+                        predictionForm.controls.floorAreaSqm.hasError('max')) &&
+                      predictionForm.controls.floorAreaSqm.touched
+                    ) {
+                      <span id="floor-area-error" class="field-error">{{ t('floor_area_range') }}</span>
+                    }
+                  </div>
+
+                  <div class="field-group field-full">
+                    <label class="field-label" for="field-lease-year">{{ t('lease_commence_date') }}</label>
+                    <select
+                      id="field-lease-year"
+                      class="field-select"
+                      formControlName="leaseCommenceYear"
+                      aria-describedby="lease-year-error"
+                    >
+                      @for (year of leaseYears; track year) {
+                        <option [value]="year">{{ year }}</option>
+                      }
+                    </select>
                     @if (
                       predictionForm.controls.leaseCommenceYear.hasError('required') &&
                       predictionForm.controls.leaseCommenceYear.touched
                     ) {
-                      <mat-error>{{
-                        t('missing_lease_commence_date')
-                      }}</mat-error>
+                      <span id="lease-year-error" class="field-error">{{ t('missing_lease_commence_date') }}</span>
                     }
-                  </mat-form-field>
+                  </div>
 
                   <div class="button-row field-full">
                     <button
-                      mat-flat-button
-                      class="primary-button"
+                      class="btn-primary"
                       type="submit"
                       [disabled]="predictionForm.invalid || loading()"
                     >
-                      {{ loading() ? t('predicting') : t('get_prediction') }}
+                      <span [class.loading-pulse]="loading()">
+                        {{ loading() ? t('predicting') : t('get_prediction') }}
+                      </span>
                     </button>
                     <button
-                      mat-stroked-button
-                      class="reset-button"
+                      class="btn-reset"
                       type="button"
                       [disabled]="loading()"
                       (click)="resetForm()"
@@ -224,11 +207,11 @@
             <div class="price-panel">
               <span class="results-label">{{ t('prediction') }}</span>
               @if (hasPrediction()) {
-                <strong class="price-value" aria-live="polite">{{
+                <strong class="price-value has-value" aria-live="polite">{{
                   formatCurrency(predictedPrice())
                 }}</strong>
               } @else {
-                <strong class="price-value price-value-placeholder">{{
+                <strong class="price-value awaiting">{{
                   t('awaiting_prediction')
                 }}</strong>
               }

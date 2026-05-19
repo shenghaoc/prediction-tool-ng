@@ -1,6 +1,7 @@
 :root {
   color-scheme: light;
   --font-body:
+    'DM Sans',
     'Avenir Next',
     'SF Pro Text',
     'Helvetica Neue',
@@ -17,6 +18,7 @@
     'Heiti SC',
     sans-serif;
   --font-display:
+    'Lora',
     'Iowan Old Style',
     'Palatino Linotype',
     'Book Antiqua',

@@ -12,10 +12,6 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import {
   BaseChartDirective,
   NgChartsModule
@@ -78,7 +74,7 @@ type PredictionRequestPayload = {
 };
 
 const MIN_YEAR = 1960;
-const MAX_YEAR = new Date().getUTCFullYear();
+const MAX_YEAR = parseInt(month_list[month_list.length - 1].substring(0, 4), 10);
 const MIN_FLOOR_AREA = 20;
 const MAX_FLOOR_AREA = 300;
 const PREDICTION_API_URL =
@@ -101,10 +97,6 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatInputModule,
-    MatButtonModule,
     NgChartsModule
   ]
 })
