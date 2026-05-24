@@ -51,18 +51,7 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       results_placeholder_title: 'Run a scenario to generate a forecast',
       results_placeholder_body:
         'Choose a model, adjust the flat details, and submit the form to see the projected resale price and 12-month trend.',
-      stat_models_hint:
-        'Machine learning models trained on HDB resale transactions.',
-      stat_towns_hint: 'Singapore towns covered in the resale dataset.',
-      stat_types_hint: 'HDB flat model types used as prediction inputs.',
-      error_invalid_prediction:
-        'The server returned prices we could not display. Try different inputs or a model.',
-      error_form_restore_failed:
-        'Saved form data was invalid and has been reset.',
-      floor_area_unit: 'Square metres (m²)',
       floor_area_unit_short: 'm²',
-      prediction_success:
-        'Prediction complete! Scroll down to view results.',
       models_count: 'Models',
       towns_count: 'Towns',
       flat_types_count: 'Flat Types'
@@ -181,15 +170,7 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       results_placeholder_title: '提交一个情境后即可生成预测',
       results_placeholder_body:
         '选择模型并调整房屋资料后提交表单，即可查看预测转售价与过去12个月趋势。',
-      stat_models_hint: '基于组屋转售成交数据训练的机器学习模型。',
-      stat_towns_hint: '数据集中涵盖的新加坡城镇。',
-      stat_types_hint: '用作预测输入的组屋房型。',
-      error_invalid_prediction:
-        '服务器返回的价格无法显示。请尝试其他输入或模型。',
-      error_form_restore_failed: '已保存的表单数据无效，已重置。',
-      floor_area_unit: '平方米 (m²)',
       floor_area_unit_short: 'm²',
-      prediction_success: '预测完成！向下滚动查看结果。',
       models_count: '模型',
       towns_count: '城镇',
       flat_types_count: '房型'

@@ -406,6 +406,7 @@ export class PredictionToolComponent implements OnInit {
     }
 
     this.syncDocumentState();
+    this.chart?.update();
   }
 
   protected toggleLanguage(): void {
@@ -657,7 +658,7 @@ function formatCurrency(value: number): string {
 }
 
 function readCssVar(name: string, doc: Document): string {
-  return getComputedStyle(doc.documentElement).getPropertyValue(name).trim();
+  return getComputedStyle(doc.body).getPropertyValue(name).trim();
 }
 
 function colorWithAlpha(hex: string, alpha: number): string {
