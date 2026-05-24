@@ -152,18 +152,11 @@
                       id="field-lease-year"
                       class="field-select"
                       formControlName="leaseCommenceYear"
-                      aria-describedby="lease-year-error"
                     >
                       @for (year of leaseYears; track year) {
                         <option [value]="year">{{ year }}</option>
                       }
                     </select>
-                    @if (
-                      predictionForm.controls.leaseCommenceYear.hasError('required') &&
-                      predictionForm.controls.leaseCommenceYear.touched
-                    ) {
-                      <span id="lease-year-error" class="field-error">{{ t('missing_lease_commence_date') }}</span>
-                    }
                   </div>
 
                   <div class="button-row field-full">

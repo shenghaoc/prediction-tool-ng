@@ -262,7 +262,6 @@ export class PredictionToolComponent implements OnInit {
     leaseCommenceYear: [
       INITIAL_FORM_VALUE.leaseCommenceYear,
       [
-        Validators.required,
         Validators.min(MIN_YEAR),
         Validators.max(MAX_YEAR)
       ]
