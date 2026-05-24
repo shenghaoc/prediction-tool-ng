@@ -365,9 +365,9 @@ export class PredictionToolComponent implements OnInit {
       this.chart?.update();
 
       if (this.isBrowser) {
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           this.resultsAnchor?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 0);
+        });
       }
     } catch (error: unknown) {
       console.error('Prediction request failed', {
@@ -661,14 +661,12 @@ function readCssVar(name: string, doc: Document): string {
   return getComputedStyle(doc.body).getPropertyValue(name).trim();
 }
 
-function colorWithAlpha(hex: string, alpha: number): string {
-  if (!hex) return '';
-  const h = hex.replace('#', '');
-  const rr = h.length === 3 ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2] : h;
-  const r = parseInt(rr.slice(0, 2), 16);
-  const g = parseInt(rr.slice(2, 4), 16);
-  const b = parseInt(rr.slice(4, 6), 16);
-  if (Number.isNaN(r)) return '';
+function colorWithAlpha(color: string, alpha: number): string {
+  if (!color) return '';
+  const digits = color.match(/\d+/g);
+  if (!digits || digits.length < 3) return '';
+  const [r, g, b] = digits.map(Number);
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return '';
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
