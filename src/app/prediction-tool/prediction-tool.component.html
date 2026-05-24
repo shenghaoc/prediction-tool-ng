@@ -165,7 +165,7 @@
                         [placeholder]="t('enter_floor_area')"
                         aria-describedby="floor-area-unit floor-area-error"
                       />
-                      <span id="floor-area-unit" class="unit-tag">m²</span>
+                      <span id="floor-area-unit" class="unit-tag">{{ t('floor_area_unit_short') }}</span>
                     </div>
                     @if (
                       predictionForm.controls.floorAreaSqm.hasError('required') &&
@@ -230,7 +230,7 @@
         </div>
 
         <!-- Right Panel: Results -->
-        <div id="results-anchor">
+        <div #resultsAnchor>
           <section class="results-card" aria-labelledby="results-heading" [attr.aria-busy]="loading() || null">
             <div class="results-header">
               <div class="results-heading-group">

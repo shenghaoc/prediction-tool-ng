@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  ElementRef,
   OnInit,
   PLATFORM_ID,
   ViewChild,
@@ -109,6 +110,7 @@ export class PredictionToolComponent implements OnInit {
   private readonly translationService = inject(TranslationService);
 
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
+  @ViewChild('resultsAnchor') resultsAnchor?: ElementRef<HTMLElement>;
 
   protected readonly lang = this.translationService.lang;
   protected readonly mlModels = ml_model_list;
@@ -165,11 +167,11 @@ export class PredictionToolComponent implements OnInit {
         {
           data: this.trendData().map((point) => point.value),
           label: this.t('predicted_price'),
-          borderColor: readCssVar('--primary'),
-          backgroundColor: readCssVar('--chart-fill'),
-          pointBackgroundColor: readCssVar('--primary'),
-          pointHoverBackgroundColor: readCssVar('--primary'),
-          pointHoverBorderColor: readCssVar('--card'),
+          borderColor: readCssVar('--primary', this.document),
+          backgroundColor: readCssVar('--chart-fill', this.document),
+          pointBackgroundColor: readCssVar('--primary', this.document),
+          pointHoverBackgroundColor: readCssVar('--primary', this.document),
+          pointHoverBorderColor: readCssVar('--card', this.document),
           fill: true,
           tension: 0.35,
           borderWidth: 3
@@ -182,10 +184,10 @@ export class PredictionToolComponent implements OnInit {
     ChartConfiguration<'line'>['options']
   >(() => {
     void this.darkMode();
-    const labelColor = readCssVar('--muted-foreground');
-    const panelColor = readCssVar('--popover');
-    const tooltipBorder = colorWithAlpha(readCssVar('--primary'), 0.16);
-    const gridColor = colorWithAlpha(readCssVar('--foreground'), 0.08);
+    const labelColor = readCssVar('--muted-foreground', this.document);
+    const panelColor = readCssVar('--popover', this.document);
+    const tooltipBorder = colorWithAlpha(readCssVar('--primary', this.document), 0.16);
+    const gridColor = colorWithAlpha(readCssVar('--foreground', this.document), 0.08);
 
     return {
       responsive: true,
@@ -200,8 +202,8 @@ export class PredictionToolComponent implements OnInit {
         tooltip: {
           displayColors: false,
           backgroundColor: panelColor,
-          titleColor: readCssVar('--foreground'),
-          bodyColor: readCssVar('--foreground'),
+          titleColor: readCssVar('--foreground', this.document),
+          bodyColor: readCssVar('--foreground', this.document),
           borderColor: tooltipBorder,
           borderWidth: 1,
           callbacks: {
@@ -364,8 +366,7 @@ export class PredictionToolComponent implements OnInit {
 
       if (this.isBrowser) {
         setTimeout(() => {
-          const anchor = this.document.getElementById('results-anchor');
-          anchor?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          this.resultsAnchor?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 0);
       }
     } catch (error: unknown) {
@@ -655,16 +656,17 @@ function formatCurrency(value: number): string {
   return `$${sanitizeCurrencyValue(value).toLocaleString()}`;
 }
 
-function readCssVar(name: string): string {
-  if (typeof document === 'undefined') return '';
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+function readCssVar(name: string, doc: Document): string {
+  return getComputedStyle(doc.documentElement).getPropertyValue(name).trim();
 }
 
 function colorWithAlpha(hex: string, alpha: number): string {
   if (!hex) return '';
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
+  const h = hex.replace('#', '');
+  const rr = h.length === 3 ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2] : h;
+  const r = parseInt(rr.slice(0, 2), 16);
+  const g = parseInt(rr.slice(2, 4), 16);
+  const b = parseInt(rr.slice(4, 6), 16);
   if (Number.isNaN(r)) return '';
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

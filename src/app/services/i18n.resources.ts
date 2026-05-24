@@ -60,6 +60,7 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       error_form_restore_failed:
         'Saved form data was invalid and has been reset.',
       floor_area_unit: 'Square metres (m²)',
+      floor_area_unit_short: 'm²',
       prediction_success:
         'Prediction complete! Scroll down to view results.',
       models_count: 'Models',
@@ -187,6 +188,7 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
         '服务器返回的价格无法显示。请尝试其他输入或模型。',
       error_form_restore_failed: '已保存的表单数据无效，已重置。',
       floor_area_unit: '平方米 (m²)',
+      floor_area_unit_short: 'm²',
       prediction_success: '预测完成！向下滚动查看结果。',
       models_count: '模型',
       towns_count: '城镇',
