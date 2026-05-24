@@ -1,0 +1,24 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": "worker/index.ts",
+	"name": "ee4802-g20-tool-ng",
+	"compatibility_date": "2026-05-24",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"directory": "dist/prediction-tool-ng/browser",
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "ee4802-g20-tool-db",
+			"database_id": "4e17ff7b-2af8-40fe-bb1c-2a6bc5b4199f"
+		}
+	],
+	"observability": {
+		"enabled": true
+	}
+}

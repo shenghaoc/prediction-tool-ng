@@ -78,7 +78,7 @@ const MAX_YEAR = parseInt(month_list[month_list.length - 1].substring(0, 4), 10)
 const MIN_FLOOR_AREA = 20;
 const MAX_FLOOR_AREA = 300;
 const PREDICTION_API_URL =
-  'https://ee4802-g20-tool.shenghaoc.workers.dev/api/prices';
+  'https://ee4802-g20-tool-ng.shenghaoc.workers.dev/api/prices';
 const PREDICTION_MONTHS = [...month_list.slice(-13)];
 
 const INITIAL_FORM_VALUE: PredictionFormValue = {
