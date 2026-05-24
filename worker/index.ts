@@ -1,3 +1,18 @@
+const CORS_HEADERS = {
+	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Methods': 'POST, OPTIONS',
+	'Access-Control-Allow-Headers': 'Content-Type',
+} as const;
+
+function jsonResponse(body: unknown, init?: ResponseInit): Response {
+	const headers = new Headers(init?.headers);
+	headers.set('Content-Type', 'application/json');
+	for (const [key, value] of Object.entries(CORS_HEADERS)) {
+		headers.set(key, value);
+	}
+	return new Response(JSON.stringify(body), { ...init, headers });
+}
+
 interface PriceQueryRow {
 	intercept_map: number;
 	month_map: number;
@@ -9,13 +24,6 @@ interface PriceQueryRow {
 	town_map: number;
 	flat_model_map: number;
 	storey_range_multiplier: number;
-}
-
-interface PredictionResponse {
-	predictions: Array<{
-		month: string;
-		predictedPrice: number;
-	}>;
 }
 
 interface RequestFields {
@@ -95,10 +103,7 @@ async function handleApiPrices(request: Request, env: CloudflareEnv): Promise<Re
 		fields = await parseRequestFields(request);
 	} catch (error: unknown) {
 		const message = error instanceof Error ? error.message : 'Invalid request body';
-		return new Response(JSON.stringify({ error: message }), {
-			status: 400,
-			headers: { 'Content-Type': 'application/json' },
-		});
+		return jsonResponse({ error: message }, { status: 400 });
 	}
 
 	try {
@@ -136,9 +141,9 @@ async function handleApiPrices(request: Request, env: CloudflareEnv): Promise<Re
 
 		const [first] = results;
 		if (!first) {
-			return new Response(
-				JSON.stringify({ error: 'No prediction data found for the given parameters.' }),
-				{ status: 404, headers: { 'Content-Type': 'application/json' } }
+			return jsonResponse(
+				{ error: 'No prediction data found for the given parameters.' },
+				{ status: 404 }
 			);
 		}
 
@@ -170,17 +175,13 @@ async function handleApiPrices(request: Request, env: CloudflareEnv): Promise<Re
 			};
 		});
 
-		const response: PredictionResponse = { predictions };
-		return new Response(JSON.stringify(response), {
-			headers: { 'Content-Type': 'application/json' },
-		});
+		return jsonResponse({ predictions });
 	} catch (error: unknown) {
 		console.error(error);
-		const message = 'Prediction service unavailable.';
-		return new Response(JSON.stringify({ error: message }), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' },
-		});
+		return jsonResponse(
+			{ error: 'Prediction service unavailable.' },
+			{ status: 500 }
+		);
 	}
 }
 
@@ -188,8 +189,13 @@ export default {
 	async fetch(request: Request, env: CloudflareEnv): Promise<Response> {
 		const url = new URL(request.url);
 
-		if (url.pathname === '/api/prices' && request.method === 'POST') {
-			return handleApiPrices(request, env);
+		if (url.pathname === '/api/prices') {
+			if (request.method === 'OPTIONS') {
+				return jsonResponse(null);
+			}
+			if (request.method === 'POST') {
+				return handleApiPrices(request, env);
+			}
 		}
 
 		return env.ASSETS.fetch(request);
