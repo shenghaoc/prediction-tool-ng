@@ -28,9 +28,9 @@ describe('PredictionToolComponent', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('.chart-placeholder-title')?.textContent)
+    expect(compiled.querySelector('.empty-heading')?.textContent)
       .toContain('Run a scenario');
-    expect(compiled.querySelector('.price-value-placeholder')?.textContent)
+    expect(compiled.querySelector('.price-value.awaiting')?.textContent)
       .toContain('Awaiting prediction');
   });
 });

@@ -2,391 +2,606 @@
   display: block;
 }
 
+/* ── Shell ──────────────────────────────────────────────────────── */
 .shell {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
   min-height: 100vh;
-  padding: 26px 28px 42px;
-  transition:
-    background 0.45s ease,
-    color 0.3s ease;
 }
 
-.shell::before,
-.shell::after {
-  content: '';
-  position: fixed;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.shell::before {
-  inset: 0;
-  background-image:
-    linear-gradient(var(--mesh-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--mesh-line) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: radial-gradient(circle at center, black 40%, transparent 88%);
-  -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 88%);
-  opacity: 0.22;
-}
-
-.shell::after {
-  width: 46vw;
-  height: 46vw;
-  max-width: 560px;
-  max-height: 560px;
-  top: -180px;
-  right: -140px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--orb-color) 0%, transparent 68%);
-  filter: blur(12px);
-  opacity: 0.78;
-  transition: background 0.45s ease;
-}
-
-.theme-light {
-  --text-color: #1f2328;
-  --text-muted: #74685b;
-  --primary-color: #234b61;
-  --accent-color: #af6542;
-  --btn-text: #fffaf3;
-  --line-soft: rgba(116, 92, 68, 0.14);
-  --panel-bg: rgba(255, 250, 244, 0.72);
-  --panel-strong: rgba(255, 253, 250, 0.82);
-  --results-bg: rgba(255, 252, 248, 0.9);
-  --results-bg-2: rgba(249, 243, 236, 0.84);
-  --price-panel-bg: rgba(255, 255, 255, 0.46);
-  --field-bg: rgba(255, 255, 255, 0.54);
-  --pill-bg: rgba(255, 251, 246, 0.56);
-  --focus-ring: rgba(35, 75, 97, 0.12);
-  --panel-shadow: rgba(110, 84, 63, 0.12);
-  --accent-shadow: rgba(175, 101, 66, 0.24);
-  --mesh-line: rgba(31, 35, 40, 0.04);
-  --orb-color: rgba(175, 101, 66, 0.14);
-  --error-bg: rgba(175, 101, 66, 0.1);
-  --error-border: rgba(175, 101, 66, 0.24);
-  background: linear-gradient(155deg, #f5eee5 0%, #eee4d8 50%, #ece6de 100%);
-  color: var(--text-color);
-}
-
-.theme-dark {
-  --text-color: #f2ede6;
-  --text-muted: #9e998f;
-  --primary-color: #8daec1;
-  --accent-color: #cf8b60;
-  --btn-text: #fffaf3;
-  --line-soft: rgba(141, 174, 193, 0.16);
-  --panel-bg: rgba(16, 23, 31, 0.78);
-  --panel-strong: rgba(18, 27, 37, 0.88);
-  --results-bg: rgba(18, 26, 35, 0.92);
-  --results-bg-2: rgba(15, 22, 30, 0.86);
-  --price-panel-bg: rgba(255, 255, 255, 0.04);
-  --field-bg: rgba(255, 255, 255, 0.04);
-  --pill-bg: rgba(255, 255, 255, 0.04);
-  --focus-ring: rgba(141, 174, 193, 0.14);
-  --panel-shadow: rgba(0, 0, 0, 0.32);
-  --accent-shadow: rgba(207, 139, 96, 0.26);
-  --mesh-line: rgba(255, 255, 255, 0.06);
-  --orb-color: rgba(207, 139, 96, 0.18);
-  --error-bg: rgba(207, 139, 96, 0.14);
-  --error-border: rgba(207, 139, 96, 0.28);
-  background: linear-gradient(155deg, #091017 0%, #101821 52%, #1a2430 100%);
-  color: var(--text-color);
-}
-
-.surface {
-  position: relative;
-  z-index: 1;
+.page-surface {
   max-width: 1280px;
   margin: 0 auto;
+  padding: 0 24px;
 }
 
-/* --- Topbar --- */
-.topbar {
+/* ── Sticky Header ──────────────────────────────────────────────── */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: 0 -24px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 14px;
-  border: 1px solid var(--line-soft);
-  border-radius: 999px;
-  background: var(--pill-bg);
-  color: var(--accent-color);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1.4px;
+  gap: 14px;
+  padding: 14px 24px;
+  border-bottom: 1px solid color-mix(in oklab, var(--border) 50%, transparent);
+  background: color-mix(in oklab, var(--background) 85%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition: background 0.3s ease, border-color 0.3s ease;
 }
 
-.actions {
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid color-mix(in oklab, var(--primary) 20%, transparent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  white-space: nowrap;
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+.brand-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  transition: background 200ms ease;
+}
+
+.header-actions {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
-/* --- Buttons --- */
-.ghost-btn {
-  min-height: 42px;
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: var(--panel-strong);
-  color: var(--text-color);
-  border: 1px solid var(--line-soft);
+/* ── Buttons ────────────────────────────────────────────────────── */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--card);
+  color: var(--foreground);
   font: inherit;
-  font-weight: 700;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
-  transition: transform 160ms ease, background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition:
+    transform 160ms ease,
+    background 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
 }
-.ghost-btn:hover { transform: translateY(-1px); }
-.ghost-btn:active { transform: translateY(0); }
-.ghost-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+.btn-outline:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: var(--secondary);
+}
+.btn-outline:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-outline:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 25%, transparent);
+}
+.btn-outline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-.btn-primary {
-  min-height: 54px;
-  padding: 14px 28px;
-  border-radius: 999px;
-  background: var(--accent-color);
-  color: var(--btn-text);
-  border: none;
-  box-shadow: 0 16px 30px var(--accent-shadow);
-  font: inherit;
-  font-weight: 700;
-  font-size: 1rem;
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--card);
+  color: var(--foreground);
   cursor: pointer;
-  transition: transform 160ms ease, opacity 160ms ease, background 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 160ms ease,
+    background 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
 }
-.btn-primary:hover:not(:disabled) { transform: translateY(-1px); }
-.btn-primary:active:not(:disabled) { transform: translateY(0); }
-.btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
-.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-.btn-primary:disabled:has(.loading-pulse) { cursor: progress; }
-
-.btn-reset {
-  min-height: 54px;
-  padding: 14px 28px;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-color);
-  border: 1px solid var(--line-soft);
-  font: inherit;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: transform 160ms ease, background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+.btn-icon svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
-.btn-reset:hover:not(:disabled) { transform: translateY(-1px); }
-.btn-reset:active:not(:disabled) { transform: translateY(0); }
-.btn-reset:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--focus-ring); }
+.btn-icon:hover {
+  transform: translateY(-1px);
+  background: var(--secondary);
+}
+.btn-icon:active {
+  transform: translateY(0);
+}
+.btn-icon:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 25%, transparent);
+}
 
-/* --- Layout --- */
-.layout {
+/* ── Skeleton ───────────────────────────────────────────────────── */
+.skeleton {
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--muted);
+}
+
+.skeleton-animate {
+  background: linear-gradient(
+    110deg,
+    var(--secondary) 8%,
+    color-mix(in oklab, var(--secondary) 60%, var(--primary)) 18%,
+    var(--secondary) 33%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ── Layout Grid ────────────────────────────────────────────────── */
+.content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
-  gap: 22px;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 20px;
   align-items: start;
+  padding-bottom: 32px;
 }
 
-/* --- Cards --- */
-.card,
-.results-card {
-  border-radius: 30px;
-  border: 1px solid var(--line-soft);
-  box-shadow: 0 24px 70px var(--panel-shadow);
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+/* ── Panel Card (shared base) ───────────────────────────────────── */
+.panel-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: calc(var(--radius) * 1.8);
+  background: var(--card);
+  box-shadow:
+    0 1px 3px color-mix(in oklab, var(--foreground) 4%, transparent),
+    0 4px 16px color-mix(in oklab, var(--foreground) 6%, transparent);
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    box-shadow 300ms ease;
+}
+.panel-card:hover {
+  box-shadow:
+    0 1px 3px color-mix(in oklab, var(--foreground) 4%, transparent),
+    0 4px 16px color-mix(in oklab, var(--foreground) 6%, transparent),
+    0 8px 32px color-mix(in oklab, var(--primary) 5%, transparent);
 }
 
-.card {
-  background: var(--panel-bg);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+.panel-card-accent {
+  border-left: 4px solid color-mix(in oklab, var(--primary) 70%, transparent);
 }
 
 .card-inner {
-  display: grid;
-  gap: 22px;
   padding: 22px;
+  display: grid;
+  gap: 18px;
 }
 
+/* ── Intro Block ────────────────────────────────────────────────── */
 .intro-block {
   display: grid;
-  gap: 20px;
+  gap: 16px;
 }
 
-/* --- Typography --- */
 .headline {
   margin: 0;
-  max-width: 10ch;
-  color: var(--text-color);
-  font-family:
-    var(--font-display),
-    var(--font-body),
-    'PingFang SC',
-    'Noto Sans SC',
-    sans-serif;
-  font-size: clamp(3rem, 6vw, 5.3rem);
-  line-height: 0.9;
+  color: var(--foreground);
+  font-family: var(--font-display), var(--font-body),
+    'PingFang SC', 'Noto Sans SC', sans-serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.05;
   font-weight: 700;
-  letter-spacing: -0.04em;
-  transition: color 0.3s ease;
+  letter-spacing: -0.03em;
+  white-space: pre-line;
+  transition: color 200ms ease;
 }
 
 .headline-cjk {
   font-family: var(--font-body-cjk);
   font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.02;
-  max-width: none;
-}
-
-.lead,
-.caption {
-  margin: 0;
-  color: var(--text-muted);
-  transition: color 0.3s ease;
+  line-height: 1.15;
 }
 
 .lead {
-  max-width: 38rem;
+  margin: 0;
+  max-width: 42rem;
+  color: var(--muted-foreground);
   font-size: 1rem;
-  line-height: 1.8;
-}
-
-.caption {
-  font-size: 0.82rem;
   line-height: 1.7;
+  transition: color 200ms ease;
 }
 
-/* --- Figures --- */
+/* ── Stat Tiles ─────────────────────────────────────────────────── */
 .figure-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
-.figure {
-  padding: 16px 16px 18px;
-  border: 1px solid var(--line-soft);
-  border-radius: 20px;
-  background: var(--panel-strong);
-  transition: background 0.3s ease, border-color 0.3s ease;
+.stat-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: calc(var(--radius) * 1.4);
+  background: color-mix(in oklab, var(--card) 90%, transparent);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 2%, transparent);
+  transition:
+    transform 200ms ease,
+    background 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+  cursor: default;
+}
+.stat-tile:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--primary) 25%, transparent);
 }
 
-.figure-label {
+.stat-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: calc(var(--radius) * 1.4);
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--primary) 15%, transparent);
+  color: var(--primary);
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
+}
+.stat-tile:hover .stat-tile-icon {
+  background: color-mix(in oklab, var(--primary) 15%, transparent);
+  border-color: color-mix(in oklab, var(--primary) 25%, transparent);
+}
+.stat-tile-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.stat-tile-text {
+  min-width: 0;
+}
+
+.stat-tile-label {
   display: block;
-  color: var(--text-muted);
+  color: var(--muted-foreground);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  transition: color 0.3s ease;
+  letter-spacing: 0.8px;
+  transition: color 200ms ease;
 }
 
-.figure-value {
+.stat-tile-value {
   display: block;
-  margin-top: 6px;
-  color: var(--primary-color);
-  font-size: 1.85rem;
+  margin-top: 2px;
+  color: var(--primary);
+  font-family: var(--font-display), var(--font-body),
+    'PingFang SC', 'Noto Sans SC', sans-serif;
+  font-size: 1.25rem;
   font-weight: 800;
-  letter-spacing: -0.04em;
-  transition: color 0.3s ease;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  transition: color 200ms ease;
 }
 
-/* --- Form Shell --- */
+.caption {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  transition: color 200ms ease;
+}
+
+/* ── Form Shell ─────────────────────────────────────────────────── */
 .form-shell {
-  padding: 22px;
-  border-radius: 24px;
-  background: var(--panel-strong);
-  border: 1px solid var(--line-soft);
-  transition: background 0.3s ease, border-color 0.3s ease;
+  padding: 20px;
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--secondary);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  transition:
+    background 200ms ease,
+    border-color 200ms ease;
 }
 
 .section-title {
   margin: 0 0 16px;
-  color: var(--primary-color);
-  font-size: 1.35rem;
+  color: var(--primary);
+  font-size: 1rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  transition: color 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: color 200ms ease;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 16px;
+  gap: 14px 16px;
 }
 
 .field-full {
   grid-column: 1 / -1;
 }
 
-.app-field {
-  width: 100%;
+/* ── Form Fields ────────────────────────────────────────────────── */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
+.field-label {
+  display: block;
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: color 200ms ease;
+}
+
+.field-select,
+.field-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.95rem;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    background 200ms ease,
+    color 200ms ease;
+}
+
+.field-select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 38px;
+}
+
+.field-input {
+  cursor: text;
+}
+
+.field-select:hover,
+.field-input:hover {
+  border-color: color-mix(in oklab, var(--primary) 30%, transparent);
+}
+
+.field-select:focus-visible,
+.field-input:focus-visible {
+  border-color: color-mix(in oklab, var(--primary) 50%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--ring) 15%, transparent),
+    0 4px 12px color-mix(in oklab, var(--primary) 5%, transparent);
+}
+
+.field-input::placeholder {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+/* Unit input wrapper */
 .unit-wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .unit-wrap .field-input {
-  border-radius: 16px 0 0 16px;
+  border-radius: calc(var(--radius) * 1.4) 0 0 calc(var(--radius) * 1.4);
 }
 
 .unit-tag {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 18px;
-  min-height: 52px;
-  border: 1px solid var(--line-soft);
+  padding: 0 14px;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
   border-left: none;
-  border-radius: 0 16px 16px 0;
-  background: var(--field-bg);
-  color: var(--text-muted);
-  font-size: 0.88rem;
+  border-radius: 0 calc(var(--radius) * 1.4) calc(var(--radius) * 1.4) 0;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 12px;
   font-weight: 700;
-  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  white-space: nowrap;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
 }
 
+.field-error {
+  display: block;
+  color: var(--destructive);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  transition: color 200ms ease;
+}
+
+/* ── Button Row ─────────────────────────────────────────────────── */
 .button-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  margin-top: 6px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: calc(var(--radius) * 1.4);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    0 4px 12px color-mix(in oklab, var(--primary) 20%, transparent);
+  transition:
+    transform 160ms ease,
+    background 200ms ease,
+    box-shadow 200ms ease,
+    filter 200ms ease;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow:
+    0 6px 18px color-mix(in oklab, var(--primary) 25%, transparent);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 25%, transparent);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-primary:disabled:has(.loading-pulse) {
+  cursor: progress;
+}
+
+.btn-reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 12px 24px;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: calc(var(--radius) * 1.4);
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    background 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+.btn-reset:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: color-mix(in oklab, var(--muted) 80%, transparent);
+}
+.btn-reset:active:not(:disabled) {
+  transform: translateY(0);
+}
+.btn-reset:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 25%, transparent);
+}
+.btn-reset:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Error Display ──────────────────────────────────────────────── */
+.error-display {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: calc(var(--radius) * 1.4);
+  border: 1px solid color-mix(in oklab, var(--destructive) 30%, transparent);
+  background: color-mix(in oklab, var(--destructive) 5%, transparent);
+  color: var(--destructive);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
+}
+
+/* ── Progress Track ─────────────────────────────────────────────── */
+.progress-track {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--secondary);
+  height: 4px;
   margin-top: 4px;
 }
 
-/* --- Error Banner --- */
-.error-banner {
-  margin: 16px 0 0;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--error-border);
-  background: var(--error-bg);
-  color: var(--text-color);
-  font-size: 0.92rem;
-  line-height: 1.5;
+.progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  width: 60%;
+  background: linear-gradient(
+    90deg,
+    var(--primary),
+    color-mix(in oklab, var(--primary) 70%, var(--chart-2))
+  );
+  animation: progress-indeterminate 1.8s ease-in-out infinite;
 }
 
-/* --- Results Card --- */
+/* ── Results Panel ──────────────────────────────────────────────── */
 .results-card {
   padding: 22px;
-  background: linear-gradient(
-    180deg,
-    var(--results-bg) 0%,
-    var(--results-bg-2) 100%
-  );
+  border-radius: calc(var(--radius) * 1.8);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--card) 92%, transparent) 0%,
+      color-mix(in oklab, var(--secondary) 84%, transparent) 100%
+    );
+  box-shadow:
+    0 1px 3px color-mix(in oklab, var(--foreground) 4%, transparent),
+    0 4px 16px color-mix(in oklab, var(--foreground) 6%, transparent);
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    box-shadow 300ms ease;
+  display: grid;
+  gap: 18px;
 }
 
 .results-header {
@@ -394,54 +609,102 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 18px;
-  margin-bottom: 18px;
 }
 
-.results-label {
-  display: block;
-  color: var(--text-muted);
+.results-heading-group {
+  min-width: 0;
+}
+
+.results-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in oklab, var(--primary) 20%, transparent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-foreground);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1.4px;
-  transition: color 0.3s ease;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
 }
 
 .results-title {
-  margin: 6px 0 0;
-  color: var(--text-color);
-  font-family:
-    var(--font-display),
-    var(--font-body),
-    'PingFang SC',
-    'Noto Sans SC',
-    sans-serif;
-  font-size: clamp(2.2rem, 4vw, 3.4rem);
-  line-height: 0.95;
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--font-display), var(--font-body),
+    'PingFang SC', 'Noto Sans SC', sans-serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.4rem);
+  line-height: 1.05;
   font-weight: 700;
-  letter-spacing: -0.04em;
-  transition: color 0.3s ease;
+  letter-spacing: -0.03em;
+  transition: color 200ms ease;
 }
 
+/* ── Price Badge ────────────────────────────────────────────────── */
 .price-panel {
-  min-width: 220px;
-  padding: 18px 20px;
-  border-radius: 22px;
-  border: 1px solid var(--line-soft);
-  background: var(--price-panel-bg);
-  transition: background 0.3s ease, border-color 0.3s ease;
+  flex-shrink: 0;
+  min-width: 180px;
+  padding: 16px 18px;
+  border-radius: calc(var(--radius) * 1.4);
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--primary) 12%, transparent),
+      color-mix(in oklab, var(--accent) 60%, transparent)
+    );
+  transition:
+    background 200ms ease,
+    border-color 200ms ease;
+}
+
+.price-panel-glow {
+  border-color: color-mix(in oklab, var(--primary) 25%, transparent);
+  animation: glow-pulse 2.4s ease-in-out infinite;
+}
+
+.price-panel-inner {
+  position: relative;
+  z-index: 1;
+  background: radial-gradient(
+    ellipse at top right,
+    color-mix(in oklab, var(--primary) 18%, transparent),
+    transparent 55%
+  );
+  border-radius: calc(var(--radius) * 1.2);
+  padding: 6px;
+  margin: -8px;
+}
+
+.price-label {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  transition: color 200ms ease;
 }
 
 .price-value {
   display: block;
-  margin-top: 8px;
-  color: var(--accent-color);
-  font-size: clamp(2rem, 4vw, 2.7rem);
+  margin-top: 4px;
+  color: var(--primary);
+  font-family: var(--font-display), var(--font-body),
+    'PingFang SC', 'Noto Sans SC', sans-serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
-  transition: color 0.3s ease;
+  transition: color 200ms ease;
 }
 
 .price-value.has-value {
@@ -449,58 +712,93 @@
 }
 
 .price-value.awaiting {
-  color: var(--text-muted);
-  font-size: clamp(1.1rem, 2vw, 1.3rem);
+  color: var(--muted-foreground);
+  font-size: 1rem;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
-/* --- Metric Grid --- */
+/* ── Metric Grid ────────────────────────────────────────────────── */
 .results-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 18px;
 }
 
 .metric-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 14px 16px;
-  border: 1px solid var(--line-soft);
-  border-radius: 18px;
-  background: var(--panel-strong);
-  transition: background 0.3s ease, border-color 0.3s ease;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: calc(var(--radius) * 1.4);
+  background: color-mix(in oklab, var(--card) 90%, transparent);
+  transition:
+    transform 200ms ease,
+    background 200ms ease,
+    border-color 200ms ease;
+}
+.metric-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--primary) 20%, transparent);
 }
 
-.metric-card span {
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: calc(var(--radius) * 1.2);
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--primary) 15%, transparent);
+  color: var(--primary);
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
+}
+.metric-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.metric-body {
+  min-width: 0;
+}
+
+.metric-label {
   display: block;
-  color: var(--text-muted);
+  color: var(--muted-foreground);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  transition: color 0.3s ease;
+  letter-spacing: 0.8px;
+  transition: color 200ms ease;
 }
 
-.metric-card strong {
+.metric-value {
   display: block;
-  margin-top: 6px;
-  color: var(--text-color);
-  font-size: 0.95rem;
+  margin-top: 3px;
+  color: var(--foreground);
+  font-size: 0.9rem;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.35;
   letter-spacing: -0.02em;
-  transition: color 0.3s ease;
+  transition: color 200ms ease;
 }
 
-/* --- Chart Shell --- */
+/* ── Chart Shell ────────────────────────────────────────────────── */
 .chart-shell {
   padding-top: 16px;
-  border-top: 1px solid var(--line-soft);
-  transition: border-color 0.3s ease;
+  border-top: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  transition: border-color 200ms ease;
 }
 
 .chart-header {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   margin-bottom: 14px;
 }
 
@@ -510,21 +808,21 @@
 
 .chart-kicker {
   display: block;
-  color: var(--text-muted);
+  color: var(--muted-foreground);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1.3px;
-  transition: color 0.3s ease;
+  letter-spacing: 1.2px;
+  transition: color 200ms ease;
 }
 
 .chart-title {
-  margin: 6px 0 0;
-  color: var(--text-color);
-  font-size: 1.2rem;
+  margin: 4px 0 0;
+  color: var(--foreground);
+  font-size: 1.1rem;
   font-weight: 800;
-  letter-spacing: -0.03em;
-  transition: color 0.3s ease;
+  letter-spacing: -0.02em;
+  transition: color 200ms ease;
 }
 
 .chart-summary-grid {
@@ -534,52 +832,88 @@
 }
 
 .chart-summary-card {
-  min-width: 130px;
   padding: 12px 14px;
-  border: 1px solid var(--line-soft);
-  border-radius: 18px;
-  background: var(--panel-strong);
-  transition: background 0.3s ease, border-color 0.3s ease;
+  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: calc(var(--radius) * 1.4);
+  background: color-mix(in oklab, var(--secondary) 40%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition:
+    background 200ms ease,
+    border-color 200ms ease;
+}
+.chart-summary-card:hover {
+  border-color: color-mix(in oklab, var(--primary) 20%, transparent);
 }
 
-.chart-summary-card span {
+.chart-summary-label {
   display: block;
-  color: var(--text-muted);
+  color: var(--muted-foreground);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  transition: color 0.3s ease;
+  letter-spacing: 1px;
+  transition: color 200ms ease;
 }
 
-.chart-summary-card strong {
+.chart-summary-value {
   display: block;
-  margin-top: 6px;
-  color: var(--text-color);
+  margin-top: 4px;
+  color: var(--foreground);
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-  transition: color 0.3s ease;
+  transition: color 200ms ease;
 }
 
-.chart-summary-card small {
+.chart-summary-hint {
   display: block;
-  margin-top: 4px;
-  color: var(--text-muted);
+  margin-top: 3px;
+  color: var(--muted-foreground);
   font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  transition: color 0.3s ease;
+  letter-spacing: 1px;
+  transition: color 200ms ease;
 }
 
+.chart-summary-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 2px;
+  font-size: 10px;
+  font-weight: 800;
+}
+.chart-summary-trend.up {
+  color: var(--chart-4);
+}
+.chart-summary-trend.down {
+  color: var(--chart-5);
+}
+.trend-arrow {
+  width: 12px;
+  height: 12px;
+}
+
+/* ── Chart Frame ────────────────────────────────────────────────── */
 .chart-frame {
-  min-height: 360px;
+  min-height: 340px;
   display: flex;
   align-items: stretch;
   justify-content: center;
+  padding: 8px;
+  border-radius: calc(var(--radius) * 1.4);
+  border: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--secondary) 20%, transparent) 0%,
+    color-mix(in oklab, var(--secondary) 5%, transparent) 100%
+  );
+  transition:
+    background 200ms ease,
+    border-color 200ms ease;
 }
 
 .chart-frame canvas {
@@ -587,155 +921,182 @@
   height: 100% !important;
 }
 
-/* --- Placeholder State --- */
-.chart-placeholder {
-  align-items: center;
-  border-radius: 24px;
-  border: 1px dashed var(--line-soft);
-  color: var(--text-muted);
-  background: var(--panel-strong);
-  transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.chart-placeholder-empty {
+/* ── Empty State ────────────────────────────────────────────────── */
+.chart-empty {
   display: grid;
-  gap: 10px;
+  gap: 14px;
   justify-items: start;
+  align-content: center;
+  min-height: 260px;
   padding: 28px;
-  min-height: 220px;
+  border-radius: calc(var(--radius) * 1.4);
+  border: 1px dashed color-mix(in oklab, var(--border) 70%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--muted) 30%, transparent) 0%,
+    transparent 100%
+  );
+  transition:
+    background 200ms ease,
+    border-color 200ms ease;
 }
 
-.chart-placeholder-title {
+.empty-heading {
   margin: 0;
-  color: var(--text-color);
-  font-size: 1.35rem;
+  color: var(--foreground);
+  font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  transition: color 0.3s ease;
+  transition: color 200ms ease;
 }
 
-.chart-placeholder-body {
+.empty-body {
   margin: 0;
   max-width: 42ch;
-  color: var(--text-muted);
-  font-size: 0.98rem;
-  line-height: 1.7;
-  transition: color 0.3s ease;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.65;
+  transition: color 200ms ease;
 }
 
-/* --- Animations --- */
-@keyframes settle {
-  0%   { transform: scale(0.96); opacity: 0.72; }
-  65%  { transform: scale(1.05); opacity: 1; }
-  100% { transform: scale(1);    opacity: 1; }
+.empty-chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 80px;
+  animation: empty-float 4s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  from { transform: translateY(0); }
-  to { transform: translateY(-2px); }
+.empty-bar {
+  width: 14px;
+  border-radius: 4px 4px 0 0;
+  background: color-mix(in oklab, var(--primary) 35%, transparent);
+  transition: background 200ms ease;
 }
+
+/* ── Loading skeleton layout ────────────────────────────────────── */
+.skeleton-shell {
+  min-height: 100vh;
+  padding: 20px 24px 32px;
+}
+
+.skeleton-header {
+  height: 44px;
+  border-radius: calc(var(--radius) * 1.4);
+  background: linear-gradient(
+    110deg,
+    var(--secondary) 8%,
+    color-mix(in oklab, var(--secondary) 60%, var(--primary)) 18%,
+    var(--secondary) 33%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  margin-bottom: 20px;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 20px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.skeleton-card {
+  height: 280px;
+  border-radius: calc(var(--radius) * 1.8);
+  background: linear-gradient(
+    110deg,
+    var(--secondary) 8%,
+    color-mix(in oklab, var(--secondary) 60%, var(--primary)) 18%,
+    var(--secondary) 33%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ── Animations ─────────────────────────────────────────────────── */
+.animate-fade-in-deep {
+  animation: fade-up-deep 0.5s ease-out both;
+}
+
+.animate-stagger > *:nth-child(1) { animation: fade-up 0.4s ease-out 0.05s both; }
+.animate-stagger > *:nth-child(2) { animation: fade-up 0.4s ease-out 0.12s both; }
+.animate-stagger > *:nth-child(3) { animation: fade-up 0.4s ease-out 0.19s both; }
+.animate-stagger > *:nth-child(4) { animation: fade-up 0.4s ease-out 0.26s both; }
+.animate-stagger > *:nth-child(5) { animation: fade-up 0.4s ease-out 0.33s both; }
+.animate-stagger > *:nth-child(6) { animation: fade-up 0.4s ease-out 0.40s both; }
 
 .loading-pulse {
   display: inline-block;
   animation: pulse 1s ease-in-out infinite alternate;
 }
 
-/* --- Form Fields --- */
-.field-group {
-  display: flex;
-  flex-direction: column;
+/* ── Decorative blobs on intro card ─────────────────────────────── */
+.intro-blob {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
 }
 
-.field-label {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--text-color);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1.1px;
-  transition: color 0.3s ease;
+.intro-blob-1 {
+  width: 200px;
+  height: 200px;
+  top: -80px;
+  right: -60px;
+  background: color-mix(in oklab, var(--primary) 15%, transparent);
+  filter: blur(48px);
 }
 
-.field-select,
-.field-input {
-  width: 100%;
-  padding: 14px 16px;
-  min-height: 52px;
-  border: 1px solid var(--line-soft);
-  border-radius: 16px;
-  background: var(--field-bg);
-  color: var(--text-color);
-  font: inherit;
-  font-weight: 600;
-  font-size: 1rem;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  transition: border-color 200ms ease, box-shadow 200ms ease, background 0.3s ease, color 0.3s ease;
+.intro-blob-2 {
+  width: 160px;
+  height: 160px;
+  bottom: -60px;
+  left: -40px;
+  background: color-mix(in oklab, var(--chart-2) 15%, transparent);
+  filter: blur(48px);
 }
 
-.field-select { cursor: pointer; }
-.field-input  { cursor: text; }
-
-.field-select {
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2374685b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-  padding-right: 40px;
-}
-
-.theme-dark .field-select {
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%239e998f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-
-.field-select:hover,
-.field-input:hover {
-  border-color: var(--primary-color);
-}
-
-.field-select:focus-visible,
-.field-input:focus-visible {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
-
-.field-input::placeholder {
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.field-error {
-  display: block;
-  margin-top: 6px;
-  color: var(--accent-color);
-  font-size: 0.82rem;
-  line-height: 1.4;
-  transition: color 0.3s ease;
-}
-
-/* --- Responsive --- */
-@media (max-width: 1080px) {
-  .layout {
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .content-grid,
+  .skeleton-grid {
     grid-template-columns: 1fr;
   }
-}
 
-@media (max-width: 900px) {
-  .shell {
-    padding: 18px 14px 30px;
-  }
-
-  .topbar,
-  .results-header {
+  .sticky-header {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .actions {
+  .header-actions {
     width: 100%;
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-surface {
+    padding: 0 14px;
+  }
+
+  .sticky-header {
+    margin: 0 -14px 18px;
+    padding: 12px 14px;
+  }
+
+  .card-inner {
+    padding: 16px;
+  }
+
+  .results-card {
+    padding: 16px;
+  }
+
+  .results-header {
+    flex-direction: column;
   }
 
   .price-panel {
@@ -746,7 +1107,6 @@
   .figure-row,
   .results-grid,
   .button-row,
-  .chart-header,
   .chart-summary-grid {
     grid-template-columns: 1fr;
   }

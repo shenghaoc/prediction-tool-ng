@@ -120,6 +120,7 @@ export class PredictionToolComponent implements OnInit {
     (_, index) => MAX_YEAR - index
   );
 
+  protected readonly mounted = signal(false);
   protected readonly loading = signal(false);
   protected readonly darkMode = signal(false);
   protected readonly errorMessage = signal('');
@@ -162,13 +163,13 @@ export class PredictionToolComponent implements OnInit {
       {
         data: this.trendData().map((point) => point.value),
         label: this.t('predicted_price'),
-        borderColor: this.darkMode() ? '#cf8b60' : '#af6542',
+        borderColor: this.darkMode() ? '#818cf8' : '#4f46e5',
         backgroundColor: this.darkMode()
-          ? 'rgba(207, 139, 96, 0.26)'
-          : 'rgba(175, 101, 66, 0.18)',
-        pointBackgroundColor: this.darkMode() ? '#cf8b60' : '#af6542',
-        pointHoverBackgroundColor: this.darkMode() ? '#cf8b60' : '#af6542',
-        pointHoverBorderColor: this.darkMode() ? '#0f1821' : '#fffaf4',
+          ? 'rgba(129, 140, 248, 0.26)'
+          : 'rgba(79, 70, 229, 0.18)',
+        pointBackgroundColor: this.darkMode() ? '#818cf8' : '#4f46e5',
+        pointHoverBackgroundColor: this.darkMode() ? '#818cf8' : '#4f46e5',
+        pointHoverBorderColor: this.darkMode() ? '#0f172a' : '#ffffff',
         fill: true,
         tension: 0.35,
         borderWidth: 3
@@ -180,14 +181,14 @@ export class PredictionToolComponent implements OnInit {
     ChartConfiguration<'line'>['options']
   >(() => {
     const darkMode = this.darkMode();
-    const labelColor = darkMode ? '#9e998f' : '#74685b';
-    const panelColor = darkMode ? '#13202b' : '#fffaf4';
+    const labelColor = darkMode ? '#94a3b8' : '#64748b';
+    const panelColor = darkMode ? '#161929' : '#ffffff';
     const tooltipBorder = darkMode
-      ? 'rgba(141, 174, 193, 0.16)'
-      : 'rgba(116, 92, 68, 0.14)';
+      ? 'rgba(129, 140, 248, 0.16)'
+      : 'rgba(79, 70, 229, 0.14)';
     const gridColor = darkMode
       ? 'rgba(255,255,255,0.08)'
-      : 'rgba(31, 35, 40, 0.08)';
+      : 'rgba(15, 23, 42, 0.08)';
 
     return {
       responsive: true,
@@ -277,6 +278,12 @@ export class PredictionToolComponent implements OnInit {
     this.syncSummaryWithForm();
     this.syncDocumentState();
 
+    this.mounted.set(true);
+
+    if (this.isBrowser) {
+      this.document.body.classList.add('theme-ready');
+    }
+
     this.predictionForm.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((partialValue) => {
@@ -357,6 +364,13 @@ export class PredictionToolComponent implements OnInit {
       this.hasPrediction.set(true);
       this.trendData.set(normalizeTrendData(serverData));
       this.chart?.update();
+
+      if (this.isBrowser) {
+        setTimeout(() => {
+          const anchor = this.document.getElementById('results-anchor');
+          anchor?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+      }
     } catch (error: unknown) {
       console.error('Prediction request failed', {
         error,
