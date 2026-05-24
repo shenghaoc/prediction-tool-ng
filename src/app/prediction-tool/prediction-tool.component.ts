@@ -157,27 +157,31 @@ export class PredictionToolComponent implements OnInit {
 
   protected readonly chartData = computed<
     ChartConfiguration<'line'>['data']
-  >(() => ({
-    labels: this.trendData().map((point) => point.label),
-    datasets: [
-      {
-        data: this.trendData().map((point) => point.value),
-        label: this.t('predicted_price'),
-        borderColor: readCssVar('--primary'),
-        backgroundColor: readCssVar('--chart-fill'),
-        pointBackgroundColor: readCssVar('--primary'),
-        pointHoverBackgroundColor: readCssVar('--primary'),
-        pointHoverBorderColor: readCssVar('--card'),
-        fill: true,
-        tension: 0.35,
-        borderWidth: 3
-      }
-    ]
-  }));
+  >(() => {
+    void this.darkMode();
+    return {
+      labels: this.trendData().map((point) => point.label),
+      datasets: [
+        {
+          data: this.trendData().map((point) => point.value),
+          label: this.t('predicted_price'),
+          borderColor: readCssVar('--primary'),
+          backgroundColor: readCssVar('--chart-fill'),
+          pointBackgroundColor: readCssVar('--primary'),
+          pointHoverBackgroundColor: readCssVar('--primary'),
+          pointHoverBorderColor: readCssVar('--card'),
+          fill: true,
+          tension: 0.35,
+          borderWidth: 3
+        }
+      ]
+    };
+  });
 
   protected readonly chartOptions = computed<
     ChartConfiguration<'line'>['options']
   >(() => {
+    void this.darkMode();
     const labelColor = readCssVar('--muted-foreground');
     const panelColor = readCssVar('--popover');
     const tooltipBorder = colorWithAlpha(readCssVar('--primary'), 0.16);

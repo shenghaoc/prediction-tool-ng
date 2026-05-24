@@ -235,7 +235,7 @@
             <div class="results-header">
               <div class="results-heading-group">
                 <span class="results-eyebrow">
-                  <span class="brand-dot" aria-hidden="true" style="width:8px;height:8px;"></span>
+                  <span class="brand-dot brand-dot-sm" aria-hidden="true"></span>
                   {{ t('prediction') }}
                 </span>
                 <h2 id="results-heading" class="results-title">{{ t('predicted_price') }}</h2>
@@ -342,19 +342,19 @@
                     ></canvas>
                   </div>
                 } @else {
-                  <div class="chart-frame" style="align-items:center;justify-content:center;">
+                  <div class="chart-frame chart-frame-placeholder">
                     <span class="chart-summary-label">{{ t('loading_chart') }}</span>
                   </div>
                 }
               } @else {
                 <div class="chart-empty">
                   <div class="empty-chart-bars" aria-hidden="true">
-                    <div class="empty-bar" style="height:35%;"></div>
-                    <div class="empty-bar" style="height:55%;"></div>
-                    <div class="empty-bar" style="height:85%;"></div>
-                    <div class="empty-bar" style="height:45%;"></div>
-                    <div class="empty-bar" style="height:70%;"></div>
-                    <div class="empty-bar" style="height:30%;"></div>
+                    <div class="empty-bar" style="--bar-h:35%"></div>
+                    <div class="empty-bar" style="--bar-h:55%"></div>
+                    <div class="empty-bar" style="--bar-h:85%"></div>
+                    <div class="empty-bar" style="--bar-h:45%"></div>
+                    <div class="empty-bar" style="--bar-h:70%"></div>
+                    <div class="empty-bar" style="--bar-h:30%"></div>
                   </div>
                   <h3 class="empty-heading">{{ t('results_placeholder_title') }}</h3>
                   <p class="empty-body">{{ t('results_placeholder_body') }}</p>

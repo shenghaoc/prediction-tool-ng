@@ -59,6 +59,11 @@
   transition: background 200ms ease;
 }
 
+.brand-dot-sm {
+  width: 8px;
+  height: 8px;
+}
+
 .header-actions {
   display: flex;
   gap: 8px;
@@ -329,22 +334,11 @@
 }
 
 /* ── Form Shell ─────────────────────────────────────────────────── */
-.form-shell {
-  padding: 20px;
-  border-radius: calc(var(--radius) * 1.4);
-  background: var(--secondary);
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  transition:
-    background 200ms ease,
-    border-color 200ms ease;
-}
-
 .section-title {
   margin: 0 0 16px;
   color: var(--primary);
   font-size: 1rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
   text-transform: uppercase;
   letter-spacing: 1px;
   transition: color 200ms ease;
@@ -925,6 +919,11 @@
     border-color 200ms ease;
 }
 
+.chart-frame-placeholder {
+  align-items: center;
+  justify-content: center;
+}
+
 .chart-frame canvas {
   width: 100% !important;
   height: 100% !important;
@@ -978,6 +977,7 @@
 
 .empty-bar {
   width: 14px;
+  height: var(--bar-h, 50%);
   border-radius: 4px 4px 0 0;
   background: color-mix(in oklab, var(--primary) 35%, transparent);
   transition: background 200ms ease;
@@ -1041,9 +1041,6 @@
 .animate-stagger > *:nth-child(1) { animation: fade-up 0.4s ease-out 0.05s both; }
 .animate-stagger > *:nth-child(2) { animation: fade-up 0.4s ease-out 0.12s both; }
 .animate-stagger > *:nth-child(3) { animation: fade-up 0.4s ease-out 0.19s both; }
-.animate-stagger > *:nth-child(4) { animation: fade-up 0.4s ease-out 0.26s both; }
-.animate-stagger > *:nth-child(5) { animation: fade-up 0.4s ease-out 0.33s both; }
-.animate-stagger > *:nth-child(6) { animation: fade-up 0.4s ease-out 0.40s both; }
 
 .loading-pulse {
   display: inline-block;

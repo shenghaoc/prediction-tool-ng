@@ -16,9 +16,6 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
     labels: {
       loading_chart: 'Loading chart...',
       error_fetch: 'Failed to fetch prediction. Please try again.',
-      switch_language: '中文/English',
-      switch_to_dark: 'Dark Mode',
-      switch_to_light: 'Light Mode',
       switch_to_light_mode: 'Switch to light mode',
       switch_to_dark_mode: 'Switch to dark mode',
       language_label_en: 'English',
@@ -149,9 +146,6 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
     labels: {
       loading_chart: '加载图表中...',
       error_fetch: '获取预测失败，请重试。',
-      switch_language: '中文/English',
-      switch_to_dark: '深色模式',
-      switch_to_light: '浅色模式',
       switch_to_light_mode: '切换到浅色模式',
       switch_to_dark_mode: '切换到深色模式',
       language_label_en: 'English',
