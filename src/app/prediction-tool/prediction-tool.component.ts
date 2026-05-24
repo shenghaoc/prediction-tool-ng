@@ -81,8 +81,7 @@ const MIN_YEAR = 1960;
 const MAX_YEAR = new Date().getUTCFullYear();
 const MIN_FLOOR_AREA = 20;
 const MAX_FLOOR_AREA = 300;
-const PREDICTION_API_URL =
-  'https://ee4802-g20-tool.shenghaoc.workers.dev/api/prices';
+const PREDICTION_API_URL = '/api/prices';
 const PREDICTION_MONTHS = [...month_list.slice(-13)];
 
 const INITIAL_FORM_VALUE: PredictionFormValue = {
