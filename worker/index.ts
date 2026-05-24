@@ -1,8 +1,3 @@
-interface Env {
-	DB: D1Database;
-	ASSETS: Fetcher;
-}
-
 interface PriceQueryRow {
 	intercept_map: number;
 	month_map: number;
@@ -94,7 +89,7 @@ async function parseRequestFields(request: Request): Promise<RequestFields> {
 	};
 }
 
-async function handleApiPrices(request: Request, env: Env): Promise<Response> {
+async function handleApiPrices(request: Request, env: CloudflareEnv): Promise<Response> {
 	let fields: RequestFields;
 	try {
 		fields = await parseRequestFields(request);
@@ -143,7 +138,7 @@ async function handleApiPrices(request: Request, env: Env): Promise<Response> {
 		if (!first) {
 			return new Response(
 				JSON.stringify({ error: 'No prediction data found for the given parameters.' }),
-				{ status: 500, headers: { 'Content-Type': 'application/json' } }
+				{ status: 404, headers: { 'Content-Type': 'application/json' } }
 			);
 		}
 
@@ -181,7 +176,7 @@ async function handleApiPrices(request: Request, env: Env): Promise<Response> {
 		});
 	} catch (error: unknown) {
 		console.error(error);
-		const message = error instanceof Error ? error.message : 'Prediction service unavailable.';
+		const message = 'Prediction service unavailable.';
 		return new Response(JSON.stringify({ error: message }), {
 			status: 500,
 			headers: { 'Content-Type': 'application/json' },
@@ -190,7 +185,7 @@ async function handleApiPrices(request: Request, env: Env): Promise<Response> {
 }
 
 export default {
-	async fetch(request: Request, env: Env): Promise<Response> {
+	async fetch(request: Request, env: CloudflareEnv): Promise<Response> {
 		const url = new URL(request.url);
 
 		if (url.pathname === '/api/prices' && request.method === 'POST') {
