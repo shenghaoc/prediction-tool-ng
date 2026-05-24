@@ -173,14 +173,6 @@
                         <mat-option [value]="year">{{ year }}</mat-option>
                       }
                     </mat-select>
-                    @if (
-                      predictionForm.controls.leaseCommenceYear.hasError('required') &&
-                      predictionForm.controls.leaseCommenceYear.touched
-                    ) {
-                      <mat-error>{{
-                        t('missing_lease_commence_date')
-                      }}</mat-error>
-                    }
                   </mat-form-field>
 
                   <div class="button-row field-full">
