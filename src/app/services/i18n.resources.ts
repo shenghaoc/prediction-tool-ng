@@ -21,6 +21,8 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       switch_to_light: 'Light Mode',
       switch_to_light_mode: 'Switch to light mode',
       switch_to_dark_mode: 'Switch to dark mode',
+      language_label_en: 'English',
+      language_label_zh: '中文',
       price_prediction: 'Price\nPrediction',
       intro_eyebrow: 'Singapore HDB resale estimator',
       intro_blurb:
@@ -152,6 +154,8 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       switch_to_light: '浅色模式',
       switch_to_light_mode: '切换到浅色模式',
       switch_to_dark_mode: '切换到深色模式',
+      language_label_en: 'English',
+      language_label_zh: '中文',
       price_prediction: '价格\n预测',
       intro_eyebrow: '新加坡组屋转售价估算器',
       intro_blurb:

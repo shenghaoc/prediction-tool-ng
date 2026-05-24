@@ -163,13 +163,11 @@ export class PredictionToolComponent implements OnInit {
       {
         data: this.trendData().map((point) => point.value),
         label: this.t('predicted_price'),
-        borderColor: this.darkMode() ? '#818cf8' : '#4f46e5',
-        backgroundColor: this.darkMode()
-          ? 'rgba(129, 140, 248, 0.26)'
-          : 'rgba(79, 70, 229, 0.18)',
-        pointBackgroundColor: this.darkMode() ? '#818cf8' : '#4f46e5',
-        pointHoverBackgroundColor: this.darkMode() ? '#818cf8' : '#4f46e5',
-        pointHoverBorderColor: this.darkMode() ? '#0f172a' : '#ffffff',
+        borderColor: readCssVar('--primary'),
+        backgroundColor: readCssVar('--chart-fill'),
+        pointBackgroundColor: readCssVar('--primary'),
+        pointHoverBackgroundColor: readCssVar('--primary'),
+        pointHoverBorderColor: readCssVar('--card'),
         fill: true,
         tension: 0.35,
         borderWidth: 3
@@ -180,15 +178,10 @@ export class PredictionToolComponent implements OnInit {
   protected readonly chartOptions = computed<
     ChartConfiguration<'line'>['options']
   >(() => {
-    const darkMode = this.darkMode();
-    const labelColor = darkMode ? '#94a3b8' : '#64748b';
-    const panelColor = darkMode ? '#161929' : '#ffffff';
-    const tooltipBorder = darkMode
-      ? 'rgba(129, 140, 248, 0.16)'
-      : 'rgba(79, 70, 229, 0.14)';
-    const gridColor = darkMode
-      ? 'rgba(255,255,255,0.08)'
-      : 'rgba(15, 23, 42, 0.08)';
+    const labelColor = readCssVar('--muted-foreground');
+    const panelColor = readCssVar('--popover');
+    const tooltipBorder = colorWithAlpha(readCssVar('--primary'), 0.16);
+    const gridColor = colorWithAlpha(readCssVar('--foreground'), 0.08);
 
     return {
       responsive: true,
@@ -203,8 +196,8 @@ export class PredictionToolComponent implements OnInit {
         tooltip: {
           displayColors: false,
           backgroundColor: panelColor,
-          titleColor: darkMode ? '#f2ede6' : '#1f2328',
-          bodyColor: darkMode ? '#f2ede6' : '#1f2328',
+          titleColor: readCssVar('--foreground'),
+          bodyColor: readCssVar('--foreground'),
           borderColor: tooltipBorder,
           borderWidth: 1,
           callbacks: {
@@ -369,7 +362,7 @@ export class PredictionToolComponent implements OnInit {
         setTimeout(() => {
           const anchor = this.document.getElementById('results-anchor');
           anchor?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
+        }, 0);
       }
     } catch (error: unknown) {
       console.error('Prediction request failed', {
@@ -656,6 +649,20 @@ function roundValue(value: number): number {
 
 function formatCurrency(value: number): string {
   return `$${sanitizeCurrencyValue(value).toLocaleString()}`;
+}
+
+function readCssVar(name: string): string {
+  if (typeof document === 'undefined') return '';
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function colorWithAlpha(hex: string, alpha: number): string {
+  if (!hex) return '';
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  if (Number.isNaN(r)) return '';
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function formatCompactCurrency(value: number): string {

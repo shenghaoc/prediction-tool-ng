@@ -197,6 +197,15 @@
   gap: 18px;
 }
 
+.card-inner-rel {
+  position: relative;
+  z-index: 1;
+}
+
+.panel-spacer {
+  height: 20px;
+}
+
 /* ── Intro Block ────────────────────────────────────────────────── */
 .intro-block {
   display: grid;
@@ -981,6 +990,8 @@
 }
 
 .skeleton-header {
+  max-width: 1280px;
+  margin: 0 auto 20px;
   height: 44px;
   border-radius: calc(var(--radius) * 1.4);
   background: linear-gradient(
@@ -991,7 +1002,6 @@
   );
   background-size: 200% 100%;
   animation: shimmer 1.8s ease-in-out infinite;
-  margin-bottom: 20px;
 }
 
 .skeleton-grid {
@@ -1015,9 +1025,17 @@
   animation: shimmer 1.8s ease-in-out infinite;
 }
 
+.skeleton-card-tall {
+  height: 360px;
+}
+
 /* ── Animations ─────────────────────────────────────────────────── */
 .animate-fade-in-deep {
   animation: fade-up-deep 0.5s ease-out both;
+}
+
+.animate-fade-in-form {
+  animation: fade-up-deep 0.5s ease-out 0.1s both;
 }
 
 .animate-stagger > *:nth-child(1) { animation: fade-up 0.4s ease-out 0.05s both; }
