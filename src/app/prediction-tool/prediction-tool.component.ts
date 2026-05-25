@@ -662,12 +662,30 @@ function readCssVar(name: string, doc: Document): string {
 }
 
 function colorWithAlpha(color: string, alpha: number): string {
-  if (!color) return '';
-  const digits = color.match(/\d+/g);
-  if (!digits || digits.length < 3) return '';
-  const [r, g, b] = digits.map(Number);
-  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return '';
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  const trimmed = color.trim();
+  if (!trimmed) return '';
+
+  if (trimmed.startsWith('rgb')) {
+    const match = trimmed.match(/\d+/g);
+    if (!match || match.length < 3) return '';
+    const [r, g, b] = match.map(Number);
+    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return '';
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  if (trimmed.startsWith('#')) {
+    const hex = trimmed.slice(1);
+    const full = hex.length === 3
+      ? hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2]
+      : hex;
+    const r = parseInt(full.slice(0, 2), 16);
+    const g = parseInt(full.slice(2, 4), 16);
+    const b = parseInt(full.slice(4, 6), 16);
+    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return '';
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  return '';
 }
 
 function formatCompactCurrency(value: number): string {
