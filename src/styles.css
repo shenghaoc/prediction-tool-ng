@@ -1,31 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
+
+/* ── Design Tokens ────────────────────────────────────────────────
+   Indigo primary on taupe-neutral surfaces. Colors use light-dark()
+   so dark mode is automatic — no separate .dark block needed for
+   most values. body[data-theme] mirrors the shadcn .dark convention. */
+
 :root {
   color-scheme: light;
-  --font-body:
-    'DM Sans',
-    'Avenir Next',
-    'SF Pro Text',
-    'Helvetica Neue',
-    'Segoe UI',
-    Arial,
+
+  --font-body: 'DM Sans', 'Avenir Next', 'SF Pro Text', 'Helvetica Neue',
+    'Segoe UI', Arial, sans-serif;
+  --font-display: 'Lora', 'Iowan Old Style', 'Palatino Linotype',
+    'Book Antiqua', Georgia, serif;
+  --font-body-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC',
+    'Noto Sans SC', 'Microsoft YaHei', 'Source Han Sans SC', 'Heiti SC',
     sans-serif;
-  --font-body-cjk:
-    'PingFang SC',
-    'Hiragino Sans GB',
-    'Noto Sans CJK SC',
-    'Noto Sans SC',
-    'Microsoft YaHei',
-    'Source Han Sans SC',
-    'Heiti SC',
-    sans-serif;
-  --font-display:
-    'Lora',
-    'Iowan Old Style',
-    'Palatino Linotype',
-    'Book Antiqua',
-    Georgia,
-    serif;
+
+  --background: light-dark(#f2f3f8, #0c0f1d);
+  --foreground: light-dark(#0f172a, #f1f5f9);
+  --card: light-dark(#ffffff, #161929);
+  --card-foreground: light-dark(#0f172a, #f1f5f9);
+  --popover: light-dark(#ffffff, #161929);
+  --popover-foreground: light-dark(#0f172a, #f1f5f9);
+  --primary: light-dark(#4f46e5, #818cf8);
+  --primary-foreground: light-dark(#ffffff, #0f172a);
+  --secondary: light-dark(#f4f5fa, #111427);
+  --secondary-foreground: light-dark(#475569, #94a3b8);
+  --muted: light-dark(#f4f5fa, #111427);
+  --muted-foreground: light-dark(#64748b, #94a3b8);
+  --accent: light-dark(#eef2ff, rgba(129, 140, 248, 0.12));
+  --accent-foreground: light-dark(#4338ca, #e0e7ff);
+  --destructive: light-dark(#dc2626, #f87171);
+  --destructive-foreground: light-dark(#ffffff, #2a0c0c);
+  --border: light-dark(#e2e8f0, #272b42);
+  --input: light-dark(#e2e8f0, #353a55);
+  --ring: var(--primary);
+  --chart-1: var(--primary);
+  --chart-2: light-dark(#6366f1, #a5b4fc);
+  --chart-3: light-dark(#8b5cf6, #c4b5fd);
+  --chart-4: light-dark(#10b981, #4ade80);
+  --chart-5: light-dark(#f59e0b, #fbbf24);
+  --radius: 0.625rem;
+
+  /* Legacy aliases kept for chart + internal references */
+  --color-page: var(--background);
+  --color-surface: var(--card);
+  --color-input-bg: var(--secondary);
+  --color-text: var(--foreground);
+  --color-text-secondary: var(--secondary-foreground);
+  --color-text-muted: var(--muted-foreground);
+  --color-chart: var(--chart-1);
+  --color-on-primary: var(--primary-foreground);
+
+  /* Chart-specific tokens */
+  --chart-line: var(--primary);
+  --chart-fill: light-dark(
+    rgba(79, 70, 229, 0.10),
+    rgba(129, 140, 248, 0.12)
+  );
 }
 
+body[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+/* ── Language overrides ────────────────────────────────────────── */
+html[lang='zh'] {
+  --font-display: var(--font-body-cjk);
+}
+
+html[lang='zh'] body {
+  font-family: var(--font-body-cjk);
+}
+
+/* ── Base ───────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
 }
@@ -38,24 +86,29 @@ body {
 }
 
 body {
-  background: #f5eee5;
-  color: #1f2328;
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-body);
-  transition:
-    background 0.35s ease,
-    color 0.25s ease;
-}
-
-body[data-theme='dark'] {
-  color-scheme: dark;
-}
-
-html[lang='zh'] {
-  --font-display: var(--font-body-cjk);
-}
-
-html[lang='zh'] body {
-  font-family: var(--font-body-cjk);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image:
+    radial-gradient(
+      ellipse 80% 50% at 50% -20%,
+      color-mix(in oklab, var(--primary) 12%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      circle,
+      color-mix(in oklab, var(--primary) 10%, transparent) 1px,
+      transparent 1px
+    );
+  background-size:
+    100% 480px,
+    22px 22px;
+  background-position:
+    center top,
+    center center;
+  background-repeat: no-repeat, repeat;
 }
 
 button,
@@ -63,4 +116,118 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+/* ── Theme transitions (applied after mount) ───────────────────── */
+.theme-ready,
+.theme-ready *,
+.theme-ready *::before,
+.theme-ready *::after {
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
+}
+
+/* ── Animations ─────────────────────────────────────────────────── */
+@keyframes fade-up-deep {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes settle {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.72;
+  }
+  65% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes pulse {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 12px
+      color-mix(in oklab, var(--primary) 20%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 28px
+      color-mix(in oklab, var(--primary) 35%, transparent);
+  }
+}
+
+@keyframes empty-float {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-3px) rotate(0.5deg);
+  }
+  75% {
+    transform: translateY(2px) rotate(-0.5deg);
+  }
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-deep,
+  .animate-settle,
+  .animate-stagger > *,
+  .animate-glow {
+    animation: none !important;
+  }
 }

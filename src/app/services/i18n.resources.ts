@@ -16,10 +16,11 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
     labels: {
       loading_chart: 'Loading chart...',
       error_fetch: 'Failed to fetch prediction. Please try again.',
-      switch_language: '中文/English',
-      switch_to_dark: 'Dark Mode',
-      switch_to_light: 'Light Mode',
-      price_prediction: 'Price Prediction',
+      switch_to_light_mode: 'Switch to light mode',
+      switch_to_dark_mode: 'Switch to dark mode',
+      language_label_en: 'English',
+      language_label_zh: '中文',
+      price_prediction: 'Price\nPrediction',
       intro_eyebrow: 'Singapore HDB resale estimator',
       intro_blurb:
         'Compare flat attributes, submit a scenario, and get a quick resale estimate with a 12-month trend view.',
@@ -49,7 +50,11 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       awaiting_prediction: 'Awaiting prediction',
       results_placeholder_title: 'Run a scenario to generate a forecast',
       results_placeholder_body:
-        'Choose a model, adjust the flat details, and submit the form to see the projected resale price and 12-month trend.'
+        'Choose a model, adjust the flat details, and submit the form to see the projected resale price and 12-month trend.',
+      floor_area_unit_short: 'm²',
+      models_count: 'Models',
+      towns_count: 'Towns',
+      flat_types_count: 'Flat Types'
     },
     options: {
       ml_models: {
@@ -131,10 +136,11 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
     labels: {
       loading_chart: '加载图表中...',
       error_fetch: '获取预测失败，请重试。',
-      switch_language: '中文/English',
-      switch_to_dark: '深色模式',
-      switch_to_light: '浅色模式',
-      price_prediction: '价格预测',
+      switch_to_light_mode: '切换到浅色模式',
+      switch_to_dark_mode: '切换到深色模式',
+      language_label_en: 'English',
+      language_label_zh: '中文',
+      price_prediction: '价格\n预测',
       intro_eyebrow: '新加坡组屋转售价估算器',
       intro_blurb:
         '比较房屋属性，提交一个情境，并快速查看估算转售价与过去12个月趋势。',
@@ -163,7 +169,11 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       awaiting_prediction: '等待预测结果',
       results_placeholder_title: '提交一个情境后即可生成预测',
       results_placeholder_body:
-        '选择模型并调整房屋资料后提交表单，即可查看预测转售价与过去12个月趋势。'
+        '选择模型并调整房屋资料后提交表单，即可查看预测转售价与过去12个月趋势。',
+      floor_area_unit_short: 'm²',
+      models_count: '模型',
+      towns_count: '城镇',
+      flat_types_count: '房型'
     },
     options: {
       ml_models: {

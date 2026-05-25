@@ -1,70 +1,105 @@
-<main
-  class="shell"
-  [class.theme-dark]="darkMode()"
-  [class.theme-light]="!darkMode()"
->
-  <div class="surface">
-    <div class="topbar">
-      <div class="pill">{{ t('intro_eyebrow') }}</div>
-
-      <div class="actions">
-        <button
-          type="button"
-          class="ghost-btn"
-          [attr.aria-pressed]="darkMode()"
-          (click)="toggleTheme()"
-        >
-          {{ darkMode() ? t('switch_to_light') : t('switch_to_dark') }}
-        </button>
-        <button
-          type="button"
-          class="ghost-btn"
-          (click)="toggleLanguage()"
-        >
-          {{ t('switch_language') }}
-        </button>
-      </div>
+@if (!mounted()) {
+  <!-- Skeleton loading state -->
+  <main class="skeleton-shell" aria-busy="true">
+    <div class="skeleton-header"></div>
+    <div class="skeleton-grid">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card skeleton-card-tall"></div>
     </div>
+  </main>
+} @else {
+  <main class="shell" [class.theme-ready]="mounted()">
+    <div class="page-surface">
+      <!-- ═══ Sticky Header ═══ -->
+      <header class="sticky-header">
+        <div class="brand-badge">
+          <span class="brand-dot" aria-hidden="true"></span>
+          {{ t('intro_eyebrow') }}
+        </div>
 
-    <div class="layout">
-      <section class="panel">
-        <div class="card">
-          <div class="card-inner">
-            <div class="intro-block">
-              <h1
-                class="headline"
-                [class.headline-cjk]="lang() === 'zh'"
-              >
-                {{ t('price_prediction') }}
-              </h1>
-              <p class="lead">{{ t('intro_blurb') }}</p>
+        <div class="header-actions">
+          <button
+            type="button"
+            class="btn-outline"
+            (click)="toggleLanguage()"
+          >
+            {{ lang() === 'zh' ? t('language_label_en') : t('language_label_zh') }}
+          </button>
+          <button
+            type="button"
+            class="btn-icon"
+            [attr.aria-label]="darkMode() ? t('switch_to_light_mode') : t('switch_to_dark_mode')"
+            [attr.aria-pressed]="darkMode()"
+            (click)="toggleTheme()"
+          >
+            @if (darkMode()) {
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            }
+          </button>
+        </div>
+      </header>
 
-              <div class="figure-row">
-                <div class="figure">
-                  <span class="figure-label">{{ t('ml_model') }}</span>
-                  <strong class="figure-value">{{
-                    mlModels.length.toString().padStart(2, '0')
-                  }}</strong>
+      <!-- ═══ Content Grid ═══ -->
+      <div class="content-grid">
+        <!-- Left Panel: Intro + Form -->
+        <div>
+          <!-- Intro Card -->
+          <section class="panel-card panel-card-accent animate-fade-in-deep" aria-labelledby="intro-heading">
+            <div class="intro-blob intro-blob-1" aria-hidden="true"></div>
+            <div class="intro-blob intro-blob-2" aria-hidden="true"></div>
+
+            <div class="card-inner card-inner-rel">
+              <div class="intro-block">
+                <h1 id="intro-heading" class="headline" [class.headline-cjk]="lang() === 'zh'">
+                  {{ t('price_prediction') }}
+                </h1>
+                <p class="lead">{{ t('intro_blurb') }}</p>
+
+                <div class="figure-row animate-stagger">
+                  <div class="stat-tile">
+                    <div class="stat-tile-icon" aria-hidden="true">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>
+                    </div>
+                    <div class="stat-tile-text">
+                      <span class="stat-tile-label">{{ t('models_count') }}</span>
+                      <strong class="stat-tile-value">{{ mlModels.length }}</strong>
+                    </div>
+                  </div>
+
+                  <div class="stat-tile">
+                    <div class="stat-tile-icon" aria-hidden="true">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
+                    <div class="stat-tile-text">
+                      <span class="stat-tile-label">{{ t('towns_count') }}</span>
+                      <strong class="stat-tile-value">{{ towns.length }}</strong>
+                    </div>
+                  </div>
+
+                  <div class="stat-tile">
+                    <div class="stat-tile-icon" aria-hidden="true">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </div>
+                    <div class="stat-tile-text">
+                      <span class="stat-tile-label">{{ t('flat_types_count') }}</span>
+                      <strong class="stat-tile-value">{{ flatModels.length }}</strong>
+                    </div>
+                  </div>
                 </div>
-                <div class="figure">
-                  <span class="figure-label">{{ t('town') }}</span>
-                  <strong class="figure-value">{{
-                    towns.length.toString().padStart(2, '0')
-                  }}</strong>
-                </div>
-                <div class="figure">
-                  <span class="figure-label">{{ t('flat_model') }}</span>
-                  <strong class="figure-value">{{
-                    flatModels.length.toString().padStart(2, '0')
-                  }}</strong>
-                </div>
+
+                <p class="caption">{{ t('intro_caption') }}</p>
               </div>
-
-              <p class="caption">{{ t('intro_caption') }}</p>
             </div>
+          </section>
 
-            <div class="form-shell">
-              <h2 class="section-title">{{ t('prediction_form') }}</h2>
+          <div class="panel-spacer" aria-hidden="true"></div>
+
+          <!-- Form Card -->
+          <section class="panel-card panel-card-accent animate-fade-in-form" aria-labelledby="form-heading">
+            <div class="card-inner">
+              <h2 id="form-heading" class="section-title">{{ t('prediction_form') }}</h2>
 
               <form
                 [formGroup]="predictionForm"
@@ -130,7 +165,7 @@
                         [placeholder]="t('enter_floor_area')"
                         aria-describedby="floor-area-unit floor-area-error"
                       />
-                      <span id="floor-area-unit" class="unit-tag">sqm</span>
+                      <span id="floor-area-unit" class="unit-tag">{{ t('floor_area_unit_short') }}</span>
                     </div>
                     @if (
                       predictionForm.controls.floorAreaSqm.hasError('required') &&
@@ -181,114 +216,154 @@
                 </div>
               </form>
 
+              @if (loading()) {
+                <div class="progress-track" role="progressbar" aria-label="Loading prediction">
+                  <div class="progress-bar"></div>
+                </div>
+              }
+
               @if (errorMessage()) {
-                <p class="error-banner">{{ errorMessage() }}</p>
+                <p class="error-display" role="alert">{{ errorMessage() }}</p>
               }
             </div>
-          </div>
+          </section>
         </div>
-      </section>
 
-      <section class="results-panel">
-        <div class="results-card">
-          <div class="results-header">
-            <div>
-              <span class="results-label">{{ t('predicted_trends') }}</span>
-              <h2 class="results-title">{{ t('predicted_price') }}</h2>
+        <!-- Right Panel: Results -->
+        <div #resultsAnchor>
+          <section class="results-card" aria-labelledby="results-heading" [attr.aria-busy]="loading() || null">
+            <div class="results-header">
+              <div class="results-heading-group">
+                <span class="results-eyebrow">
+                  <span class="brand-dot brand-dot-sm" aria-hidden="true"></span>
+                  {{ t('prediction') }}
+                </span>
+                <h2 id="results-heading" class="results-title">{{ t('predicted_price') }}</h2>
+              </div>
+
+              <div
+                class="price-panel"
+                [class.price-panel-glow]="hasPrediction()"
+              >
+                <div class="price-panel-inner">
+                  <span class="price-label">{{ t('prediction') }}</span>
+                  @if (hasPrediction()) {
+                    <strong class="price-value has-value" aria-live="polite">
+                      {{ formatCurrency(predictedPrice()) }}
+                    </strong>
+                  } @else if (loading()) {
+                    <strong class="price-value awaiting">
+                      <span class="loading-pulse">{{ t('predicting') }}</span>
+                    </strong>
+                  } @else {
+                    <strong class="price-value awaiting">
+                      {{ t('awaiting_prediction') }}
+                    </strong>
+                  }
+                </div>
+              </div>
             </div>
 
-            <div class="price-panel">
-              <span class="results-label">{{ t('prediction') }}</span>
+            <!-- Summary metric cards -->
+            <div class="results-grid">
+              <div class="metric-card">
+                <div class="metric-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>
+                </div>
+                <div class="metric-body">
+                  <span class="metric-label">{{ t('ml_model') }}</span>
+                  <strong class="metric-value">{{ tOption('ml_models', summaryValues().mlModel) }}</strong>
+                </div>
+              </div>
+
+              <div class="metric-card">
+                <div class="metric-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                </div>
+                <div class="metric-body">
+                  <span class="metric-label">{{ t('town') }}</span>
+                  <strong class="metric-value">{{ tOption('towns', summaryValues().town) }}</strong>
+                </div>
+              </div>
+
+              <div class="metric-card">
+                <div class="metric-icon" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                </div>
+                <div class="metric-body">
+                  <span class="metric-label">{{ t('lease_commence_date') }}</span>
+                  <strong class="metric-value">{{ summaryValues().leaseCommenceYear }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chart area -->
+            <div class="chart-shell">
               @if (hasPrediction()) {
-                <strong class="price-value has-value" aria-live="polite">{{
-                  formatCurrency(predictedPrice())
-                }}</strong>
+                <div class="chart-header">
+                  <div class="chart-copy">
+                    <span class="chart-kicker">{{ t('predicted_trends') }}</span>
+                    <h3 class="chart-title">{{ t('chart_story_title') }}</h3>
+                  </div>
+
+                  <div class="chart-summary-grid">
+                    <div class="chart-summary-card">
+                      <span class="chart-summary-label">{{ t('chart_latest') }}</span>
+                      <strong class="chart-summary-value">{{ formatCurrency(chartMetrics().latestValue) }}</strong>
+                    </div>
+                    <div class="chart-summary-card">
+                      <span class="chart-summary-label">{{ t('chart_range') }}</span>
+                      <strong class="chart-summary-value">{{ formatCurrencyRange(chartMetrics().lowValue, chartMetrics().peakValue) }}</strong>
+                    </div>
+                    <div class="chart-summary-card">
+                      <span class="chart-summary-label">{{ t('chart_delta') }}</span>
+                      <strong class="chart-summary-value">
+                        {{ formatDeltaCurrency(chartMetrics().deltaValue) }}
+                        <span class="chart-summary-trend" [class.up]="chartMetrics().deltaValue >= 0" [class.down]="chartMetrics().deltaValue < 0">
+                          @if (chartMetrics().deltaValue >= 0) {
+                            <svg class="trend-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                          } @else {
+                            <svg class="trend-arrow" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                          }
+                        </span>
+                      </strong>
+                      <span class="chart-summary-hint">{{ t('vs_12m_ago') }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                @if (isBrowser) {
+                  <div class="chart-frame">
+                    <canvas
+                      baseChart
+                      [type]="'line'"
+                      [data]="chartData()"
+                      [options]="chartOptions()"
+                    ></canvas>
+                  </div>
+                } @else {
+                  <div class="chart-frame chart-frame-placeholder">
+                    <span class="chart-summary-label">{{ t('loading_chart') }}</span>
+                  </div>
+                }
               } @else {
-                <strong class="price-value awaiting">{{
-                  t('awaiting_prediction')
-                }}</strong>
+                <div class="chart-empty">
+                  <div class="empty-chart-bars" aria-hidden="true">
+                    <div class="empty-bar" style="--bar-h:35%"></div>
+                    <div class="empty-bar" style="--bar-h:55%"></div>
+                    <div class="empty-bar" style="--bar-h:85%"></div>
+                    <div class="empty-bar" style="--bar-h:45%"></div>
+                    <div class="empty-bar" style="--bar-h:70%"></div>
+                    <div class="empty-bar" style="--bar-h:30%"></div>
+                  </div>
+                  <h3 class="empty-heading">{{ t('results_placeholder_title') }}</h3>
+                  <p class="empty-body">{{ t('results_placeholder_body') }}</p>
+                </div>
               }
             </div>
-          </div>
-
-          <div class="results-grid">
-            <div class="metric-card">
-              <span>{{ t('ml_model') }}</span>
-              <strong>{{
-                tOption('ml_models', summaryValues().mlModel)
-              }}</strong>
-            </div>
-            <div class="metric-card">
-              <span>{{ t('town') }}</span>
-              <strong>{{ tOption('towns', summaryValues().town) }}</strong>
-            </div>
-            <div class="metric-card">
-              <span>{{ t('lease_commence_date') }}</span>
-              <strong>{{ summaryValues().leaseCommenceYear }}</strong>
-            </div>
-          </div>
-
-          <div class="chart-shell">
-            @if (hasPrediction()) {
-              <div class="chart-header">
-                <div class="chart-copy">
-                  <span class="chart-kicker">{{ t('predicted_trends') }}</span>
-                  <h3 class="chart-title">{{ t('chart_story_title') }}</h3>
-                </div>
-
-                <div class="chart-summary-grid">
-                  <div class="chart-summary-card">
-                    <span>{{ t('chart_latest') }}</span>
-                    <strong>{{
-                      formatCurrency(chartMetrics().latestValue)
-                    }}</strong>
-                  </div>
-                  <div class="chart-summary-card">
-                    <span>{{ t('chart_range') }}</span>
-                    <strong>{{
-                      formatCurrencyRange(
-                        chartMetrics().lowValue,
-                        chartMetrics().peakValue
-                      )
-                    }}</strong>
-                  </div>
-                  <div class="chart-summary-card">
-                    <span>{{ t('chart_delta') }}</span>
-                    <strong>{{
-                      formatDeltaCurrency(chartMetrics().deltaValue)
-                    }}</strong>
-                    <small>{{ t('vs_12m_ago') }}</small>
-                  </div>
-                </div>
-              </div>
-
-              @if (isBrowser) {
-                <div class="chart-frame">
-                  <canvas
-                    baseChart
-                    [type]="'line'"
-                    [data]="chartData()"
-                    [options]="chartOptions()"
-                  ></canvas>
-                </div>
-              } @else {
-                <div class="chart-frame chart-placeholder">
-                  {{ t('loading_chart') }}
-                </div>
-              }
-            } @else {
-              <div class="chart-placeholder chart-placeholder-empty">
-                <h3 class="chart-placeholder-title">
-                  {{ t('results_placeholder_title') }}
-                </h3>
-                <p class="chart-placeholder-body">
-                  {{ t('results_placeholder_body') }}
-                </p>
-              </div>
-            }
-          </div>
+          </section>
         </div>
-      </section>
+      </div>
     </div>
-  </div>
-</main>
+  </main>
+}
