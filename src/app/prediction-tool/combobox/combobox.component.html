@@ -1,7 +1,7 @@
 <div class="cb-wrap" [attr.data-open]="isOpen() || null">
   <div class="cb-input-wrap">
     <input #inputEl
-      [id]="inputId()"
+      [id]="resolvedInputId()"
       type="text"
       role="combobox"
       [attr.aria-expanded]="isOpen()"
@@ -39,7 +39,7 @@
         <li class="cb-empty" role="presentation">{{ noMatchesLabel() }}</li>
       } @else {
         @for (opt of filtered(); track opt.value; let i = $index) {
-          <li [id]="'opt-' + inputId() + '-' + i"
+          <li [id]="'opt-' + resolvedInputId() + '-' + i"
             role="option"
             [attr.aria-selected]="opt.value === value()"
             class="cb-option"

@@ -62,12 +62,14 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   private readonly _instanceId = ComboboxComponent._nextId++;
   private static _nextId = 0;
 
-  protected readonly listboxId = computed(() => {
-    const id = this.inputId();
-    // When no inputId is provided, fall back to the instance-unique ID so
-    // multiple comboboxes on the same page don't collide on "lb-".
-    return id ? `lb-${id}` : `lb-_cb_${this._instanceId}`;
+  // Resolved ID guaranteed to be non-empty: uses the provided inputId or falls
+  // back to the per-instance unique ID.  Used consistently by listboxId,
+  // activeOptionId, and the template so IDs never collide across instances.
+  protected readonly resolvedInputId = computed(() => {
+    return this.inputId() || `_cb_${this._instanceId}`;
   });
+
+  protected readonly listboxId = computed(() => `lb-${this.resolvedInputId()}`);
 
   protected readonly filtered = computed(() => {
     // Fall back to [] if the parent somehow passes null/undefined.
@@ -91,7 +93,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected readonly activeOptionId = computed(() => {
     const idx = this.activeIndex();
     if (idx < 0) return null;
-    return `opt-${this.inputId()}-${idx}`;
+    return `opt-${this.resolvedInputId()}-${idx}`;
   });
 
   private onChange: (value: string) => void = () => {};

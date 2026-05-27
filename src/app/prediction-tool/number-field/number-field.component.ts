@@ -71,7 +71,7 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     return n !== null && n >= this.max();
   });
 
-  private onChange: (value: number) => void = () => {};
+  private onChange: (value: number | null) => void = () => {};
   private onTouched: () => void = () => {};
 
   private holdTimerId: ReturnType<typeof setTimeout> | null = null;
@@ -82,9 +82,14 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   }
 
   writeValue(val: unknown): void {
-    // The CVA interface accepts any; null/undefined mean "no value" and must
-    // clear the field.  Guard them before Number() because Number(null) === 0.
+    // The CVA interface accepts any; null, undefined, and empty/whitespace
+    // strings all mean "no value" and must clear the field.  Guard them before
+    // Number() because Number(null) === 0 and Number("") === 0.
     if (val === null || val === undefined) {
+      this.rawValue.set('');
+      return;
+    }
+    if (typeof val === 'string' && val.trim() === '') {
       this.rawValue.set('');
       return;
     }
@@ -94,7 +99,7 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     );
   }
 
-  registerOnChange(fn: (value: number) => void): void {
+  registerOnChange(fn: (value: number | null) => void): void {
     this.onChange = fn;
   }
 
@@ -182,8 +187,7 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     if (!raw.trim()) {
       this.rawValue.set('');
       // Notify the form control so validation (e.g. required) reacts immediately.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.onChange(null as any);
+      this.onChange(null);
       return;
     }
     // Use Number() (strict) rather than parseFloat (permissive) so that partial
@@ -198,8 +202,7 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
       // Invalid characters typed: immediately notify the form control so
       // validation fires and Ctrl+Enter cannot submit the stale previous value.
       // Do NOT update rawValue — blur will restore the DOM to the last valid value.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.onChange(null as any);
+      this.onChange(null);
     }
   }
 
