@@ -56,13 +56,18 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   // the live query string so the user sees their own keystrokes.
   protected readonly userTyped = signal(false);
 
+  // Unique per-instance ID captured once at construction so the listboxId
+  // computed does not contain a side-effecting _nextId++ inside it (computed
+  // signals must be pure — re-evaluation would otherwise change the ID).
+  private readonly _instanceId = ComboboxComponent._nextId++;
+  private static _nextId = 0;
+
   protected readonly listboxId = computed(() => {
     const id = this.inputId();
-    // When no inputId is provided, generate a unique fallback so multiple
-    // instances on the same page don't collide on "lb-".
-    return id ? `lb-${id}` : `lb-_cb_${ComboboxComponent._nextId++}`;
+    // When no inputId is provided, fall back to the instance-unique ID so
+    // multiple comboboxes on the same page don't collide on "lb-".
+    return id ? `lb-${id}` : `lb-_cb_${this._instanceId}`;
   });
-  private static _nextId = 0;
 
   protected readonly filtered = computed(() => {
     // Fall back to [] if the parent somehow passes null/undefined.

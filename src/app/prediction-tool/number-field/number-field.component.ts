@@ -82,11 +82,15 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   }
 
   writeValue(val: unknown): void {
-    // The CVA interface accepts any; guard against NaN (which survives ??),
-    // strings from localStorage round-trips, and other non-numeric values.
+    // The CVA interface accepts any; null/undefined mean "no value" and must
+    // clear the field.  Guard them before Number() because Number(null) === 0.
+    if (val === null || val === undefined) {
+      this.rawValue.set('');
+      return;
+    }
     const n = typeof val === 'number' ? val : Number(val);
     this.rawValue.set(
-      typeof n === 'number' && Number.isFinite(n) ? n : ''
+      typeof n === 'number' && Number.isFinite(n) && !Number.isNaN(n) ? n : ''
     );
   }
 
