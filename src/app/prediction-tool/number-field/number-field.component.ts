@@ -174,6 +174,11 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     if (n !== null) {
       this.setValue(Math.min(this.max, Math.max(this.min, n)));
     }
+    // Explicitly sync the DOM value so invalid non-numeric text (e.g. "25a") is
+    // cleared even when rawValue didn't change and Angular's binding won't re-fire.
+    if (this.inputEl) {
+      this.inputEl.nativeElement.value = this.displayValue();
+    }
   }
 
   private setValue(n: number): void {

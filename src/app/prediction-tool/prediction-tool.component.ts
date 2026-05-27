@@ -195,7 +195,14 @@ export class PredictionToolComponent implements OnInit {
   });
 
   protected readonly chartPlugins = computed(() => {
+    // Read CSS vars once here (inside the computed), not per-frame in draw callbacks.
+    // The computed re-runs when darkMode() changes, refreshing the cached colors.
+    void this.darkMode();
     const doc = this.document;
+    const c1 = readCssVar('--chart-1', doc);
+    const c2 = readCssVar('--chart-2', doc);
+    const glowColor = colorWithAlpha(readCssVar('--primary', doc), 0.15);
+
     return [
       {
         id: 'gradientLine',
@@ -203,8 +210,6 @@ export class PredictionToolComponent implements OnInit {
           const { ctx, chartArea, data } = chart;
           if (!chartArea || !data.datasets[0]) return;
           const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
-          const c1 = readCssVar('--chart-1', doc);
-          const c2 = readCssVar('--chart-2', doc);
           gradient.addColorStop(0, c1);
           gradient.addColorStop(1, c2);
           data.datasets[0].borderColor = gradient;
@@ -222,7 +227,7 @@ export class PredictionToolComponent implements OnInit {
           ctx.save();
           ctx.beginPath();
           ctx.arc(x, y, 9, 0, Math.PI * 2);
-          ctx.fillStyle = colorWithAlpha(readCssVar('--primary', doc), 0.15);
+          ctx.fillStyle = glowColor;
           ctx.fill();
           ctx.restore();
         }
@@ -327,6 +332,11 @@ export class PredictionToolComponent implements OnInit {
 
   @HostListener('document:keydown', ['$event'])
   onDocumentKeyDown(event: KeyboardEvent): void {
+    // Ignore events already handled by child components (e.g. Escape inside Combobox).
+    if (event.defaultPrevented) {
+      return;
+    }
+
     const isCtrlOrCmd = event.ctrlKey || event.metaKey;
 
     if (isCtrlOrCmd && event.key === 'Enter') {

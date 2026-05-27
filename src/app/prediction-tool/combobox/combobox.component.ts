@@ -73,10 +73,12 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
+  private blurTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  // Close on click outside
+  // Close on click outside — skip the containment check when already closed.
   @HostListener('document:pointerdown', ['$event'])
   onDocumentPointerDown(event: PointerEvent): void {
+    if (!this.isOpen()) return;
     const el = (event.target as HTMLElement);
     if (!this._elementRef.nativeElement.contains(el)) {
       this.close();
@@ -85,7 +87,11 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
 
   constructor(private _elementRef: ElementRef) {}
 
-  ngOnDestroy(): void {}
+  ngOnDestroy(): void {
+    if (this.blurTimeoutId !== null) {
+      clearTimeout(this.blurTimeoutId);
+    }
+  }
 
   writeValue(val: string): void {
     this.value.set(val ?? '');
@@ -111,8 +117,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected onBlur(): void {
     this.focused.set(false);
     this.onTouched();
-    // Delay close to allow click events on options to fire first
-    setTimeout(() => {
+    // Delay close to allow click events on options to fire first.
+    // Store the ID so we can cancel it on destroy.
+    this.blurTimeoutId = setTimeout(() => {
+      this.blurTimeoutId = null;
       if (!this._elementRef.nativeElement.contains(document.activeElement)) {
         this.close();
       }
