@@ -389,8 +389,9 @@ export class PredictionToolComponent implements OnInit {
   }
 
   protected async onSubmit(): Promise<void> {
-    if (this.predictionForm.invalid || !this.isBrowser) {
-      this.predictionForm.markAllAsTouched();
+    if (this.predictionForm.invalid || !this.isBrowser || this.loading()) {
+      // Only mark touched when the form is invalid (not when blocking a concurrent request)
+      if (!this.loading()) this.predictionForm.markAllAsTouched();
       return;
     }
 

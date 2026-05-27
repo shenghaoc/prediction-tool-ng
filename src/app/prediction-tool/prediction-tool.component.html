@@ -164,6 +164,8 @@
                       [placeholder]="t('enter_floor_area')"
                       [ariaLabel]="t('floor_area')"
                       [ariaDescribedby]="floorAreaErrorId()"
+                      [decreaseLabel]="t('decrease_value')"
+                      [increaseLabel]="t('increase_value')"
                     ></app-number-field>
                     @if (
                       predictionForm.controls.floorAreaSqm.hasError('required') &&

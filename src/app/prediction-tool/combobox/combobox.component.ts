@@ -4,6 +4,7 @@ import {
   ElementRef,
   HostListener,
   Input,
+  OnDestroy,
   ViewChild,
   computed,
   forwardRef,
@@ -30,7 +31,7 @@ export interface ComboboxOption {
     }
   ]
 })
-export class ComboboxComponent implements ControlValueAccessor {
+export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   @Input() options: ComboboxOption[] = [];
   @Input() placeholder = '';
   @Input() inputId = '';
@@ -74,6 +75,8 @@ export class ComboboxComponent implements ControlValueAccessor {
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
+  // Timeout ID for the post-open scroll; tracked so it can be cancelled on destroy.
+  private scrollTimeoutId: ReturnType<typeof setTimeout> | null = null;
   // Set when the user dismisses the dropdown with Escape; prevents focus
   // alone (e.g. tabbing back in) from re-opening it until an explicit action.
   private escapeDismissed = false;
@@ -89,6 +92,12 @@ export class ComboboxComponent implements ControlValueAccessor {
   }
 
   constructor(private _elementRef: ElementRef) {}
+
+  ngOnDestroy(): void {
+    if (this.scrollTimeoutId !== null) {
+      clearTimeout(this.scrollTimeoutId);
+    }
+  }
 
   writeValue(val: string): void {
     this.value.set(val ?? '');
@@ -221,8 +230,14 @@ export class ComboboxComponent implements ControlValueAccessor {
     // Pre-select the active index to the current value
     const currentIdx = this.filtered().findIndex((opt) => opt.value === this.value());
     this.activeIndex.set(currentIdx >= 0 ? currentIdx : 0);
-    // Scroll to active item after render
-    setTimeout(() => this.scrollActiveIntoView(), 0);
+    // Scroll to active item after render; cancel any previous pending scroll.
+    if (this.scrollTimeoutId !== null) {
+      clearTimeout(this.scrollTimeoutId);
+    }
+    this.scrollTimeoutId = setTimeout(() => {
+      this.scrollTimeoutId = null;
+      this.scrollActiveIntoView();
+    }, 0);
   }
 
   private close(): void {

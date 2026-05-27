@@ -34,6 +34,8 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   @Input() unit = '';
   @Input() ariaLabel = '';
   @Input() ariaDescribedby: string | null = null;
+  @Input() decreaseLabel = 'Decrease value';
+  @Input() increaseLabel = 'Increase value';
 
   @ViewChild('inputEl') inputEl?: ElementRef<HTMLInputElement>;
 
