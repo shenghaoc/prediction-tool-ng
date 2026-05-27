@@ -208,9 +208,14 @@ export class PredictionToolComponent implements OnInit {
       beforeDatasetDraw: (chart: any) => {
         const { ctx, chartArea, data } = chart;
         if (!chartArea || !data.datasets[0]) return;
+        const c1 = this.chartColors.c1;
+        const c2 = this.chartColors.c2;
+        // Guard: colors are empty strings until updateChartColorsCache() runs;
+        // addColorStop throws a DOMException with an empty/invalid color value.
+        if (!c1 || !c2) return;
         const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
-        gradient.addColorStop(0, this.chartColors.c1);
-        gradient.addColorStop(1, this.chartColors.c2);
+        gradient.addColorStop(0, c1);
+        gradient.addColorStop(1, c2);
         data.datasets[0].borderColor = gradient;
       }
     },
