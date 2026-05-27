@@ -10,6 +10,7 @@
       aria-autocomplete="list"
       aria-haspopup="listbox"
       [attr.aria-label]="ariaLabel || null"
+      [attr.aria-required]="required || null"
       [value]="inputDisplayValue()"
       [placeholder]="placeholder"
       [disabled]="disabled()"
@@ -33,7 +34,7 @@
   @if (isOpen()) {
     <ul #listboxEl [id]="listboxId()" role="listbox" [attr.aria-label]="ariaLabel || null" class="cb-listbox">
       @if (filtered().length === 0) {
-        <li class="cb-empty">No matches</li>
+        <li class="cb-empty">{{ noMatchesLabel }}</li>
       } @else {
         @for (opt of filtered(); track opt.value; let i = $index) {
           <li [id]="'opt-' + inputId + '-' + i"

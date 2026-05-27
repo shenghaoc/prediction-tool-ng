@@ -36,6 +36,8 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   @Input() placeholder = '';
   @Input() inputId = '';
   @Input() ariaLabel = '';
+  @Input() noMatchesLabel = 'No matches';
+  @Input() required = false;
 
   @ViewChild('inputEl') inputEl?: ElementRef<HTMLInputElement>;
   @ViewChild('listboxEl') listboxEl?: ElementRef<HTMLUListElement>;
@@ -74,6 +76,9 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
   private blurTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  // Set when the user dismisses the dropdown with Escape; prevents focus
+  // alone (e.g. tabbing back in) from re-opening it until an explicit action.
+  private escapeDismissed = false;
 
   // Close on click outside — skip the containment check when already closed.
   @HostListener('document:pointerdown', ['$event'])
@@ -111,7 +116,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
 
   protected onFocus(): void {
     this.focused.set(true);
-    this.open();
+    // Don't re-open on focus if the user dismissed the dropdown with Escape.
+    if (!this.escapeDismissed) {
+      this.open();
+    }
   }
 
   protected onBlur(): void {
@@ -131,6 +139,8 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     const target = event.target as HTMLInputElement;
     this.query.set(target.value);
     this.activeIndex.set(this.filtered().length > 0 ? 0 : -1);
+    // Typing is an explicit intent to open.
+    this.escapeDismissed = false;
     if (!this.isOpen()) {
       this.isOpen.set(true);
     }
@@ -184,6 +194,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
         event.preventDefault();
         if (this.isOpen()) {
           this.close();
+          this.escapeDismissed = true;
         }
         break;
       case 'Tab':
@@ -217,6 +228,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
 
   private open(): void {
     this.isOpen.set(true);
+    this.escapeDismissed = false;
     // Pre-select the active index to the current value
     const currentIdx = this.filtered().findIndex((opt) => opt.value === this.value());
     this.activeIndex.set(currentIdx >= 0 ? currentIdx : 0);

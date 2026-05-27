@@ -114,6 +114,7 @@ export class PredictionToolComponent implements OnInit {
 
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
   @ViewChild('resultsAnchor') resultsAnchor?: ElementRef<HTMLElement>;
+  @ViewChild('resultsHeading') resultsHeadingEl?: ElementRef<HTMLElement>;
   @ViewChild('liveRegion') liveRegionEl?: ElementRef<HTMLElement>;
 
   protected readonly lang = this.translationService.lang;
@@ -242,8 +243,10 @@ export class PredictionToolComponent implements OnInit {
     const doc = this.document;
     const labelColor = readCssVar('--muted-foreground', doc);
     const panelColor = readCssVar('--popover', doc);
+    const foregroundColor = readCssVar('--foreground', doc);
     const tooltipBorder = colorWithAlpha(readCssVar('--primary', doc), 0.16);
-    const gridColor = colorWithAlpha(readCssVar('--foreground', doc), 0.08);
+    const gridColor = colorWithAlpha(foregroundColor, 0.08);
+    const dashedGridColor = colorWithAlpha(foregroundColor, 0.06);
 
     return {
       responsive: true,
@@ -258,8 +261,8 @@ export class PredictionToolComponent implements OnInit {
         tooltip: {
           displayColors: false,
           backgroundColor: panelColor,
-          titleColor: readCssVar('--foreground', doc),
-          bodyColor: readCssVar('--foreground', doc),
+          titleColor: foregroundColor,
+          bodyColor: foregroundColor,
           borderColor: tooltipBorder,
           borderWidth: 1,
           callbacks: {
@@ -291,9 +294,7 @@ export class PredictionToolComponent implements OnInit {
         y: {
           grid: {
             color: (context: any) =>
-              context.index === 0
-                ? gridColor
-                : colorWithAlpha(readCssVar('--foreground', doc), 0.06),
+              context.index === 0 ? gridColor : dashedGridColor,
             lineWidth: 1,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             borderDash: ((context: any) => context.index === 0 ? [] : [3, 4]) as any,
@@ -454,19 +455,27 @@ export class PredictionToolComponent implements OnInit {
       if (this.isBrowser) {
         const latestValue = normalizedData.at(-1)?.value ?? 0;
         const announcement = `Prediction complete. Latest predicted price: ${formatCurrency(sanitizeCurrencyValue(latestValue))}`;
+        // Clear the live region first so identical consecutive announcements
+        // are still re-read by assistive technology.
+        if (this.liveRegionEl) {
+          this.liveRegionEl.nativeElement.textContent = '';
+        }
         requestAnimationFrame(() => {
           if (this.liveRegionEl) {
             this.liveRegionEl.nativeElement.textContent = announcement;
           }
           this.resultsAnchor?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          // Focus the results section for keyboard users
-          const resultsEl = this.resultsAnchor?.nativeElement;
-          if (resultsEl) {
-            const heading = resultsEl.querySelector<HTMLElement>('[id="results-heading"]');
-            if (heading) {
-              heading.setAttribute('tabindex', '-1');
-              heading.focus({ preventScroll: true });
-            }
+          // Focus the results heading for keyboard users, then drop the
+          // temporary tabindex once focus leaves so it isn't left interactive.
+          const heading = this.resultsHeadingEl?.nativeElement;
+          if (heading) {
+            heading.setAttribute('tabindex', '-1');
+            heading.focus({ preventScroll: true });
+            heading.addEventListener(
+              'blur',
+              () => heading.removeAttribute('tabindex'),
+              { once: true }
+            );
           }
         });
       }
@@ -521,6 +530,16 @@ export class PredictionToolComponent implements OnInit {
 
   protected tOption(group: OptionGroup, value: string): string {
     return this.translationService.translateOption(group, value);
+  }
+
+  protected floorAreaErrorId(): string | null {
+    const control = this.predictionForm.controls.floorAreaSqm;
+    const hasVisibleError =
+      control.touched &&
+      (control.hasError('required') ||
+        control.hasError('min') ||
+        control.hasError('max'));
+    return hasVisibleError ? 'floor-area-error' : null;
   }
 
   protected formatCurrency(value: number): string {

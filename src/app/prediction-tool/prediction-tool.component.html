@@ -125,6 +125,8 @@
                       [options]="townOptions()"
                       [placeholder]="t('town')"
                       [ariaLabel]="t('town')"
+                      [noMatchesLabel]="t('combobox_no_matches')"
+                      [required]="true"
                     ></app-combobox>
                   </div>
 
@@ -161,6 +163,7 @@
                       [unit]="t('floor_area_unit_short')"
                       [placeholder]="t('enter_floor_area')"
                       [ariaLabel]="t('floor_area')"
+                      [ariaDescribedby]="floorAreaErrorId()"
                     ></app-number-field>
                     @if (
                       predictionForm.controls.floorAreaSqm.hasError('required') &&
@@ -233,7 +236,7 @@
                   <span class="brand-dot brand-dot-sm" aria-hidden="true"></span>
                   {{ t('prediction') }}
                 </span>
-                <h2 id="results-heading" class="results-title">{{ t('predicted_price') }}</h2>
+                <h2 #resultsHeading id="results-heading" class="results-title">{{ t('predicted_price') }}</h2>
               </div>
 
               <div
@@ -243,7 +246,7 @@
                 <div class="price-panel-inner">
                   <span class="price-label">{{ t('prediction') }}</span>
                   @if (hasPrediction()) {
-                    <strong class="price-value has-value" aria-live="polite">
+                    <strong class="price-value has-value">
                       {{ formatCurrency(predictedPrice()) }}
                     </strong>
                   } @else if (loading()) {

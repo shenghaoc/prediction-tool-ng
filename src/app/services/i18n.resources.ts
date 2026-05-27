@@ -54,7 +54,8 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       floor_area_unit_short: 'm²',
       models_count: 'Models',
       towns_count: 'Towns',
-      flat_types_count: 'Flat Types'
+      flat_types_count: 'Flat Types',
+      combobox_no_matches: 'No matches'
     },
     options: {
       ml_models: {
@@ -173,7 +174,8 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       floor_area_unit_short: 'm²',
       models_count: '模型',
       towns_count: '城镇',
-      flat_types_count: '房型'
+      flat_types_count: '房型',
+      combobox_no_matches: '无匹配项'
     },
     options: {
       ml_models: {
