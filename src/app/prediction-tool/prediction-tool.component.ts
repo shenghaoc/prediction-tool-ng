@@ -12,8 +12,9 @@ import {
   inject,
   signal
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { startWith } from 'rxjs';
 import { BaseChartDirective } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
 import { Temporal } from '@js-temporal/polyfill';
@@ -539,15 +540,24 @@ export class PredictionToolComponent implements OnInit {
     return this.translationService.translateOption(group, value);
   }
 
-  protected floorAreaErrorId(): string | null {
-    const control = this.predictionForm.controls.floorAreaSqm;
-    const hasVisibleError =
-      control.touched &&
-      (control.hasError('required') ||
-        control.hasError('min') ||
-        control.hasError('max'));
-    return hasVisibleError ? 'floor-area-error' : null;
-  }
+  // Track floorAreaSqm status changes so the computed below stays reactive
+  // in an OnPush component. A plain method would only be re-evaluated when
+  // some other signal or @Input change triggers CD — missing the case where
+  // markAllAsTouched() fires without any signal change (e.g. Ctrl+Enter on
+  // an already-invalid form).
+  private readonly _floorAreaStatus = toSignal(
+    this.predictionForm.controls.floorAreaSqm.statusChanges.pipe(startWith(null)),
+    { initialValue: null }
+  );
+
+  protected readonly floorAreaErrorId = computed(() => {
+    void this._floorAreaStatus(); // subscribe to control status changes
+    const c = this.predictionForm.controls.floorAreaSqm;
+    return c.touched &&
+      (c.hasError('required') || c.hasError('min') || c.hasError('max'))
+      ? 'floor-area-error'
+      : null;
+  });
 
   protected formatCurrency(value: number): string {
     return formatCurrency(value);
