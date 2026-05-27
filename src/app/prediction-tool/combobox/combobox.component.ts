@@ -303,6 +303,12 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   }
 
   private close(): void {
+    // Cancel any pending blur-close timer so a rapid re-open within 150 ms
+    // (e.g. option tap on mobile) isn't immediately closed by the stale timer.
+    if (this.blurTimeoutId !== null) {
+      clearTimeout(this.blurTimeoutId);
+      this.blurTimeoutId = null;
+    }
     this.isOpen.set(false);
     this.query.set('');
     this.activeIndex.set(-1);

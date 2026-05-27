@@ -5,7 +5,7 @@
       type="text"
       role="combobox"
       [attr.aria-expanded]="isOpen()"
-      [attr.aria-controls]="listboxId()"
+      [attr.aria-controls]="isOpen() ? listboxId() : null"
       [attr.aria-activedescendant]="activeOptionId()"
       aria-autocomplete="list"
       aria-haspopup="listbox"
@@ -54,7 +54,7 @@
           </li>
         }
         @if (query() && filtered().length < options().length) {
-          <li class="cb-count" role="presentation">{{ filtered().length }} of {{ options().length }}</li>
+          <li class="cb-count" role="presentation">{{ filtered().length }} / {{ options().length }}</li>
         }
       }
     </ul>

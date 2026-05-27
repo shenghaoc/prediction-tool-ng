@@ -12,9 +12,8 @@ import {
   inject,
   signal
 } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { startWith } from 'rxjs';
 import { BaseChartDirective } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
 import { Temporal } from '@js-temporal/polyfill';
@@ -540,24 +539,20 @@ export class PredictionToolComponent implements OnInit {
     return this.translationService.translateOption(group, value);
   }
 
-  // Track floorAreaSqm status changes so the computed below stays reactive
-  // in an OnPush component. A plain method would only be re-evaluated when
-  // some other signal or @Input change triggers CD — missing the case where
-  // markAllAsTouched() fires without any signal change (e.g. Ctrl+Enter on
-  // an already-invalid form).
-  private readonly _floorAreaStatus = toSignal(
-    this.predictionForm.controls.floorAreaSqm.statusChanges.pipe(startWith(null)),
-    { initialValue: null }
-  );
-
-  protected readonly floorAreaErrorId = computed(() => {
-    void this._floorAreaStatus(); // subscribe to control status changes
+  // A plain method (not a computed signal) is correct here. statusChanges
+  // only emits on VALID/INVALID/PENDING transitions — it does NOT emit when
+  // markAllAsTouched() is called on an already-INVALID control (touched state
+  // changes but validation status stays INVALID). A plain method is always
+  // re-evaluated during the CD run that follows any zone-triggered event
+  // (including the form submit that calls markAllAsTouched()), so it reliably
+  // reflects the current touched+error state without missing the key case.
+  protected floorAreaErrorId(): string | null {
     const c = this.predictionForm.controls.floorAreaSqm;
     return c.touched &&
       (c.hasError('required') || c.hasError('min') || c.hasError('max'))
       ? 'floor-area-error'
       : null;
-  });
+  }
 
   protected formatCurrency(value: number): string {
     return formatCurrency(value);
