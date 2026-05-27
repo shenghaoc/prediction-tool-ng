@@ -223,6 +223,10 @@ export class PredictionToolComponent implements OnInit {
       id: 'latestGlow',
       afterDatasetsDraw: (chart: any) => {
         const { ctx } = chart;
+        // Guard: glow is '' until updateChartColorsCache() runs; an empty
+        // fillStyle produces an invisible fill, not a crash, but skip early
+        // to stay consistent with the gradientLine guard above.
+        if (!this.chartColors.glow) return;
         const meta = chart.getDatasetMeta(0);
         if (!meta || !meta.data || meta.data.length === 0) return;
         const last = meta.data[meta.data.length - 1];

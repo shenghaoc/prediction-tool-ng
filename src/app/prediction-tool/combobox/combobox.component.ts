@@ -58,7 +58,8 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected readonly listboxId = computed(() => `lb-${this.inputId()}`);
 
   protected readonly filtered = computed(() => {
-    const opts = this.options();
+    // Fall back to [] if the parent somehow passes null/undefined.
+    const opts = this.options() ?? [];
     const q = this.query().toLowerCase().trim();
     if (!q) return opts;
     return opts.filter((opt) => opt.label.toLowerCase().includes(q));
@@ -71,7 +72,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     if (this.isOpen() && this.userTyped()) {
       return this.query();
     }
-    const selected = this.options().find((opt) => opt.value === this.value());
+    const selected = (this.options() ?? []).find((opt) => opt.value === this.value());
     return selected ? selected.label : '';
   });
 

@@ -98,14 +98,26 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     // Round the raw sum first (eliminates float drift), then clamp — so the
     // clamp always wins at the boundary even when max is a repeating decimal.
     const snapped = Number((current + this.step()).toFixed(12));
-    this.setValue(Math.min(this.max(), snapped));
+    const next = Math.min(this.max(), snapped);
+    this.setValue(next);
+    // When the boundary is reached the button becomes [disabled], which stops
+    // the browser from dispatching further pointer events on it — so pointerup/
+    // pointerleave can never cancel the hold.  Stop it here explicitly.
+    if (next >= this.max()) {
+      this.stopHold();
+    }
   }
 
   protected decrement(): void {
     const current = this.numericValue() ?? this.min();
     // Same pattern: round first, clamp second.
     const snapped = Number((current - this.step()).toFixed(12));
-    this.setValue(Math.max(this.min(), snapped));
+    const next = Math.max(this.min(), snapped);
+    this.setValue(next);
+    // Same boundary-reached stop as increment (min side).
+    if (next <= this.min()) {
+      this.stopHold();
+    }
   }
 
   protected startHold(event: PointerEvent, dir: 'inc' | 'dec'): void {
@@ -146,7 +158,9 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   protected onInput(event: Event): void {
     const target = event.target as HTMLInputElement;
     const raw = target.value;
-    if (raw === '') {
+    // Treat whitespace-only input as empty: Number(" ") === 0 in JS, which
+    // would silently parse a space as zero rather than treating it as blank.
+    if (!raw.trim()) {
       this.rawValue.set('');
       // Notify the form control so validation (e.g. required) reacts immediately.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
