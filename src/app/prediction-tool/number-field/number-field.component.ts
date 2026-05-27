@@ -93,16 +93,17 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
 
   protected increment(): void {
     const current = this.numericValue() ?? this.min();
-    // Use toFixed(12) to avoid floating-point drift (e.g. 0.1 + 0.2 ≠ 0.3).
-    const next = Number((Math.min(this.max(), current + this.step())).toFixed(12));
-    this.setValue(next);
+    // Round the raw sum first (eliminates float drift), then clamp — so the
+    // clamp always wins at the boundary even when max is a repeating decimal.
+    const snapped = Number((current + this.step()).toFixed(12));
+    this.setValue(Math.min(this.max(), snapped));
   }
 
   protected decrement(): void {
     const current = this.numericValue() ?? this.min();
-    // Use toFixed(12) to avoid floating-point drift (e.g. 0.3 - 0.1 ≠ 0.2).
-    const next = Number((Math.max(this.min(), current - this.step())).toFixed(12));
-    this.setValue(next);
+    // Same pattern: round first, clamp second.
+    const snapped = Number((current - this.step()).toFixed(12));
+    this.setValue(Math.max(this.min(), snapped));
   }
 
   protected startHold(event: PointerEvent, dir: 'inc' | 'dec'): void {
@@ -181,9 +182,12 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     // Clamp and snap to the nearest step multiple on blur.
     const n = this.numericValue();
     if (n !== null) {
-      const clamped = Math.min(this.max(), Math.max(this.min(), n));
-      const stepped = this.min() + Math.round((clamped - this.min()) / this.step()) * this.step();
-      this.setValue(stepped);
+      const min = this.min(), max = this.max(), step = this.step();
+      const clamped = Math.min(max, Math.max(min, n));
+      // Apply toFixed(12) to prevent float drift (same guard as increment/decrement),
+      // then re-clamp in case toFixed rounds a repeating-decimal boundary upward.
+      const stepped = Number((min + Math.round((clamped - min) / step) * step).toFixed(12));
+      this.setValue(Math.min(max, stepped));
     }
     // Explicitly sync the DOM value so invalid non-numeric text (e.g. "25a") is
     // cleared even when rawValue didn't change and Angular's binding won't re-fire.

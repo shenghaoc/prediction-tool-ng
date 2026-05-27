@@ -166,10 +166,11 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     const filtered = this.filtered();
     switch (event.key) {
       case 'ArrowDown':
-        event.preventDefault();
+        // Only prevent default (cursor-to-end) when navigating an open dropdown.
         if (!this.isOpen()) {
           this.open();
         } else {
+          event.preventDefault();
           const next = Math.min(this.activeIndex() + 1, filtered.length - 1);
           this.activeIndex.set(next);
           this.scrollActiveIntoView();
@@ -248,8 +249,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     this.isOpen.set(true);
     this.escapeDismissed = false;
     // Pre-select the active index to the current value
-    const currentIdx = this.filtered().findIndex((opt) => opt.value === this.value());
-    this.activeIndex.set(currentIdx >= 0 ? currentIdx : 0);
+    const f = this.filtered();
+    const currentIdx = f.findIndex((opt) => opt.value === this.value());
+    // Fall back to 0 only when the list is non-empty; -1 keeps aria-activedescendant null.
+    this.activeIndex.set(currentIdx >= 0 ? currentIdx : f.length > 0 ? 0 : -1);
     // Scroll to active item after render; cancel any previous pending scroll.
     if (this.scrollTimeoutId !== null) {
       clearTimeout(this.scrollTimeoutId);

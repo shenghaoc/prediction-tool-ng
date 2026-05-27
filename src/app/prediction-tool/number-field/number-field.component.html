@@ -1,4 +1,4 @@
-<div class="nf-group" [class.nf-focused]="focused()" role="group" [attr.aria-label]="ariaLabel()">
+<div class="nf-group" [class.nf-focused]="focused()" role="group" [attr.aria-label]="ariaLabel() || null">
   <button type="button" tabindex="-1" class="nf-stepper"
     [class.nf-stepper-disabled]="atMin()"
     [disabled]="atMin() || disabled()"
