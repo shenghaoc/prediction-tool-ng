@@ -81,8 +81,13 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     this.stopHold();
   }
 
-  writeValue(val: number): void {
-    this.rawValue.set(val ?? '');
+  writeValue(val: unknown): void {
+    // The CVA interface accepts any; guard against NaN (which survives ??),
+    // strings from localStorage round-trips, and other non-numeric values.
+    const n = typeof val === 'number' ? val : Number(val);
+    this.rawValue.set(
+      typeof n === 'number' && Number.isFinite(n) ? n : ''
+    );
   }
 
   registerOnChange(fn: (value: number) => void): void {
@@ -99,9 +104,13 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
 
   protected increment(): void {
     const current = this.numericValue() ?? this.min();
+    const step = this.step();
+    // Defensive: non-positive step would make the stepper a no-op or reverse
+    // direction, breaking spinbutton semantics.
+    if (step <= 0 || !Number.isFinite(step)) return;
     // Round the raw sum first (eliminates float drift), then clamp — so the
     // clamp always wins at the boundary even when max is a repeating decimal.
-    const snapped = Number((current + this.step()).toFixed(12));
+    const snapped = Number((current + step).toFixed(12));
     const next = Math.min(this.max(), snapped);
     this.setValue(next);
     // When the boundary is reached the button becomes [disabled], which stops
@@ -114,8 +123,10 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
 
   protected decrement(): void {
     const current = this.numericValue() ?? this.min();
+    const step = this.step();
+    if (step <= 0 || !Number.isFinite(step)) return;
     // Same pattern: round first, clamp second.
-    const snapped = Number((current - this.step()).toFixed(12));
+    const snapped = Number((current - step).toFixed(12));
     const next = Math.max(this.min(), snapped);
     this.setValue(next);
     // Same boundary-reached stop as increment (min side).
@@ -226,10 +237,19 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     if (n !== null) {
       const min = this.min(), max = this.max(), step = this.step();
       const clamped = Math.min(max, Math.max(min, n));
-      // Apply toFixed(12) to prevent float drift (same guard as increment/decrement),
-      // then re-clamp in case toFixed rounds a repeating-decimal boundary upward.
-      const stepped = Number((min + Math.round((clamped - min) / step) * step).toFixed(12));
-      this.setValue(Math.min(max, stepped));
+      // Defensive guard: division by zero or negative step would produce
+      // NaN/erratic values in the snap-to-step calculation below.
+      if (step <= 0 || !Number.isFinite(step)) {
+        this.setValue(clamped);
+      } else {
+        // Apply toFixed(12) to prevent float drift (same guard as
+        // increment/decrement), then re-clamp in case toFixed rounds a
+        // repeating-decimal boundary upward.
+        const stepped = Number(
+          (min + Math.round((clamped - min) / step) * step).toFixed(12)
+        );
+        this.setValue(Math.min(max, stepped));
+      }
     }
     // Explicitly sync the DOM value so invalid non-numeric text (e.g. "25a") is
     // cleared even when rawValue didn't change and Angular's binding won't re-fire.

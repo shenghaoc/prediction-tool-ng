@@ -56,7 +56,13 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   // the live query string so the user sees their own keystrokes.
   protected readonly userTyped = signal(false);
 
-  protected readonly listboxId = computed(() => `lb-${this.inputId()}`);
+  protected readonly listboxId = computed(() => {
+    const id = this.inputId();
+    // When no inputId is provided, generate a unique fallback so multiple
+    // instances on the same page don't collide on "lb-".
+    return id ? `lb-${id}` : `lb-_cb_${ComboboxComponent._nextId++}`;
+  });
+  private static _nextId = 0;
 
   protected readonly filtered = computed(() => {
     // Fall back to [] if the parent somehow passes null/undefined.
@@ -146,6 +152,9 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   }
 
   protected onFocus(): void {
+    // Programmatic focus (e.g. from assistive technology or parent code) can
+    // bypass the [disabled] attribute; guard against it here.
+    if (this.disabled()) return;
     // Cancel any pending blur-close timer so a rapid tab-out + tab-back
     // within the 150 ms window doesn't close a freshly re-opened dropdown.
     if (this.blurTimeoutId !== null) {
@@ -195,6 +204,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
       case 'ArrowDown':
         // Only prevent default (cursor-to-end) when navigating an open dropdown.
         if (!this.isOpen()) {
+          event.preventDefault();
           this.open();
         } else {
           event.preventDefault();
@@ -263,6 +273,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   }
 
   protected toggleOpen(): void {
+    if (this.disabled()) return;
     if (this.isOpen()) {
       this.close();
     } else {
