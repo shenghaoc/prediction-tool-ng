@@ -18,6 +18,7 @@ import {
   NgChartsModule
 } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
+import { Temporal } from '@js-temporal/polyfill';
 
 import {
   flat_model_list,
@@ -75,7 +76,7 @@ type PredictionRequestPayload = {
 };
 
 const MIN_YEAR = 1960;
-const MAX_YEAR = parseInt(month_list[month_list.length - 1].substring(0, 4), 10);
+const MAX_YEAR = Temporal.PlainYearMonth.from(month_list[month_list.length - 1]).year;
 const MIN_FLOOR_AREA = 20;
 const MAX_FLOOR_AREA = 300;
 const PREDICTION_API_URL =
