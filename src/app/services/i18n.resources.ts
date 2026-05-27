@@ -59,7 +59,8 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       prediction_complete: 'Prediction complete. Latest predicted price: {price}',
       decrease_value: 'Decrease value',
       increase_value: 'Increase value',
-      skip_to_form: 'Skip to form'
+      skip_to_form: 'Skip to form',
+      toggle_options: 'Toggle options'
     },
     options: {
       ml_models: {
@@ -183,7 +184,8 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       prediction_complete: '预测完成。最新预测价格：{price}',
       decrease_value: '减少数值',
       increase_value: '增加数值',
-      skip_to_form: '跳至表单'
+      skip_to_form: '跳至表单',
+      toggle_options: '切换选项'
     },
     options: {
       ml_models: {

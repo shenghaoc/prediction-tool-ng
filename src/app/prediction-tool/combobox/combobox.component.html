@@ -23,7 +23,7 @@
       autocomplete="off"
       spellcheck="false"
     />
-    <button type="button" tabindex="-1" aria-label="Toggle options"
+    <button type="button" tabindex="-1" [attr.aria-label]="toggleLabel()"
       class="cb-chevron"
       [class.cb-chevron-open]="isOpen()"
       [disabled]="disabled()"

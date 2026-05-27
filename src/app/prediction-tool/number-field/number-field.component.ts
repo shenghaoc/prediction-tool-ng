@@ -54,7 +54,11 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
 
   protected readonly displayValue = computed(() => {
     const v = this.rawValue();
-    return v === '' ? '' : String(v);
+    if (v === '' || v === null) return '';
+    const str = String(v);
+    // rawValue is number | string; NaN is a valid number but String(NaN) === "NaN",
+    // which would render as visible text. Guard against it here.
+    return str === 'NaN' ? '' : str;
   });
 
   protected readonly atMin = computed(() => {

@@ -40,6 +40,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   readonly ariaLabel = input('');
   readonly noMatchesLabel = input('No matches');
   readonly required = input(false);
+  readonly toggleLabel = input('Toggle options');
 
   @ViewChild('inputEl') inputEl?: ElementRef<HTMLInputElement>;
   @ViewChild('listboxEl') listboxEl?: ElementRef<HTMLUListElement>;
@@ -235,24 +236,22 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
         }
         break;
       case 'Escape':
-        // Only prevent default (browser form reset) when the dropdown is open.
+        // Always prevent default when the input is focused so the event does
+        // not bubble to a document-level listener (e.g. prediction-tool's
+        // form-reset shortcut) and accidentally reset the entire form.
+        event.preventDefault();
         if (this.isOpen()) {
-          event.preventDefault();
           this.close();
           this.escapeDismissed = true;
+          // Return focus to the input so the user can continue editing.
+          this.inputEl?.nativeElement.focus();
         }
         break;
       case 'Tab':
         if (this.isOpen()) {
-          // Use an explicit index check (matching the Enter branch above) rather
-          // than relying on filtered[-1] === undefined to reach the close path.
-          const idx = this.activeIndex();
-          const opt = idx >= 0 ? filtered[idx] : undefined;
-          if (opt) {
-            this.selectOption(opt.value);
-          } else {
-            this.close();
-          }
+          // Close without committing — mouseenter may have set activeIndex to a
+          // hovered option the user didn't intend to select.  Only Enter commits.
+          this.close();
         }
         break;
     }
