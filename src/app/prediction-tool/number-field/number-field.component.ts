@@ -44,7 +44,7 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   protected readonly numericValue = computed(() => {
     const v = this.rawValue();
     if (v === '' || v === null || v === undefined) return null;
-    const n = typeof v === 'number' ? v : parseInt(String(v), 10);
+    const n = typeof v === 'number' ? v : parseFloat(String(v));
     return Number.isNaN(n) ? null : n;
   });
 
@@ -140,7 +140,7 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
       this.rawValue.set('');
       return;
     }
-    const n = parseInt(raw, 10);
+    const n = parseFloat(raw);
     if (!Number.isNaN(n)) {
       this.rawValue.set(n);
     }

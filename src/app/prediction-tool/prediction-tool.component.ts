@@ -195,46 +195,41 @@ export class PredictionToolComponent implements OnInit {
     };
   });
 
-  protected readonly chartPlugins = computed(() => {
-    // Read CSS vars once here (inside the computed), not per-frame in draw callbacks.
-    // The computed re-runs when darkMode() changes, refreshing the cached colors.
-    void this.darkMode();
-    const doc = this.document;
-    const c1 = readCssVar('--chart-1', doc);
-    const c2 = readCssVar('--chart-2', doc);
-    const glowColor = colorWithAlpha(readCssVar('--primary', doc), 0.15);
+  // Chart plugin color cache: updated once in ngOnInit and on every theme toggle.
+  // The plugin array is stable (never recreated), so Chart.js doesn't re-register
+  // plugins on each theme change.
+  private readonly chartColors = { c1: '', c2: '', glow: '' };
 
-    return [
-      {
-        id: 'gradientLine',
-        beforeDatasetDraw(chart: any) {
-          const { ctx, chartArea, data } = chart;
-          if (!chartArea || !data.datasets[0]) return;
-          const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
-          gradient.addColorStop(0, c1);
-          gradient.addColorStop(1, c2);
-          data.datasets[0].borderColor = gradient;
-        }
-      },
-      {
-        id: 'latestGlow',
-        afterDatasetsDraw(chart: any) {
-          const { ctx } = chart;
-          const meta = chart.getDatasetMeta(0);
-          if (!meta || !meta.data || meta.data.length === 0) return;
-          const last = meta.data[meta.data.length - 1];
-          if (!last) return;
-          const { x, y } = last.getCenterPoint();
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(x, y, 9, 0, Math.PI * 2);
-          ctx.fillStyle = glowColor;
-          ctx.fill();
-          ctx.restore();
-        }
+  protected readonly chartPlugins = [
+    {
+      id: 'gradientLine',
+      beforeDatasetDraw: (chart: any) => {
+        const { ctx, chartArea, data } = chart;
+        if (!chartArea || !data.datasets[0]) return;
+        const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+        gradient.addColorStop(0, this.chartColors.c1);
+        gradient.addColorStop(1, this.chartColors.c2);
+        data.datasets[0].borderColor = gradient;
       }
-    ];
-  });
+    },
+    {
+      id: 'latestGlow',
+      afterDatasetsDraw: (chart: any) => {
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data || meta.data.length === 0) return;
+        const last = meta.data[meta.data.length - 1];
+        if (!last) return;
+        const { x, y } = last.getCenterPoint();
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, 9, 0, Math.PI * 2);
+        ctx.fillStyle = this.chartColors.glow;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+  ];
 
   protected readonly chartOptions = computed<
     ChartConfiguration<'line'>['options']
@@ -363,6 +358,7 @@ export class PredictionToolComponent implements OnInit {
 
     this.syncSummaryWithForm();
     this.syncDocumentState();
+    this.updateChartColorsCache();
 
     this.mounted.set(true);
 
@@ -454,7 +450,8 @@ export class PredictionToolComponent implements OnInit {
 
       if (this.isBrowser) {
         const latestValue = normalizedData.at(-1)?.value ?? 0;
-        const announcement = `Prediction complete. Latest predicted price: ${formatCurrency(sanitizeCurrencyValue(latestValue))}`;
+        const priceStr = formatCurrency(sanitizeCurrencyValue(latestValue));
+        const announcement = this.t('prediction_complete').replace('{price}', priceStr);
         // Clear the live region first so identical consecutive announcements
         // are still re-read by assistive technology.
         if (this.liveRegionEl) {
@@ -516,6 +513,7 @@ export class PredictionToolComponent implements OnInit {
     }
 
     this.syncDocumentState();
+    this.updateChartColorsCache();
     this.chart?.update();
   }
 
@@ -554,6 +552,13 @@ export class PredictionToolComponent implements OnInit {
     const roundedValue = Math.abs(roundValue(value)).toLocaleString();
     const sign = value >= 0 ? '+' : '-';
     return `${sign}$${roundedValue}`;
+  }
+
+  private updateChartColorsCache(): void {
+    const doc = this.document;
+    this.chartColors.c1 = readCssVar('--chart-1', doc);
+    this.chartColors.c2 = readCssVar('--chart-2', doc);
+    this.chartColors.glow = colorWithAlpha(readCssVar('--primary', doc), 0.15);
   }
 
   private restoreTheme(): void {

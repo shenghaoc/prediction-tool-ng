@@ -4,7 +4,6 @@ import {
   ElementRef,
   HostListener,
   Input,
-  OnDestroy,
   ViewChild,
   computed,
   forwardRef,
@@ -31,7 +30,7 @@ export interface ComboboxOption {
     }
   ]
 })
-export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
+export class ComboboxComponent implements ControlValueAccessor {
   @Input() options: ComboboxOption[] = [];
   @Input() placeholder = '';
   @Input() inputId = '';
@@ -75,7 +74,6 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
-  private blurTimeoutId: ReturnType<typeof setTimeout> | null = null;
   // Set when the user dismisses the dropdown with Escape; prevents focus
   // alone (e.g. tabbing back in) from re-opening it until an explicit action.
   private escapeDismissed = false;
@@ -91,12 +89,6 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   }
 
   constructor(private _elementRef: ElementRef) {}
-
-  ngOnDestroy(): void {
-    if (this.blurTimeoutId !== null) {
-      clearTimeout(this.blurTimeoutId);
-    }
-  }
 
   writeValue(val: string): void {
     this.value.set(val ?? '');
@@ -125,14 +117,11 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected onBlur(): void {
     this.focused.set(false);
     this.onTouched();
-    // Delay close to allow click events on options to fire first.
-    // Store the ID so we can cancel it on destroy.
-    this.blurTimeoutId = setTimeout(() => {
-      this.blurTimeoutId = null;
-      if (!this._elementRef.nativeElement.contains(document.activeElement)) {
-        this.close();
-      }
-    }, 150);
+    // pointerdown on the listbox and chevron calls preventDefault(), which
+    // prevents the input from losing focus when clicking options. So when
+    // onBlur fires, focus has truly left the component and we can close
+    // immediately without a delay.
+    this.close();
   }
 
   protected onInput(event: Event): void {
