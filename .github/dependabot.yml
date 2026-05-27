@@ -4,6 +4,31 @@ updates:
   - package-ecosystem: "npm"
     # Look for `package.json` and `lock` files in the `root` directory
     directory: "/"
-    # Check the npm registry for updates every day (weekdays)
+    # Check the npm registry for updates monthly
     schedule:
       interval: "monthly"
+    groups:
+      angular:
+        patterns:
+          - '@angular/*'
+      typescript:
+        patterns:
+          - 'typescript'
+          - 'tslib'
+          - '@types/*'
+      testing:
+        patterns:
+          - 'jasmine-core'
+          - 'karma'
+          - 'karma-*'
+      charting:
+        patterns:
+          - 'chart.js'
+          - 'ng2-charts'
+      cloudflare:
+        patterns:
+          - '@cloudflare/*'
+          - 'wrangler'
+      miscellaneous:
+        patterns:
+          - '*'
