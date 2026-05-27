@@ -13,10 +13,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import {
-  BaseChartDirective,
-  NgChartsModule
-} from 'ng2-charts';
+import { BaseChartDirective, NgChartsModule } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
 import { Temporal } from '@js-temporal/polyfill';
 
