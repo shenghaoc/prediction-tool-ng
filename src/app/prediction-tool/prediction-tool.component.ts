@@ -299,6 +299,11 @@ export class PredictionToolComponent implements OnInit {
           }
         },
         y: {
+          // grace adds padding above/below the data range so the line is
+          // never squashed against the top or bottom of the chart area.
+          // Without this Chart.js defaults to starting at 0, which pushes
+          // HDB resale prices ($300k–$700k) into a thin band at the top.
+          grace: '15%',
           grid: {
             color: (context: any) =>
               context.index === 0 ? gridColor : dashedGridColor,
