@@ -115,7 +115,6 @@ export class PredictionToolComponent implements OnInit {
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
   @ViewChild('resultsAnchor') resultsAnchor?: ElementRef<HTMLElement>;
   @ViewChild('resultsHeading') resultsHeadingEl?: ElementRef<HTMLElement>;
-  @ViewChild('liveRegion') liveRegionEl?: ElementRef<HTMLElement>;
 
   protected readonly lang = this.translationService.lang;
   protected readonly mlModels = ml_model_list;
@@ -235,6 +234,7 @@ export class PredictionToolComponent implements OnInit {
     ChartConfiguration<'line'>['options']
   >(() => {
     void this.darkMode();
+    if (!this.isBrowser) return {};
     const doc = this.document;
     const labelColor = readCssVar('--muted-foreground', doc);
     const panelColor = readCssVar('--popover', doc);
@@ -455,13 +455,9 @@ export class PredictionToolComponent implements OnInit {
         const announcement = this.t('prediction_complete').replace('{price}', priceStr);
         // Clear the live region first so identical consecutive announcements
         // are still re-read by assistive technology.
-        if (this.liveRegionEl) {
-          this.liveRegionEl.nativeElement.textContent = '';
-        }
+        this.liveMessage.set('');
         requestAnimationFrame(() => {
-          if (this.liveRegionEl) {
-            this.liveRegionEl.nativeElement.textContent = announcement;
-          }
+          this.liveMessage.set(announcement);
           this.resultsAnchor?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           // Focus the results heading for keyboard users, then drop the
           // temporary tabindex once focus leaves so it isn't left interactive.
@@ -556,6 +552,7 @@ export class PredictionToolComponent implements OnInit {
   }
 
   private updateChartColorsCache(): void {
+    if (!this.isBrowser) return;
     const doc = this.document;
     this.chartColors.c1 = readCssVar('--chart-1', doc);
     this.chartColors.c2 = readCssVar('--chart-2', doc);

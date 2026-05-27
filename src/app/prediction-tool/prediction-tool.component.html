@@ -9,7 +9,7 @@
   </main>
 } @else {
   <a href="#field-ml-model" class="skip-nav">Skip to form</a>
-  <div role="status" aria-live="polite" aria-atomic="true" class="sr-only" #liveRegion></div>
+  <div role="status" aria-live="polite" aria-atomic="true" class="sr-only">{{ liveMessage() }}</div>
   <main class="shell" [class.theme-ready]="mounted()">
     <div class="page-surface">
       <!-- ═══ Sticky Header ═══ -->

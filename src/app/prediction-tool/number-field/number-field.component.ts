@@ -104,7 +104,7 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   }
 
   protected startHold(event: PointerEvent, dir: 'inc' | 'dec'): void {
-    if (this.disabled()) return;
+    if (this.disabled() || event.button !== 0) return;
     event.preventDefault();
 
     const fn = dir === 'inc' ? () => this.increment() : () => this.decrement();
@@ -140,11 +140,15 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     const raw = target.value;
     if (raw === '') {
       this.rawValue.set('');
+      // Notify the form control so validation (e.g. required) reacts immediately.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.onChange(null as any);
       return;
     }
     const n = parseFloat(raw);
     if (!Number.isNaN(n)) {
       this.rawValue.set(n);
+      this.onChange(n);
     }
   }
 
@@ -172,10 +176,12 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   protected onBlur(): void {
     this.focused.set(false);
     this.onTouched();
-    // Clamp on blur
+    // Clamp and snap to the nearest step multiple on blur.
     const n = this.numericValue();
     if (n !== null) {
-      this.setValue(Math.min(this.max, Math.max(this.min, n)));
+      const clamped = Math.min(this.max, Math.max(this.min, n));
+      const stepped = this.min + Math.round((clamped - this.min) / this.step) * this.step;
+      this.setValue(stepped);
     }
     // Explicitly sync the DOM value so invalid non-numeric text (e.g. "25a") is
     // cleared even when rawValue didn't change and Angular's binding won't re-fire.

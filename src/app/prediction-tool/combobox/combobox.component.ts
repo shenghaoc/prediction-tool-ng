@@ -32,7 +32,12 @@ export interface ComboboxOption {
   ]
 })
 export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
-  @Input() options: ComboboxOption[] = [];
+  // options is backed by a signal so computed signals (filtered, inputDisplayValue)
+  // react when the parent passes a new array (e.g. after a language switch).
+  protected readonly optionsSignal = signal<ComboboxOption[]>([]);
+  @Input() set options(val: ComboboxOption[]) { this.optionsSignal.set(val ?? []); }
+  get options(): ComboboxOption[] { return this.optionsSignal(); }
+
   @Input() placeholder = '';
   @Input() inputId = '';
   @Input() ariaLabel = '';
@@ -52,18 +57,17 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected readonly listboxId = computed(() => `lb-${this.inputId}`);
 
   protected readonly filtered = computed(() => {
+    const opts = this.optionsSignal();
     const q = this.query().toLowerCase().trim();
-    if (!q) return this.options;
-    return this.options.filter((opt) =>
-      opt.label.toLowerCase().includes(q)
-    );
+    if (!q) return opts;
+    return opts.filter((opt) => opt.label.toLowerCase().includes(q));
   });
 
   protected readonly inputDisplayValue = computed(() => {
     if (this.isOpen()) {
       return this.query();
     }
-    const selected = this.options.find((opt) => opt.value === this.value());
+    const selected = this.optionsSignal().find((opt) => opt.value === this.value());
     return selected ? selected.label : '';
   });
 
@@ -77,6 +81,9 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   private onTouched: () => void = () => {};
   // Timeout ID for the post-open scroll; tracked so it can be cancelled on destroy.
   private scrollTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  // Blur close is delayed so touch-taps on options (where mousedown can't
+  // prevent blur) still have time for the click to fire and select the option.
+  private blurTimeoutId: ReturnType<typeof setTimeout> | null = null;
   // Set when the user dismisses the dropdown with Escape; prevents focus
   // alone (e.g. tabbing back in) from re-opening it until an explicit action.
   private escapeDismissed = false;
@@ -96,6 +103,9 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   ngOnDestroy(): void {
     if (this.scrollTimeoutId !== null) {
       clearTimeout(this.scrollTimeoutId);
+    }
+    if (this.blurTimeoutId !== null) {
+      clearTimeout(this.blurTimeoutId);
     }
   }
 
@@ -126,11 +136,15 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected onBlur(): void {
     this.focused.set(false);
     this.onTouched();
-    // pointerdown on the listbox and chevron calls preventDefault(), which
-    // prevents the input from losing focus when clicking options. So when
-    // onBlur fires, focus has truly left the component and we can close
-    // immediately without a delay.
-    this.close();
+    // On desktop, mousedown.preventDefault() on the listbox/chevron prevents
+    // blur from firing when clicking an option. On mobile touch there is no
+    // mousedown, so blur can fire before the tap's click event; the 150 ms
+    // delay ensures the click fires first and selects the option.
+    if (this.blurTimeoutId !== null) clearTimeout(this.blurTimeoutId);
+    this.blurTimeoutId = setTimeout(() => {
+      this.blurTimeoutId = null;
+      this.close();
+    }, 150);
   }
 
   protected onInput(event: Event): void {
