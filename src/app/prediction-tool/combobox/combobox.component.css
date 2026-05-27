@@ -1,0 +1,70 @@
+:host { display: block; position: relative; }
+.cb-wrap { position: relative; }
+.cb-input-wrap { position: relative; display: flex; }
+.cb-input {
+  width: 100%;
+  min-height: var(--height-field, 32px);
+  padding: 0 32px 0 10px;
+  border-radius: var(--radius-sm, 3px);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  outline: none;
+  appearance: none;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+  cursor: default;
+}
+.cb-input::placeholder {
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+.cb-input-focused {
+  border-color: color-mix(in oklab, var(--primary) 50%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 18%, transparent);
+}
+.cb-chevron {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; border: none; background: none;
+  color: var(--muted-foreground); cursor: pointer; padding: 0;
+  transition: transform 200ms ease;
+}
+.cb-chevron:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.cb-chevron-open { transform: rotate(180deg); }
+.cb-listbox {
+  position: absolute; z-index: 50; top: calc(100% + 4px);
+  left: 0; right: 0; max-height: 240px; overflow-y: auto;
+  border-radius: var(--radius-sm, 3px);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--foreground) 8%, transparent);
+  padding: 3px; list-style: none; margin: 0;
+}
+.cb-option {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; padding: 6px 10px;
+  border-radius: var(--radius-sm, 3px);
+  font-size: 0.8125rem; font-weight: 500; cursor: pointer;
+  transition: background 100ms ease;
+  color: var(--foreground);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cb-option-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cb-option-active { background: color-mix(in oklab, var(--primary) 10%, transparent); }
+.cb-option-selected { color: var(--primary); font-weight: 700; }
+.cb-empty {
+  padding: 12px 14px; color: var(--muted-foreground);
+  font-size: 0.85rem; font-style: italic; text-align: center;
+}
+.cb-count {
+  padding: 6px 10px; color: var(--muted-foreground);
+  font-size: 0.7rem; font-weight: 700;
+  border-top: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+  margin-top: 2px; list-style: none;
+}

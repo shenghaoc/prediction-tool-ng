@@ -4,6 +4,7 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  HostListener,
   OnInit,
   PLATFORM_ID,
   ViewChild,
@@ -29,6 +30,8 @@ import {
   TranslationService
 } from '../services/translation.service';
 import type { OptionGroup } from '../services/translation.service';
+import { ComboboxComponent } from './combobox/combobox.component';
+import { NumberFieldComponent } from './number-field/number-field.component';
 
 type MlModel = (typeof ml_model_list)[number];
 type Town = (typeof town_list)[number];
@@ -96,7 +99,9 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    BaseChartDirective
+    BaseChartDirective,
+    ComboboxComponent,
+    NumberFieldComponent
   ]
 })
 export class PredictionToolComponent implements OnInit {
@@ -109,6 +114,7 @@ export class PredictionToolComponent implements OnInit {
 
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
   @ViewChild('resultsAnchor') resultsAnchor?: ElementRef<HTMLElement>;
+  @ViewChild('liveRegion') liveRegionEl?: ElementRef<HTMLElement>;
 
   protected readonly lang = this.translationService.lang;
   protected readonly mlModels = ml_model_list;
@@ -125,6 +131,7 @@ export class PredictionToolComponent implements OnInit {
   protected readonly darkMode = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly hasPrediction = signal(false);
+  protected readonly liveMessage = signal('');
   protected readonly trendData = signal<TrendPoint[]>(
     createDefaultTrendData()
   );
@@ -132,6 +139,15 @@ export class PredictionToolComponent implements OnInit {
     mlModel: INITIAL_FORM_VALUE.mlModel,
     town: INITIAL_FORM_VALUE.town,
     leaseCommenceYear: INITIAL_FORM_VALUE.leaseCommenceYear
+  });
+
+  protected readonly townOptions = computed(() => {
+    // Depend on lang signal so options re-translate on language switch
+    void this.lang();
+    return this.towns.map((town) => ({
+      value: town,
+      label: this.translationService.translateOption('towns', town)
+    }));
   });
 
   protected readonly predictedPrice = computed(() => {
@@ -178,14 +194,51 @@ export class PredictionToolComponent implements OnInit {
     };
   });
 
+  protected readonly chartPlugins = computed(() => {
+    const doc = this.document;
+    return [
+      {
+        id: 'gradientLine',
+        beforeDatasetDraw(chart: any) {
+          const { ctx, chartArea, data } = chart;
+          if (!chartArea || !data.datasets[0]) return;
+          const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+          const c1 = readCssVar('--chart-1', doc);
+          const c2 = readCssVar('--chart-2', doc);
+          gradient.addColorStop(0, c1);
+          gradient.addColorStop(1, c2);
+          data.datasets[0].borderColor = gradient;
+        }
+      },
+      {
+        id: 'latestGlow',
+        afterDatasetsDraw(chart: any) {
+          const { ctx } = chart;
+          const meta = chart.getDatasetMeta(0);
+          if (!meta || !meta.data || meta.data.length === 0) return;
+          const last = meta.data[meta.data.length - 1];
+          if (!last) return;
+          const { x, y } = last.getCenterPoint();
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(x, y, 9, 0, Math.PI * 2);
+          ctx.fillStyle = colorWithAlpha(readCssVar('--primary', doc), 0.15);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    ];
+  });
+
   protected readonly chartOptions = computed<
     ChartConfiguration<'line'>['options']
   >(() => {
     void this.darkMode();
-    const labelColor = readCssVar('--muted-foreground', this.document);
-    const panelColor = readCssVar('--popover', this.document);
-    const tooltipBorder = colorWithAlpha(readCssVar('--primary', this.document), 0.16);
-    const gridColor = colorWithAlpha(readCssVar('--foreground', this.document), 0.08);
+    const doc = this.document;
+    const labelColor = readCssVar('--muted-foreground', doc);
+    const panelColor = readCssVar('--popover', doc);
+    const tooltipBorder = colorWithAlpha(readCssVar('--primary', doc), 0.16);
+    const gridColor = colorWithAlpha(readCssVar('--foreground', doc), 0.08);
 
     return {
       responsive: true,
@@ -200,8 +253,8 @@ export class PredictionToolComponent implements OnInit {
         tooltip: {
           displayColors: false,
           backgroundColor: panelColor,
-          titleColor: readCssVar('--foreground', this.document),
-          bodyColor: readCssVar('--foreground', this.document),
+          titleColor: readCssVar('--foreground', doc),
+          bodyColor: readCssVar('--foreground', doc),
           borderColor: tooltipBorder,
           borderWidth: 1,
           callbacks: {
@@ -232,7 +285,13 @@ export class PredictionToolComponent implements OnInit {
         },
         y: {
           grid: {
-            color: gridColor,
+            color: (context: any) =>
+              context.index === 0
+                ? gridColor
+                : colorWithAlpha(readCssVar('--foreground', doc), 0.06),
+            lineWidth: 1,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            borderDash: ((context: any) => context.index === 0 ? [] : [3, 4]) as any,
             drawBorder: false
           },
           ticks: {
@@ -265,6 +324,25 @@ export class PredictionToolComponent implements OnInit {
       ]
     ]
   });
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeyDown(event: KeyboardEvent): void {
+    const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+
+    if (isCtrlOrCmd && event.key === 'Enter') {
+      event.preventDefault();
+      void this.onSubmit();
+      return;
+    }
+
+    if (event.key === 'Escape' && !this.loading()) {
+      const active = this.document.activeElement as HTMLElement | null;
+      // Only reset if focus is within the form area (not a combobox dropdown, etc.)
+      if (active && active.closest('form')) {
+        this.resetForm();
+      }
+    }
+  }
 
   ngOnInit(): void {
     if (this.isBrowser) {
@@ -363,8 +441,22 @@ export class PredictionToolComponent implements OnInit {
       this.chart?.update();
 
       if (this.isBrowser) {
+        const latestValue = normalizeTrendData(serverData).at(-1)?.value ?? 0;
+        const announcement = `Prediction complete. Latest predicted price: ${formatCurrency(sanitizeCurrencyValue(latestValue))}`;
         requestAnimationFrame(() => {
+          if (this.liveRegionEl) {
+            this.liveRegionEl.nativeElement.textContent = announcement;
+          }
           this.resultsAnchor?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          // Focus the results section for keyboard users
+          const resultsEl = this.resultsAnchor?.nativeElement;
+          if (resultsEl) {
+            const heading = resultsEl.querySelector<HTMLElement>('[id="results-heading"]');
+            if (heading) {
+              heading.setAttribute('tabindex', '-1');
+              heading.focus({ preventScroll: true });
+            }
+          }
         });
       }
     } catch (error: unknown) {

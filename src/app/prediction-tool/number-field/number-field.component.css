@@ -1,0 +1,51 @@
+:host { display: block; }
+.nf-group {
+  display: grid;
+  grid-template-columns: 32px 1fr auto 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 3px);
+  overflow: hidden;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+.nf-group.nf-focused {
+  border-color: color-mix(in oklab, var(--primary) 50%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 18%, transparent);
+}
+/* when no unit — 3 column layout */
+.nf-group:not(:has(.nf-unit)) {
+  grid-template-columns: 32px 1fr 32px;
+}
+.nf-stepper {
+  display: flex; align-items: center; justify-content: center;
+  border: none; padding: 0;
+  background: color-mix(in oklab, var(--secondary) 60%, transparent);
+  color: var(--secondary-foreground);
+  cursor: pointer; font-family: inherit;
+  transition: background 150ms ease, color 150ms ease;
+  min-height: var(--height-field, 32px);
+}
+.nf-stepper:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+.nf-stepper-disabled { opacity: 0.35; cursor: not-allowed; }
+.nf-input {
+  width: 100%;
+  min-height: var(--height-field, 32px);
+  padding: 0 10px; text-align: center;
+  border: none;
+  border-left: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+  border-right: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+  background: var(--card); color: var(--foreground);
+  font: inherit; font-size: 0.875rem; font-weight: 500;
+  outline: none; appearance: none;
+  font-variant-numeric: tabular-nums;
+}
+.nf-unit {
+  display: flex; align-items: center; padding: 0 10px;
+  background: color-mix(in oklab, var(--secondary) 60%, transparent);
+  color: var(--muted-foreground);
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+  border-left: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+  border-right: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+}
