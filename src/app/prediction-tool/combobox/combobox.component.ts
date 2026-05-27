@@ -86,7 +86,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   private escapeDismissed = false;
 
   // Close on click outside — skip the containment check when already closed.
-  onDocumentPointerDown(event: PointerEvent): void {
+  protected onDocumentPointerDown(event: PointerEvent): void {
     if (!this.isOpen()) return;
     const el = (event.target as HTMLElement);
     if (!this._elementRef.nativeElement.contains(el)) {
