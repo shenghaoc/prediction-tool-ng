@@ -1,8 +1,8 @@
-<div class="nf-group" [class.nf-focused]="focused()" role="group" [attr.aria-label]="ariaLabel">
+<div class="nf-group" [class.nf-focused]="focused()" role="group" [attr.aria-label]="ariaLabel()">
   <button type="button" tabindex="-1" class="nf-stepper"
     [class.nf-stepper-disabled]="atMin()"
     [disabled]="atMin() || disabled()"
-    [attr.aria-label]="decreaseLabel"
+    [attr.aria-label]="decreaseLabel()"
     (pointerdown)="startHold($event, 'dec')"
     (pointerup)="stopHold()"
     (pointerleave)="stopHold()"
@@ -10,17 +10,17 @@
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>
   <input #inputEl
-    [id]="inputId"
+    [id]="inputId()"
     type="text"
     inputmode="numeric"
     role="spinbutton"
-    [attr.aria-valuemin]="min"
-    [attr.aria-valuemax]="max"
+    [attr.aria-valuemin]="min()"
+    [attr.aria-valuemax]="max()"
     [attr.aria-valuenow]="numericValue()"
-    [attr.aria-label]="ariaLabel || null"
-    [attr.aria-describedby]="ariaDescribedby"
+    [attr.aria-label]="ariaLabel() || null"
+    [attr.aria-describedby]="ariaDescribedby()"
     [value]="displayValue()"
-    [placeholder]="placeholder"
+    [placeholder]="placeholder()"
     [disabled]="disabled()"
     (input)="onInput($event)"
     (keydown)="onKeyDown($event)"
@@ -29,13 +29,13 @@
     class="nf-input"
     autocomplete="off"
   />
-  @if (unit) {
-    <span class="nf-unit" aria-hidden="true">{{ unit }}</span>
+  @if (unit()) {
+    <span class="nf-unit" aria-hidden="true">{{ unit() }}</span>
   }
   <button type="button" tabindex="-1" class="nf-stepper"
     [class.nf-stepper-disabled]="atMax()"
     [disabled]="atMax() || disabled()"
-    [attr.aria-label]="increaseLabel"
+    [attr.aria-label]="increaseLabel()"
     (pointerdown)="startHold($event, 'inc')"
     (pointerup)="stopHold()"
     (pointerleave)="stopHold()"

@@ -1,7 +1,7 @@
 <div class="cb-wrap" [attr.data-open]="isOpen() || null">
   <div class="cb-input-wrap">
     <input #inputEl
-      [id]="inputId"
+      [id]="inputId()"
       type="text"
       role="combobox"
       [attr.aria-expanded]="isOpen()"
@@ -9,10 +9,10 @@
       [attr.aria-activedescendant]="activeOptionId()"
       aria-autocomplete="list"
       aria-haspopup="listbox"
-      [attr.aria-label]="ariaLabel || null"
-      [attr.aria-required]="required || null"
+      [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-required]="required() || null"
       [value]="inputDisplayValue()"
-      [placeholder]="placeholder"
+      [placeholder]="placeholder()"
       [disabled]="disabled()"
       (input)="onInput($event)"
       (keydown)="onKeyDown($event)"
@@ -33,13 +33,13 @@
     </button>
   </div>
   @if (isOpen()) {
-    <ul #listboxEl [id]="listboxId()" role="listbox" [attr.aria-label]="ariaLabel || null" class="cb-listbox"
+    <ul #listboxEl [id]="listboxId()" role="listbox" [attr.aria-label]="ariaLabel() || null" class="cb-listbox"
         (mousedown)="$event.preventDefault()">
       @if (filtered().length === 0) {
-        <li class="cb-empty">{{ noMatchesLabel }}</li>
+        <li class="cb-empty">{{ noMatchesLabel() }}</li>
       } @else {
         @for (opt of filtered(); track opt.value; let i = $index) {
-          <li [id]="'opt-' + inputId + '-' + i"
+          <li [id]="'opt-' + inputId() + '-' + i"
             role="option"
             [attr.aria-selected]="opt.value === value()"
             class="cb-option"
@@ -53,8 +53,8 @@
             }
           </li>
         }
-        @if (query() && filtered().length < options.length) {
-          <li class="cb-count" role="presentation">{{ filtered().length }} of {{ options.length }}</li>
+        @if (query() && filtered().length < options().length) {
+          <li class="cb-count" role="presentation">{{ filtered().length }} of {{ options().length }}</li>
         }
       }
     </ul>

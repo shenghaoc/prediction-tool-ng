@@ -2,11 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  Input,
   OnDestroy,
   ViewChild,
   computed,
   forwardRef,
+  input,
   signal
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -26,16 +26,16 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   ]
 })
 export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
-  @Input() min = 0;
-  @Input() max = 999;
-  @Input() step = 1;
-  @Input() placeholder = '';
-  @Input() inputId = '';
-  @Input() unit = '';
-  @Input() ariaLabel = '';
-  @Input() ariaDescribedby: string | null = null;
-  @Input() decreaseLabel = 'Decrease value';
-  @Input() increaseLabel = 'Increase value';
+  readonly min = input(0);
+  readonly max = input(999);
+  readonly step = input(1);
+  readonly placeholder = input('');
+  readonly inputId = input('');
+  readonly unit = input('');
+  readonly ariaLabel = input('');
+  readonly ariaDescribedby = input<string | null>(null);
+  readonly decreaseLabel = input('Decrease value');
+  readonly increaseLabel = input('Increase value');
 
   @ViewChild('inputEl') inputEl?: ElementRef<HTMLInputElement>;
 
@@ -57,12 +57,12 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
 
   protected readonly atMin = computed(() => {
     const n = this.numericValue();
-    return n !== null && n <= this.min;
+    return n !== null && n <= this.min();
   });
 
   protected readonly atMax = computed(() => {
     const n = this.numericValue();
-    return n !== null && n >= this.max;
+    return n !== null && n >= this.max();
   });
 
   private onChange: (value: number) => void = () => {};
@@ -92,14 +92,16 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   }
 
   protected increment(): void {
-    const current = this.numericValue() ?? this.min;
-    const next = Math.min(this.max, Math.round(current + this.step));
+    const current = this.numericValue() ?? this.min();
+    // Use toFixed(12) to avoid floating-point drift (e.g. 0.1 + 0.2 ≠ 0.3).
+    const next = Number((Math.min(this.max(), current + this.step())).toFixed(12));
     this.setValue(next);
   }
 
   protected decrement(): void {
-    const current = this.numericValue() ?? this.min;
-    const next = Math.max(this.min, Math.round(current - this.step));
+    const current = this.numericValue() ?? this.min();
+    // Use toFixed(12) to avoid floating-point drift (e.g. 0.3 - 0.1 ≠ 0.2).
+    const next = Number((Math.max(this.min(), current - this.step())).toFixed(12));
     this.setValue(next);
   }
 
@@ -164,11 +166,11 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
         break;
       case 'Home':
         event.preventDefault();
-        this.setValue(this.min);
+        this.setValue(this.min());
         break;
       case 'End':
         event.preventDefault();
-        this.setValue(this.max);
+        this.setValue(this.max());
         break;
     }
   }
@@ -179,8 +181,8 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     // Clamp and snap to the nearest step multiple on blur.
     const n = this.numericValue();
     if (n !== null) {
-      const clamped = Math.min(this.max, Math.max(this.min, n));
-      const stepped = this.min + Math.round((clamped - this.min) / this.step) * this.step;
+      const clamped = Math.min(this.max(), Math.max(this.min(), n));
+      const stepped = this.min() + Math.round((clamped - this.min()) / this.step()) * this.step();
       this.setValue(stepped);
     }
     // Explicitly sync the DOM value so invalid non-numeric text (e.g. "25a") is

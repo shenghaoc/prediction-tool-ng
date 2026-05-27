@@ -2,12 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  HostListener,
-  Input,
   OnDestroy,
   ViewChild,
   computed,
   forwardRef,
+  input,
   signal
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -29,20 +28,18 @@ export interface ComboboxOption {
       useExisting: forwardRef(() => ComboboxComponent),
       multi: true
     }
-  ]
+  ],
+  host: {
+    '(document:pointerdown)': 'onDocumentPointerDown($event)'
+  }
 })
 export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
-  // options is backed by a signal so computed signals (filtered, inputDisplayValue)
-  // react when the parent passes a new array (e.g. after a language switch).
-  protected readonly optionsSignal = signal<ComboboxOption[]>([]);
-  @Input() set options(val: ComboboxOption[]) { this.optionsSignal.set(val ?? []); }
-  get options(): ComboboxOption[] { return this.optionsSignal(); }
-
-  @Input() placeholder = '';
-  @Input() inputId = '';
-  @Input() ariaLabel = '';
-  @Input() noMatchesLabel = 'No matches';
-  @Input() required = false;
+  readonly options = input<ComboboxOption[]>([]);
+  readonly placeholder = input('');
+  readonly inputId = input('');
+  readonly ariaLabel = input('');
+  readonly noMatchesLabel = input('No matches');
+  readonly required = input(false);
 
   @ViewChild('inputEl') inputEl?: ElementRef<HTMLInputElement>;
   @ViewChild('listboxEl') listboxEl?: ElementRef<HTMLUListElement>;
@@ -54,10 +51,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected readonly activeIndex = signal(-1);
   protected readonly disabled = signal(false);
 
-  protected readonly listboxId = computed(() => `lb-${this.inputId}`);
+  protected readonly listboxId = computed(() => `lb-${this.inputId()}`);
 
   protected readonly filtered = computed(() => {
-    const opts = this.optionsSignal();
+    const opts = this.options();
     const q = this.query().toLowerCase().trim();
     if (!q) return opts;
     return opts.filter((opt) => opt.label.toLowerCase().includes(q));
@@ -67,14 +64,14 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     if (this.isOpen()) {
       return this.query();
     }
-    const selected = this.optionsSignal().find((opt) => opt.value === this.value());
+    const selected = this.options().find((opt) => opt.value === this.value());
     return selected ? selected.label : '';
   });
 
   protected readonly activeOptionId = computed(() => {
     const idx = this.activeIndex();
     if (idx < 0) return null;
-    return `opt-${this.inputId}-${idx}`;
+    return `opt-${this.inputId()}-${idx}`;
   });
 
   private onChange: (value: string) => void = () => {};
@@ -89,7 +86,6 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   private escapeDismissed = false;
 
   // Close on click outside — skip the containment check when already closed.
-  @HostListener('document:pointerdown', ['$event'])
   onDocumentPointerDown(event: PointerEvent): void {
     if (!this.isOpen()) return;
     const el = (event.target as HTMLElement);
@@ -180,8 +176,9 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
         }
         break;
       case 'ArrowUp':
-        event.preventDefault();
+        // Only prevent default (cursor-to-start) when the dropdown is open.
         if (this.isOpen()) {
+          event.preventDefault();
           const prev = Math.max(this.activeIndex() - 1, 0);
           this.activeIndex.set(prev);
           this.scrollActiveIntoView();
@@ -211,8 +208,9 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
         }
         break;
       case 'Escape':
-        event.preventDefault();
+        // Only prevent default (browser form reset) when the dropdown is open.
         if (this.isOpen()) {
+          event.preventDefault();
           this.close();
           this.escapeDismissed = true;
         }
