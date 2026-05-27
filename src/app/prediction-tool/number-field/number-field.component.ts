@@ -148,10 +148,18 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
       this.onChange(null as any);
       return;
     }
-    const n = parseFloat(raw);
+    // Use Number() (strict) rather than parseFloat (permissive) so that partial
+    // strings like "25abc" are rejected rather than silently parsed as 25.
+    const n = Number(raw);
     if (!Number.isNaN(n)) {
       this.rawValue.set(n);
       this.onChange(n);
+    } else {
+      // Invalid characters typed: immediately notify the form control so
+      // validation fires and Ctrl+Enter cannot submit the stale previous value.
+      // Do NOT update rawValue — blur will restore the DOM to the last valid value.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this.onChange(null as any);
     }
   }
 

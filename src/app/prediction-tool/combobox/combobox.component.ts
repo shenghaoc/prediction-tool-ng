@@ -251,8 +251,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     // Pre-select the active index to the current value
     const f = this.filtered();
     const currentIdx = f.findIndex((opt) => opt.value === this.value());
-    // Fall back to 0 only when the list is non-empty; -1 keeps aria-activedescendant null.
-    this.activeIndex.set(currentIdx >= 0 ? currentIdx : f.length > 0 ? 0 : -1);
+    // Only highlight an existing selection; leave at -1 otherwise so that Tab
+    // out of a freshly-opened (nothing selected) dropdown does not accidentally
+    // commit the first option.
+    this.activeIndex.set(currentIdx >= 0 ? currentIdx : -1);
     // Scroll to active item after render; cancel any previous pending scroll.
     if (this.scrollTimeoutId !== null) {
       clearTimeout(this.scrollTimeoutId);
