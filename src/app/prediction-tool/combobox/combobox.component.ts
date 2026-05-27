@@ -209,9 +209,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     const filtered = this.filtered();
     switch (event.key) {
       case 'ArrowDown':
-        // Only prevent default (cursor-to-end) when navigating an open dropdown.
         if (!this.isOpen()) {
-          event.preventDefault();
           this.open();
         } else {
           event.preventDefault();
@@ -221,10 +219,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
         }
         break;
       case 'ArrowUp':
-        // Only prevent default (cursor-to-start) when the dropdown is open.
         if (this.isOpen()) {
           event.preventDefault();
-          const prev = Math.max(this.activeIndex() - 1, 0);
+          const cur = this.activeIndex();
+          const prev = cur <= 0 ? filtered.length - 1 : cur - 1;
           this.activeIndex.set(prev);
           this.scrollActiveIntoView();
         }

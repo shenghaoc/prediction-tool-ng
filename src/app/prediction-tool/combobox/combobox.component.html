@@ -36,7 +36,7 @@
     <ul #listboxEl [id]="listboxId()" role="listbox" [attr.aria-label]="ariaLabel() || null" class="cb-listbox"
         (mousedown)="$event.preventDefault()">
       @if (filtered().length === 0) {
-        <li class="cb-empty" role="presentation">{{ noMatchesLabel() }}</li>
+        <li class="cb-empty" role="option" aria-disabled="true">{{ noMatchesLabel() }}</li>
       } @else {
         @for (opt of filtered(); track opt.value; let i = $index) {
           <li [id]="'opt-' + resolvedInputId() + '-' + i"
