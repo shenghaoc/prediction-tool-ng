@@ -435,13 +435,14 @@ export class PredictionToolComponent implements OnInit {
       }
 
       const serverData = parsePredictionResponse(responseText, requestPayload);
+      const normalizedData = normalizeTrendData(serverData);
 
       this.hasPrediction.set(true);
-      this.trendData.set(normalizeTrendData(serverData));
+      this.trendData.set(normalizedData);
       this.chart?.update();
 
       if (this.isBrowser) {
-        const latestValue = normalizeTrendData(serverData).at(-1)?.value ?? 0;
+        const latestValue = normalizedData.at(-1)?.value ?? 0;
         const announcement = `Prediction complete. Latest predicted price: ${formatCurrency(sanitizeCurrencyValue(latestValue))}`;
         requestAnimationFrame(() => {
           if (this.liveRegionEl) {
