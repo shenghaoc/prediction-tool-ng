@@ -111,6 +111,8 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
 
   writeValue(val: string): void {
     this.value.set(val ?? '');
+    // Reset dismiss flag so the dropdown behaves normally after a form reset.
+    this.escapeDismissed = false;
   }
 
   registerOnChange(fn: (value: string) => void): void {
@@ -126,6 +128,12 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   }
 
   protected onFocus(): void {
+    // Cancel any pending blur-close timer so a rapid tab-out + tab-back
+    // within the 150 ms window doesn't close a freshly re-opened dropdown.
+    if (this.blurTimeoutId !== null) {
+      clearTimeout(this.blurTimeoutId);
+      this.blurTimeoutId = null;
+    }
     this.focused.set(true);
     // Don't re-open on focus if the user dismissed the dropdown with Escape.
     if (!this.escapeDismissed) {

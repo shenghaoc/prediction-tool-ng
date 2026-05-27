@@ -54,7 +54,7 @@
           </li>
         }
         @if (query() && filtered().length < options.length) {
-          <li class="cb-count">{{ filtered().length }} of {{ options.length }}</li>
+          <li class="cb-count" role="presentation">{{ filtered().length }} of {{ options.length }}</li>
         }
       }
     </ul>

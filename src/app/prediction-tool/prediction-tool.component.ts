@@ -175,6 +175,9 @@ export class PredictionToolComponent implements OnInit {
     ChartConfiguration<'line'>['data']
   >(() => {
     void this.darkMode();
+    if (!this.isBrowser) {
+      return { labels: [], datasets: [] };
+    }
     return {
       labels: this.trendData().map((point) => point.label),
       datasets: [
