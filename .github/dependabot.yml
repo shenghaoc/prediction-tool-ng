@@ -11,42 +11,24 @@ updates:
       angular:
         patterns:
           - '@angular/*'
-        update-types:
-          - 'minor'
-          - 'patch'
       typescript:
         patterns:
           - 'typescript'
           - 'tslib'
           - '@types/*'
-        update-types:
-          - 'minor'
-          - 'patch'
       testing:
         patterns:
           - 'jasmine-core'
           - 'karma'
           - 'karma-*'
-        update-types:
-          - 'minor'
-          - 'patch'
       charting:
         patterns:
           - 'chart.js'
           - 'ng2-charts'
-        update-types:
-          - 'minor'
-          - 'patch'
       cloudflare:
         patterns:
           - '@cloudflare/*'
           - 'wrangler'
-        update-types:
-          - 'minor'
-          - 'patch'
       miscellaneous:
         patterns:
           - '*'
-        update-types:
-          - 'minor'
-          - 'patch'
