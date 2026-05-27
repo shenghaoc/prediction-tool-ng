@@ -97,6 +97,13 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     if (!this.isOpen()) return;
     const el = (event.target as HTMLElement);
     if (!this._elementRef.nativeElement.contains(el)) {
+      // Also cancel any pending blur-close timer — on touch devices blur fires
+      // before pointerdown, so without this cancellation close() would be
+      // called a second time when the timer expires.
+      if (this.blurTimeoutId !== null) {
+        clearTimeout(this.blurTimeoutId);
+        this.blurTimeoutId = null;
+      }
       this.close();
     }
   }
@@ -116,6 +123,12 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     this.value.set(val ?? '');
     // Reset dismiss flag so the dropdown behaves normally after a form reset.
     this.escapeDismissed = false;
+    // If a programmatic value change arrives while the dropdown is open and
+    // the user has an active search query, close it so the new value is
+    // immediately visible rather than hidden behind stale query state.
+    if (this.isOpen()) {
+      this.close();
+    }
   }
 
   registerOnChange(fn: (value: string) => void): void {
@@ -147,6 +160,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected onBlur(): void {
     this.focused.set(false);
     this.onTouched();
+    // The Escape-dismiss flag should only suppress the re-open for the duration
+    // of the current focus session.  Clear it here so that after the user
+    // presses Escape, navigates away, and tabs back, the dropdown opens normally.
+    this.escapeDismissed = false;
     // On desktop, mousedown.preventDefault() on the listbox/chevron prevents
     // blur from firing when clicking an option. On mobile touch there is no
     // mousedown, so blur can fire before the tap's click event; the 150 ms
@@ -226,7 +243,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
         break;
       case 'Tab':
         if (this.isOpen()) {
-          const opt = filtered[this.activeIndex()];
+          // Use an explicit index check (matching the Enter branch above) rather
+          // than relying on filtered[-1] === undefined to reach the close path.
+          const idx = this.activeIndex();
+          const opt = idx >= 0 ? filtered[idx] : undefined;
           if (opt) {
             this.selectOption(opt.value);
           } else {
@@ -249,7 +269,9 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected selectOption(val: string): void {
     this.value.set(val);
     this.onChange(val);
-    this.query.set('');
+    // Do NOT clear query here — close() handles it atomically so there is no
+    // intermediate state where isOpen=true + query='' + userTyped=true, which
+    // would cause inputDisplayValue to briefly return '' (a visible flash).
     this.close();
   }
 

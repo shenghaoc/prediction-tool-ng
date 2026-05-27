@@ -45,7 +45,9 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
 
   protected readonly numericValue = computed(() => {
     const v = this.rawValue();
-    if (v === '' || v === null || v === undefined) return null;
+    // rawValue is signal<number | string> — null/undefined can never be stored,
+    // so only the empty-string sentinel needs a null-return guard.
+    if (v === '') return null;
     const n = typeof v === 'number' ? v : parseFloat(String(v));
     return Number.isNaN(n) ? null : n;
   });
@@ -109,6 +111,9 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   protected startHold(event: PointerEvent, dir: 'inc' | 'dec'): void {
     if (this.disabled() || event.button !== 0) return;
     event.preventDefault();
+    // Cancel any existing hold (e.g. two-finger touch fires two pointerdown
+    // events) so we never leak an orphaned timer or interval.
+    this.stopHold();
 
     const fn = dir === 'inc' ? () => this.increment() : () => this.decrement();
     fn(); // fire once immediately
@@ -169,11 +174,14 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     switch (event.key) {
       case 'ArrowUp':
         event.preventDefault();
-        this.increment();
+        // Only step when the field has a valid numeric value; if the user is
+        // mid-entry with invalid text (e.g. "-") the stepper would silently
+        // operate on the stale rawValue and discard the partial input.
+        if (this.numericValue() !== null) this.increment();
         break;
       case 'ArrowDown':
         event.preventDefault();
-        this.decrement();
+        if (this.numericValue() !== null) this.decrement();
         break;
       case 'Home':
         event.preventDefault();
