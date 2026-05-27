@@ -227,11 +227,16 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
         }
         break;
       case 'Enter':
-        if (this.isOpen() && this.activeIndex() >= 0) {
+        if (this.isOpen()) {
           event.preventDefault();
-          const opt = filtered[this.activeIndex()];
+          // Only commit if there's an active option; otherwise just close to
+          // avoid letting the key bubble to the parent <form> and submitting.
+          const idx = this.activeIndex();
+          const opt = idx >= 0 ? filtered[idx] : undefined;
           if (opt) {
             this.selectOption(opt.value);
+          } else {
+            this.close();
           }
         }
         break;

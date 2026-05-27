@@ -192,14 +192,20 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     switch (event.key) {
       case 'ArrowUp':
         event.preventDefault();
-        // Only step when the field has a valid numeric value; if the user is
-        // mid-entry with invalid text (e.g. "-") the stepper would silently
-        // operate on the stale rawValue and discard the partial input.
-        if (this.numericValue() !== null) this.increment();
+        if (this.numericValue() !== null) {
+          // If the DOM shows invalid text (e.g. "abc") the stepper would
+          // silently operate on the old rawValue while the user sees garbage.
+          // Restore the DOM to the last valid display value first, then step.
+          this.restoreDisplayIfDirty();
+          this.increment();
+        }
         break;
       case 'ArrowDown':
         event.preventDefault();
-        if (this.numericValue() !== null) this.decrement();
+        if (this.numericValue() !== null) {
+          this.restoreDisplayIfDirty();
+          this.decrement();
+        }
         break;
       case 'Home':
         event.preventDefault();
@@ -235,5 +241,15 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   private setValue(n: number): void {
     this.rawValue.set(n);
     this.onChange(n);
+  }
+
+  /** If the DOM input shows invalid text, restore it to the last valid display value. */
+  private restoreDisplayIfDirty(): void {
+    if (!this.inputEl) return;
+    const current = this.inputEl.nativeElement.value;
+    const display = this.displayValue();
+    if (current !== display) {
+      this.inputEl.nativeElement.value = display;
+    }
   }
 }
