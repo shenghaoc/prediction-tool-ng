@@ -44,13 +44,18 @@ type PredictionFormValue = {
   storeyRange: StoreyRange;
   flatModel: FlatModel;
   floorAreaSqm: number;
-  leaseCommenceYear: number;
+  // string because the combobox CVA always emits strings; Angular's min/max
+  // validators coerce via parseFloat so validation still works correctly.
+  leaseCommenceYear: string;
 };
 
-type SummaryValues = Pick<
-  PredictionFormValue,
-  'mlModel' | 'town' | 'leaseCommenceYear'
->;
+// leaseCommenceYear is stored as a number here (clamped from the string form
+// value) so the template can render it directly without further conversion.
+type SummaryValues = {
+  mlModel: MlModel;
+  town: Town;
+  leaseCommenceYear: number;
+};
 
 type TrendPoint = {
   label: string;
@@ -89,7 +94,7 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
   storeyRange: storey_range_list[0],
   flatModel: flat_model_list[0],
   floorAreaSqm: MIN_FLOOR_AREA,
-  leaseCommenceYear: MAX_YEAR
+  leaseCommenceYear: String(MAX_YEAR)
 };
 
 @Component({
@@ -138,7 +143,15 @@ export class PredictionToolComponent implements OnInit {
   protected readonly summaryValues = signal<SummaryValues>({
     mlModel: INITIAL_FORM_VALUE.mlModel,
     town: INITIAL_FORM_VALUE.town,
-    leaseCommenceYear: INITIAL_FORM_VALUE.leaseCommenceYear
+    leaseCommenceYear: Number(INITIAL_FORM_VALUE.leaseCommenceYear)
+  });
+
+  protected readonly mlModelOptions = computed(() => {
+    void this.lang();
+    return this.mlModels.map((m) => ({
+      value: m,
+      label: this.translationService.translateOption('ml_models', m)
+    }));
   });
 
   protected readonly townOptions = computed(() => {
@@ -149,6 +162,27 @@ export class PredictionToolComponent implements OnInit {
       label: this.translationService.translateOption('towns', town)
     }));
   });
+
+  protected readonly storeyRangeOptions = computed(() => {
+    void this.lang();
+    return this.storeyRanges.map((s) => ({
+      value: s,
+      label: this.translationService.translateOption('storey_ranges', s)
+    }));
+  });
+
+  protected readonly flatModelOptions = computed(() => {
+    void this.lang();
+    return this.flatModels.map((f) => ({
+      value: f,
+      label: this.translationService.translateOption('flat_models', f)
+    }));
+  });
+
+  // leaseYears are plain numbers; no translation needed.
+  protected readonly leaseYearOptions = computed(() =>
+    this.leaseYears.map((y) => ({ value: String(y), label: String(y) }))
+  );
 
   protected readonly predictedPrice = computed(() => {
     const latestPoint = this.trendData().at(-1);
@@ -611,12 +645,13 @@ export class PredictionToolComponent implements OnInit {
         MAX_FLOOR_AREA,
         MIN_FLOOR_AREA
       ),
-      leaseCommenceYear: clampNumber(
+      // Stored as string to match the combobox CVA; clampNumber coerces safely.
+      leaseCommenceYear: String(clampNumber(
         savedForm.leaseCommenceYear,
         MIN_YEAR,
         MAX_YEAR,
         MAX_YEAR
-      )
+      ))
     };
 
     this.predictionForm.setValue(restoredFormValue, {
@@ -638,7 +673,7 @@ export class PredictionToolComponent implements OnInit {
         value.leaseCommenceYear,
         MIN_YEAR,
         MAX_YEAR,
-        INITIAL_FORM_VALUE.leaseCommenceYear
+        MAX_YEAR
       )
     });
   }
@@ -775,11 +810,17 @@ function clampNumber(
   max: number,
   fallback: number
 ): number {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
+  // Accept both plain numbers and string-encoded numbers (e.g. from combobox CVA
+  // which always emits strings, or from localStorage where JSON round-trips may
+  // preserve the original number type).
+  const n = typeof value === 'number' ? value
+          : typeof value === 'string' ? Number(value)
+          : NaN;
+  if (!Number.isFinite(n)) {
     return fallback;
   }
 
-  return Math.min(max, Math.max(min, Math.round(value)));
+  return Math.min(max, Math.max(min, Math.round(n)));
 }
 
 function sanitizeCurrencyValue(value: number): number {

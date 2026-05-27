@@ -108,13 +108,15 @@
                 <div class="form-grid">
                   <div class="field-group">
                     <label class="field-label" for="field-ml-model">{{ t('ml_model') }}</label>
-                    <select id="field-ml-model" class="field-select" formControlName="mlModel">
-                      @for (mlModel of mlModels; track mlModel) {
-                        <option [value]="mlModel">
-                          {{ tOption('ml_models', mlModel) }}
-                        </option>
-                      }
-                    </select>
+                    <app-combobox
+                      inputId="field-ml-model"
+                      formControlName="mlModel"
+                      [options]="mlModelOptions()"
+                      [placeholder]="t('ml_model')"
+                      [ariaLabel]="t('ml_model')"
+                      [noMatchesLabel]="t('combobox_no_matches')"
+                      [required]="true"
+                    ></app-combobox>
                   </div>
 
                   <div class="field-group">
@@ -132,24 +134,28 @@
 
                   <div class="field-group">
                     <label class="field-label" for="field-storey-range">{{ t('storey_range') }}</label>
-                    <select id="field-storey-range" class="field-select" formControlName="storeyRange">
-                      @for (storeyRange of storeyRanges; track storeyRange) {
-                        <option [value]="storeyRange">
-                          {{ tOption('storey_ranges', storeyRange) }}
-                        </option>
-                      }
-                    </select>
+                    <app-combobox
+                      inputId="field-storey-range"
+                      formControlName="storeyRange"
+                      [options]="storeyRangeOptions()"
+                      [placeholder]="t('storey_range')"
+                      [ariaLabel]="t('storey_range')"
+                      [noMatchesLabel]="t('combobox_no_matches')"
+                      [required]="true"
+                    ></app-combobox>
                   </div>
 
                   <div class="field-group">
                     <label class="field-label" for="field-flat-model">{{ t('flat_model') }}</label>
-                    <select id="field-flat-model" class="field-select" formControlName="flatModel">
-                      @for (flatModel of flatModels; track flatModel) {
-                        <option [value]="flatModel">
-                          {{ tOption('flat_models', flatModel) }}
-                        </option>
-                      }
-                    </select>
+                    <app-combobox
+                      inputId="field-flat-model"
+                      formControlName="flatModel"
+                      [options]="flatModelOptions()"
+                      [placeholder]="t('flat_model')"
+                      [ariaLabel]="t('flat_model')"
+                      [noMatchesLabel]="t('combobox_no_matches')"
+                      [required]="true"
+                    ></app-combobox>
                   </div>
 
                   <div class="field-group field-full">
@@ -183,15 +189,15 @@
 
                   <div class="field-group field-full">
                     <label class="field-label" for="field-lease-year">{{ t('lease_commence_date') }}</label>
-                    <select
-                      id="field-lease-year"
-                      class="field-select"
+                    <app-combobox
+                      inputId="field-lease-year"
                       formControlName="leaseCommenceYear"
-                    >
-                      @for (year of leaseYears; track year) {
-                        <option [value]="year">{{ year }}</option>
-                      }
-                    </select>
+                      [options]="leaseYearOptions()"
+                      [placeholder]="t('lease_commence_date')"
+                      [ariaLabel]="t('lease_commence_date')"
+                      [noMatchesLabel]="t('combobox_no_matches')"
+                      [required]="true"
+                    ></app-combobox>
                   </div>
 
                   <div class="button-row field-full">
