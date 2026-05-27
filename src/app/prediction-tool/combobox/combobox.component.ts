@@ -50,6 +50,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected readonly focused = signal(false);
   protected readonly activeIndex = signal(-1);
   protected readonly disabled = signal(false);
+  // Tracks whether the user has started typing since the dropdown was opened.
+  // While false the input shows the selected option's label; once true it shows
+  // the live query string so the user sees their own keystrokes.
+  protected readonly userTyped = signal(false);
 
   protected readonly listboxId = computed(() => `lb-${this.inputId()}`);
 
@@ -61,7 +65,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   });
 
   protected readonly inputDisplayValue = computed(() => {
-    if (this.isOpen()) {
+    // Only show the raw query string after the user has actually started typing;
+    // before that (or when closed) display the selected option's label so the
+    // value doesn't visually disappear the moment the dropdown opens.
+    if (this.isOpen() && this.userTyped()) {
       return this.query();
     }
     const selected = this.options().find((opt) => opt.value === this.value());
@@ -154,6 +161,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected onInput(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.query.set(target.value);
+    this.userTyped.set(true);
     this.activeIndex.set(this.filtered().length > 0 ? 0 : -1);
     // Typing is an explicit intent to open.
     this.escapeDismissed = false;
@@ -248,6 +256,9 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   private open(): void {
     this.isOpen.set(true);
     this.escapeDismissed = false;
+    // Reset the userTyped flag so the selected label stays visible until the
+    // user starts typing; also select all text so the first keystroke replaces it.
+    this.userTyped.set(false);
     // Pre-select the active index to the current value
     const f = this.filtered();
     const currentIdx = f.findIndex((opt) => opt.value === this.value());
@@ -262,6 +273,9 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     this.scrollTimeoutId = setTimeout(() => {
       this.scrollTimeoutId = null;
       this.scrollActiveIntoView();
+      // Select all text so the user can immediately type a new query without
+      // having to manually clear the existing label.
+      this.inputEl?.nativeElement.select();
     }, 0);
   }
 
@@ -269,6 +283,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     this.isOpen.set(false);
     this.query.set('');
     this.activeIndex.set(-1);
+    this.userTyped.set(false);
   }
 
   private scrollActiveIntoView(): void {

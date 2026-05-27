@@ -152,7 +152,9 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     // strings like "25abc" are rejected rather than silently parsed as 25.
     const n = Number(raw);
     if (!Number.isNaN(n)) {
-      this.rawValue.set(n);
+      // Store the raw string so a trailing decimal point ("25.") is preserved
+      // while the user is mid-entry; Angular's [value] binding won't strip it.
+      this.rawValue.set(raw);
       this.onChange(n);
     } else {
       // Invalid characters typed: immediately notify the form control so
