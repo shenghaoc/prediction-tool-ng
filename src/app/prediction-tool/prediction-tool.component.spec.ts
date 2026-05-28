@@ -34,4 +34,18 @@ describe('PredictionToolComponent', () => {
     expect(compiled.querySelector('.price-value.awaiting')?.textContent)
       .toContain('Awaiting prediction');
   });
+
+  it('should reset form interaction state via predictionForm().reset()', async () => {
+    await fixture.whenStable();
+    const form = component['predictionForm'];
+
+    form().markAsTouched();
+    expect(form().touched()).toBeTrue();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    compiled.querySelector<HTMLButtonElement>('.btn-reset')?.click();
+    await fixture.whenStable();
+
+    expect(form().touched()).toBeFalse();
+  });
 });

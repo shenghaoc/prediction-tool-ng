@@ -528,7 +528,8 @@ export class PredictionToolComponent implements OnInit {
 
   protected resetForm(): void {
     this.predictionModel.set({ ...INITIAL_FORM_VALUE });
-    // Clear touched/dirty/error state; the model update above does not reset interaction flags.
+    // Signal Forms API: call the field tree for FieldState, then reset interaction
+    // flags on the form and all descendants (documented as form().reset()).
     this.predictionForm().reset();
     this.hasPrediction.set(false);
     this.errorMessage.set('');
