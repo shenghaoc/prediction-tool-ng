@@ -16,7 +16,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideClientHydration(),
-    provideHttpClient(withFetch()),
+    provideHttpClient(withFetch()), // v22: withFetch() is deprecated; Fetch becomes the default — drop this argument when upgrading
     provideCharts({
       registerables: [
         LineController,
