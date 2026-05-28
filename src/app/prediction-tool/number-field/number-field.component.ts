@@ -3,17 +3,16 @@ import {
   Component,
   ElementRef,
   OnDestroy,
-  ViewChild,
   computed,
   forwardRef,
   input,
-  signal
+  signal,
+  viewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'app-number-field',
-  standalone: true,
   templateUrl: './number-field.component.html',
   styleUrl: './number-field.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,7 +36,7 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
   readonly decreaseLabel = input('Decrease value');
   readonly increaseLabel = input('Increase value');
 
-  @ViewChild('inputEl') inputEl?: ElementRef<HTMLInputElement>;
+  protected readonly inputEl = viewChild<ElementRef<HTMLInputElement>>('inputEl');
 
   protected readonly rawValue = signal<number | string>('');
   protected readonly focused = signal(false);
@@ -260,8 +259,9 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     }
     // Explicitly sync the DOM value so invalid non-numeric text (e.g. "25a") is
     // cleared even when rawValue didn't change and Angular's binding won't re-fire.
-    if (this.inputEl) {
-      this.inputEl.nativeElement.value = this.displayValue();
+    const inputEl = this.inputEl();
+    if (inputEl) {
+      inputEl.nativeElement.value = this.displayValue();
     }
   }
 
@@ -272,11 +272,12 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
 
   /** If the DOM input shows invalid text, restore it to the last valid display value. */
   private restoreDisplayIfDirty(): void {
-    if (!this.inputEl) return;
-    const current = this.inputEl.nativeElement.value;
+    const inputEl = this.inputEl();
+    if (!inputEl) return;
+    const current = inputEl.nativeElement.value;
     const display = this.displayValue();
     if (current !== display) {
-      this.inputEl.nativeElement.value = display;
+      inputEl.nativeElement.value = display;
     }
   }
 }

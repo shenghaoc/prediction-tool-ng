@@ -3,11 +3,12 @@ import {
   Component,
   ElementRef,
   OnDestroy,
-  ViewChild,
   computed,
   forwardRef,
+  inject,
   input,
-  signal
+  signal,
+  viewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
@@ -18,7 +19,6 @@ export interface ComboboxOption {
 
 @Component({
   selector: 'app-combobox',
-  standalone: true,
   templateUrl: './combobox.component.html',
   styleUrl: './combobox.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,8 +43,8 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   readonly ariaDescribedby = input<string | null>(null);
   readonly toggleLabel = input('Toggle options');
 
-  @ViewChild('inputEl') inputEl?: ElementRef<HTMLInputElement>;
-  @ViewChild('listboxEl') listboxEl?: ElementRef<HTMLUListElement>;
+  protected readonly inputEl = viewChild<ElementRef<HTMLInputElement>>('inputEl');
+  protected readonly listboxEl = viewChild<ElementRef<HTMLUListElement>>('listboxEl');
 
   protected readonly value = signal<string>('');
   protected readonly query = signal<string>('');
@@ -97,6 +97,8 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     return `opt-${this.resolvedInputId()}-${idx}`;
   });
 
+  private readonly _elementRef = inject(ElementRef);
+
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
   // Timeout ID for the post-open scroll; tracked so it can be cancelled on destroy.
@@ -123,8 +125,6 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
       this.close();
     }
   }
-
-  constructor(private _elementRef: ElementRef) {}
 
   ngOnDestroy(): void {
     if (this.scrollTimeoutId !== null) {
@@ -267,7 +267,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
           this.close();
           this.escapeDismissed = true;
           // Return focus to the input so the user can continue editing.
-          this.inputEl?.nativeElement.focus();
+          this.inputEl()?.nativeElement.focus();
         }
         break;
       case 'Tab':
@@ -286,7 +286,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
       this.close();
     } else {
       this.open();
-      this.inputEl?.nativeElement.focus();
+      this.inputEl()?.nativeElement.focus();
     }
   }
 
@@ -321,7 +321,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
       this.scrollActiveIntoView();
       // Select all text so the user can immediately type a new query without
       // having to manually clear the existing label.
-      this.inputEl?.nativeElement.select();
+      this.inputEl()?.nativeElement.select();
     }, 0);
   }
 
@@ -340,8 +340,9 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
 
   private scrollActiveIntoView(): void {
     const idx = this.activeIndex();
-    if (idx < 0 || !this.listboxEl) return;
-    const listbox = this.listboxEl.nativeElement;
+    const listboxEl = this.listboxEl();
+    if (idx < 0 || !listboxEl) return;
+    const listbox = listboxEl.nativeElement;
     const item = listbox.children[idx] as HTMLElement | undefined;
     if (item) {
       item.scrollIntoView({ block: 'nearest' });

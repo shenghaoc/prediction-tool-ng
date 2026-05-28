@@ -1,4 +1,5 @@
 import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideClientHydration } from '@angular/platform-browser';
 import { provideCharts } from 'ng2-charts';
 import {
@@ -15,6 +16,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideClientHydration(),
+    provideHttpClient(withFetch()), // v22: withFetch() is deprecated; Fetch becomes the default — drop this argument when upgrading
     provideCharts({
       registerables: [
         LineController,
