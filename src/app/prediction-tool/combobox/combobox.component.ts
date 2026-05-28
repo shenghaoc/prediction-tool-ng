@@ -257,11 +257,13 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
         }
         break;
       case 'Escape':
-        // Always prevent default when the input is focused so the event does
-        // not bubble to a document-level listener (e.g. prediction-tool's
-        // form-reset shortcut) and accidentally reset the entire form.
-        event.preventDefault();
         if (this.isOpen()) {
+          // Only prevent / stop propagation when the dropdown is actually open,
+          // so that Escape when the combobox is closed can bubble up and let the
+          // parent form (e.g. prediction-tool's document-level listener) handle
+          // it as a form-reset shortcut.
+          event.preventDefault();
+          event.stopPropagation();
           this.close();
           this.escapeDismissed = true;
           // Return focus to the input so the user can continue editing.
