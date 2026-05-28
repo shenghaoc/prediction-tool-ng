@@ -10,6 +10,7 @@
       aria-autocomplete="list"
       aria-haspopup="listbox"
       [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-describedby]="ariaDescribedby()"
       [attr.aria-required]="required() || null"
       [value]="inputDisplayValue()"
       [placeholder]="placeholder()"

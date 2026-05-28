@@ -593,6 +593,19 @@ export class PredictionToolComponent implements OnInit {
       : null;
   }
 
+  protected leaseYearErrorId(): string | null {
+    const c = this.predictionForm.controls.leaseCommenceYear;
+    return c.touched && (c.hasError('min') || c.hasError('max'))
+      ? 'lease-year-error'
+      : null;
+  }
+
+  protected leaseYearRangeMessage(): string {
+    return this.t('lease_year_range')
+      .replace('{min}', String(MIN_YEAR))
+      .replace('{max}', String(MAX_YEAR));
+  }
+
   protected formatCurrency(value: number): string {
     return formatCurrency(value);
   }

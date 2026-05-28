@@ -199,10 +199,18 @@
                       [options]="leaseYearOptions()"
                       [placeholder]="t('lease_commence_date')"
                       [ariaLabel]="t('lease_commence_date')"
+                      [ariaDescribedby]="leaseYearErrorId()"
                       [noMatchesLabel]="t('combobox_no_matches')"
                       [toggleLabel]="t('toggle_options')"
                       [required]="true"
                     ></app-combobox>
+                    @if (
+                      (predictionForm.controls.leaseCommenceYear.hasError('min') ||
+                        predictionForm.controls.leaseCommenceYear.hasError('max')) &&
+                      predictionForm.controls.leaseCommenceYear.touched
+                    ) {
+                      <span id="lease-year-error" class="field-error">{{ leaseYearRangeMessage() }}</span>
+                    }
                   </div>
 
                   <div class="button-row field-full">

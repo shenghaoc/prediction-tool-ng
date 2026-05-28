@@ -40,6 +40,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   readonly ariaLabel = input('');
   readonly noMatchesLabel = input('No matches');
   readonly required = input(false);
+  readonly ariaDescribedby = input<string | null>(null);
   readonly toggleLabel = input('Toggle options');
 
   @ViewChild('inputEl') inputEl?: ElementRef<HTMLInputElement>;
