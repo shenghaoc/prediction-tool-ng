@@ -1,4 +1,5 @@
 import { provideZonelessChangeDetection } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { PredictionToolComponent } from './prediction-tool.component';
@@ -11,7 +12,7 @@ describe('PredictionToolComponent', () => {
     localStorage.clear();
     await TestBed.configureTestingModule({
       imports: [PredictionToolComponent],
-      providers: [provideZonelessChangeDetection()]
+      providers: [provideZonelessChangeDetection(), provideHttpClient()]
     })
     .compileComponents();
 
