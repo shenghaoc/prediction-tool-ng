@@ -17,10 +17,6 @@ export class TranslationService {
     return TRANSLATION_RESOURCES[this.lang()].options[group][value] ?? value;
   }
 
-  currentLang(): Lang {
-    return this.lang();
-  }
-
   setLanguage(lang: Lang): void {
     this.lang.set(lang);
     this.storageService.setItem('lang', lang);

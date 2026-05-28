@@ -1,22 +1,22 @@
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   ElementRef,
-  HostListener,
   OnInit,
   PLATFORM_ID,
-  ViewChild,
   computed,
+  effect,
   inject,
-  signal
+  signal,
+  viewChild
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
 import { Temporal } from '@js-temporal/polyfill';
+import { firstValueFrom } from 'rxjs';
+import { Field, form, max, min, required, submit, validate } from '@angular/forms/signals';
 
 import {
   flat_model_list,
@@ -44,8 +44,7 @@ type PredictionFormValue = {
   storeyRange: StoreyRange;
   flatModel: FlatModel;
   floorAreaSqm: number;
-  // string because the combobox CVA always emits strings; Angular's min/max
-  // validators coerce via parseFloat so validation still works correctly.
+  // string because the combobox CVA always emits strings.
   leaseCommenceYear: string;
 };
 
@@ -102,8 +101,11 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
   templateUrl: './prediction-tool.component.html',
   styleUrl: './prediction-tool.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:keydown)': 'onDocumentKeyDown($event)'
+  },
   imports: [
-    ReactiveFormsModule,
+    Field,
     BaseChartDirective,
     ComboboxComponent,
     NumberFieldComponent
@@ -112,14 +114,13 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
 export class PredictionToolComponent implements OnInit {
   protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly document = inject(DOCUMENT);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly storageService = inject(StorageService);
-  private readonly formBuilder = inject(FormBuilder);
+  private readonly http = inject(HttpClient);
   private readonly translationService = inject(TranslationService);
 
-  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
-  @ViewChild('resultsAnchor') resultsAnchor?: ElementRef<HTMLElement>;
-  @ViewChild('resultsHeading') resultsHeadingEl?: ElementRef<HTMLElement>;
+  protected readonly chart = viewChild(BaseChartDirective);
+  protected readonly resultsAnchor = viewChild<ElementRef<HTMLElement>>('resultsAnchor');
+  protected readonly resultsHeadingEl = viewChild<ElementRef<HTMLElement>>('resultsHeading');
 
   protected readonly lang = this.translationService.lang;
   protected readonly mlModels = ml_model_list;
@@ -140,46 +141,35 @@ export class PredictionToolComponent implements OnInit {
   protected readonly trendData = signal<TrendPoint[]>(
     createDefaultTrendData()
   );
-  protected readonly summaryValues = signal<SummaryValues>({
-    mlModel: INITIAL_FORM_VALUE.mlModel,
-    town: INITIAL_FORM_VALUE.town,
-    leaseCommenceYear: Number(INITIAL_FORM_VALUE.leaseCommenceYear)
-  });
 
-  protected readonly mlModelOptions = computed(() => {
-    void this.lang();
-    return this.mlModels.map((m) => ({
+  protected readonly mlModelOptions = computed(() =>
+    this.mlModels.map((m) => ({
       value: m,
       label: this.translationService.translateOption('ml_models', m)
-    }));
-  });
+    }))
+  );
 
-  protected readonly townOptions = computed(() => {
-    // Depend on lang signal so options re-translate on language switch
-    void this.lang();
-    return this.towns.map((town) => ({
+  protected readonly townOptions = computed(() =>
+    this.towns.map((town) => ({
       value: town,
       label: this.translationService.translateOption('towns', town)
-    }));
-  });
+    }))
+  );
 
-  protected readonly storeyRangeOptions = computed(() => {
-    void this.lang();
-    return this.storeyRanges.map((s) => ({
+  protected readonly storeyRangeOptions = computed(() =>
+    this.storeyRanges.map((s) => ({
       value: s,
       label: this.translationService.translateOption('storey_ranges', s)
-    }));
-  });
+    }))
+  );
 
-  protected readonly flatModelOptions = computed(() => {
-    void this.lang();
-    return this.flatModels.map((f) => ({
+  protected readonly flatModelOptions = computed(() =>
+    this.flatModels.map((f) => ({
       value: f,
       label: this.translationService.translateOption('flat_models', f)
-    }));
-  });
+    }))
+  );
 
-  // leaseYears are plain numbers; no translation needed.
   protected readonly leaseYearOptions = computed(() =>
     this.leaseYears.map((y) => ({ value: String(y), label: String(y) }))
   );
@@ -257,9 +247,7 @@ export class PredictionToolComponent implements OnInit {
       id: 'latestGlow',
       afterDatasetsDraw: (chart: any) => {
         const { ctx } = chart;
-        // Guard: glow is '' until updateChartColorsCache() runs; an empty
-        // fillStyle produces an invisible fill, not a crash, but skip early
-        // to stay consistent with the gradientLine guard above.
+        // Guard: glow is '' until updateChartColorsCache() runs.
         if (!this.chartColors.glow) return;
         const meta = chart.getDatasetMeta(0);
         if (!meta || !meta.data || meta.data.length === 0) return;
@@ -335,8 +323,6 @@ export class PredictionToolComponent implements OnInit {
         y: {
           // grace adds padding above/below the data range so the line is
           // never squashed against the top or bottom of the chart area.
-          // Without this Chart.js defaults to starting at 0, which pushes
-          // HDB resale prices ($300k–$700k) into a thin band at the top.
           grace: '15%',
           grid: {
             color: (context: any) =>
@@ -355,30 +341,70 @@ export class PredictionToolComponent implements OnInit {
     };
   });
 
-  protected readonly predictionForm = this.formBuilder.nonNullable.group({
-    mlModel: [INITIAL_FORM_VALUE.mlModel, Validators.required],
-    town: [INITIAL_FORM_VALUE.town, Validators.required],
-    storeyRange: [INITIAL_FORM_VALUE.storeyRange, Validators.required],
-    flatModel: [INITIAL_FORM_VALUE.flatModel, Validators.required],
-    floorAreaSqm: [
-      INITIAL_FORM_VALUE.floorAreaSqm,
-      [
-        Validators.required,
-        Validators.min(MIN_FLOOR_AREA),
-        Validators.max(MAX_FLOOR_AREA)
-      ]
-    ],
-    leaseCommenceYear: [
-      INITIAL_FORM_VALUE.leaseCommenceYear,
-      [
-        Validators.min(MIN_YEAR),
-        Validators.max(MAX_YEAR)
-      ]
-    ]
+  private readonly predictionModel = signal<PredictionFormValue>({ ...INITIAL_FORM_VALUE });
+
+  protected readonly predictionForm = form(this.predictionModel, (s) => {
+    required(s.mlModel);
+    required(s.town);
+    required(s.storeyRange);
+    required(s.flatModel);
+    required(s.floorAreaSqm);
+    min(s.floorAreaSqm, MIN_FLOOR_AREA);
+    max(s.floorAreaSqm, MAX_FLOOR_AREA);
+    validate(s.leaseCommenceYear, ({ value }) => {
+      const n = Number(value());
+      if (!Number.isFinite(n) || n < MIN_YEAR || n > MAX_YEAR) {
+        return { kind: 'range' };
+      }
+      return undefined;
+    });
   });
 
-  @HostListener('document:keydown', ['$event'])
-  onDocumentKeyDown(event: KeyboardEvent): void {
+  protected readonly summaryValues = computed<SummaryValues>(() => {
+    const value = this.predictionModel();
+    return {
+      mlModel: coerceOption(value.mlModel, ml_model_list),
+      town: coerceOption(value.town, town_list),
+      leaseCommenceYear: clampNumber(value.leaseCommenceYear, MIN_YEAR, MAX_YEAR, MAX_YEAR)
+    };
+  });
+
+  protected readonly floorAreaErrorId = computed(() => {
+    const state = this.predictionForm.floorAreaSqm();
+    return state.touched() && state.errors().length > 0 ? 'floor-area-error' : null;
+  });
+
+  protected readonly floorAreaRequiredError = computed(() => {
+    const state = this.predictionForm.floorAreaSqm();
+    return state.touched() && state.errors().some(e => e.kind === 'required');
+  });
+
+  protected readonly floorAreaRangeError = computed(() => {
+    const state = this.predictionForm.floorAreaSqm();
+    return state.touched() && state.errors().some(e => e.kind === 'min' || e.kind === 'max');
+  });
+
+  protected readonly leaseYearErrorId = computed(() => {
+    const state = this.predictionForm.leaseCommenceYear();
+    return state.touched() && state.errors().length > 0 ? 'lease-year-error' : null;
+  });
+
+  protected readonly leaseYearRangeError = computed(() => {
+    const state = this.predictionForm.leaseCommenceYear();
+    return state.touched() && state.errors().some(e => e.kind === 'range');
+  });
+
+  constructor() {
+    // Persist form state to localStorage whenever the model changes.
+    // Writing to localStorage is a valid effect use case (imperative side effect).
+    effect(() => {
+      if (this.isBrowser) {
+        this.storageService.setItem('predictionFormData', this.predictionModel());
+      }
+    });
+  }
+
+  protected onDocumentKeyDown(event: KeyboardEvent): void {
     // Ignore events already handled by child components (e.g. Escape inside Combobox).
     if (event.defaultPrevented) {
       return;
@@ -405,102 +431,60 @@ export class PredictionToolComponent implements OnInit {
     if (this.isBrowser) {
       this.restoreTheme();
       this.restoreFormState();
+      this.syncDocumentState();
+      this.updateChartColorsCache();
     }
-
-    this.syncSummaryWithForm();
-    this.syncDocumentState();
-    this.updateChartColorsCache();
 
     this.mounted.set(true);
 
     if (this.isBrowser) {
       this.document.body.classList.add('theme-ready');
     }
-
-    this.predictionForm.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((partialValue) => {
-        const nextValue = {
-          ...this.predictionForm.getRawValue(),
-          ...partialValue
-        };
-
-        this.syncSummaryWithForm(nextValue);
-
-        if (!this.hasPrediction()) {
-          this.trendData.set(
-            createDefaultTrendData()
-          );
-        }
-
-        if (this.isBrowser) {
-          this.storageService.setItem('predictionFormData', nextValue);
-        }
-      });
   }
 
   protected async onSubmit(): Promise<void> {
-    if (this.predictionForm.invalid || !this.isBrowser || this.loading()) {
-      // Only mark touched when the form is invalid (not when blocking a concurrent request)
-      if (!this.loading()) this.predictionForm.markAllAsTouched();
-      return;
-    }
+    if (!this.isBrowser || this.loading()) return;
 
-    this.loading.set(true);
-    this.errorMessage.set('');
+    await submit(this.predictionForm, async () => {
+      this.loading.set(true);
+      this.errorMessage.set('');
 
-    const formValue = this.predictionForm.getRawValue();
-    const clampedFloorArea = clampNumber(
-      formValue.floorAreaSqm,
-      MIN_FLOOR_AREA,
-      MAX_FLOOR_AREA,
-      MIN_FLOOR_AREA
-    );
-    const predictionWindow = getPredictionWindow();
+      const formValue = this.predictionModel();
+      const clampedFloorArea = clampNumber(
+        formValue.floorAreaSqm,
+        MIN_FLOOR_AREA,
+        MAX_FLOOR_AREA,
+        MIN_FLOOR_AREA
+      );
 
-    if (clampedFloorArea !== formValue.floorAreaSqm) {
-      this.predictionForm.controls.floorAreaSqm.setValue(clampedFloorArea, {
-        emitEvent: false
-      });
-    }
-
-    const requestPayload: PredictionRequestPayload = {
-      model: formValue.mlModel,
-      monthStart: predictionWindow.monthStart,
-      monthEnd: predictionWindow.monthEnd,
-      town: formValue.town,
-      storeyRange: formValue.storeyRange,
-      flatModel: formValue.flatModel,
-      floorAreaSqm: clampedFloorArea.toString(),
-      leaseCommenceYear: formValue.leaseCommenceYear.toString()
-    };
-    const formData = createPredictionFormData(requestPayload);
-
-    try {
-      const response = await fetch(PREDICTION_API_URL, {
-        method: 'POST',
-        body: formData
-      });
-      const responseText = await response.text();
-
-      if (!response.ok) {
-        throw new Error(
-          formatPredictionError(
-            `API request failed with ${response.status} ${response.statusText}`,
-            responseText,
-            requestPayload
-          )
-        );
+      if (clampedFloorArea !== formValue.floorAreaSqm) {
+        this.predictionModel.update(v => ({ ...v, floorAreaSqm: clampedFloorArea }));
       }
 
-      const serverData = parsePredictionResponse(responseText, requestPayload);
-      const normalizedData = normalizeTrendData(serverData);
+      const predictionWindow = getPredictionWindow();
+      const requestPayload: PredictionRequestPayload = {
+        model: formValue.mlModel,
+        monthStart: predictionWindow.monthStart,
+        monthEnd: predictionWindow.monthEnd,
+        town: formValue.town,
+        storeyRange: formValue.storeyRange,
+        flatModel: formValue.flatModel,
+        floorAreaSqm: clampedFloorArea.toString(),
+        leaseCommenceYear: formValue.leaseCommenceYear.toString()
+      };
+      const formData = createPredictionFormData(requestPayload);
 
-      this.hasPrediction.set(true);
-      this.trendData.set(normalizedData);
-      this.chart?.update();
+      try {
+        const responseText = await firstValueFrom(
+          this.http.post(PREDICTION_API_URL, formData, { responseType: 'text' })
+        );
+        const serverData = parsePredictionResponse(responseText, requestPayload);
+        const normalizedData = normalizeTrendData(serverData);
 
-      if (this.isBrowser) {
+        this.hasPrediction.set(true);
+        this.trendData.set(normalizedData);
+        this.chart()?.update();
+
         const latestValue = normalizedData.at(-1)?.value ?? 0;
         const priceStr = formatCurrency(sanitizeCurrencyValue(latestValue));
         const announcement = this.t('prediction_complete').replace('{price}', priceStr);
@@ -509,10 +493,10 @@ export class PredictionToolComponent implements OnInit {
         this.liveMessage.set('');
         requestAnimationFrame(() => {
           this.liveMessage.set(announcement);
-          this.resultsAnchor?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          this.resultsAnchor()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           // Focus the results heading for keyboard users, then drop the
           // temporary tabindex once focus leaves so it isn't left interactive.
-          const heading = this.resultsHeadingEl?.nativeElement;
+          const heading = this.resultsHeadingEl()?.nativeElement;
           if (heading) {
             heading.setAttribute('tabindex', '-1');
             heading.focus({ preventScroll: true });
@@ -523,30 +507,31 @@ export class PredictionToolComponent implements OnInit {
             );
           }
         });
+      } catch (error: unknown) {
+        if (error instanceof HttpErrorResponse) {
+          console.error('Prediction request failed', {
+            summary: formatPredictionError(
+              `API request failed with ${error.status} ${error.statusText}`,
+              typeof error.error === 'string' ? error.error : '',
+              requestPayload
+            )
+          });
+        } else {
+          console.error('Prediction request failed', { error, requestPayload });
+        }
+        this.errorMessage.set(this.t('error_fetch'));
+      } finally {
+        this.loading.set(false);
       }
-    } catch (error: unknown) {
-      console.error('Prediction request failed', {
-        error,
-        requestPayload
-      });
-      this.errorMessage.set(this.t('error_fetch'));
-    } finally {
-      this.loading.set(false);
-    }
+    });
   }
 
   protected resetForm(): void {
-    this.predictionForm.reset(INITIAL_FORM_VALUE);
+    this.predictionModel.set({ ...INITIAL_FORM_VALUE });
+    this.predictionForm().reset();
     this.hasPrediction.set(false);
     this.errorMessage.set('');
-    this.trendData.set(
-      createDefaultTrendData()
-    );
-    this.syncSummaryWithForm(INITIAL_FORM_VALUE);
-
-    if (this.isBrowser) {
-      this.storageService.removeItem('predictionFormData');
-    }
+    this.trendData.set(createDefaultTrendData());
   }
 
   protected toggleTheme(): void {
@@ -562,7 +547,7 @@ export class PredictionToolComponent implements OnInit {
 
     this.syncDocumentState();
     this.updateChartColorsCache();
-    this.chart?.update();
+    this.chart()?.update();
   }
 
   protected toggleLanguage(): void {
@@ -576,28 +561,6 @@ export class PredictionToolComponent implements OnInit {
 
   protected tOption(group: OptionGroup, value: string): string {
     return this.translationService.translateOption(group, value);
-  }
-
-  // A plain method (not a computed signal) is correct here. statusChanges
-  // only emits on VALID/INVALID/PENDING transitions — it does NOT emit when
-  // markAllAsTouched() is called on an already-INVALID control (touched state
-  // changes but validation status stays INVALID). A plain method is always
-  // re-evaluated during the CD run that follows any zone-triggered event
-  // (including the form submit that calls markAllAsTouched()), so it reliably
-  // reflects the current touched+error state without missing the key case.
-  protected floorAreaErrorId(): string | null {
-    const c = this.predictionForm.controls.floorAreaSqm;
-    return c.touched &&
-      (c.hasError('required') || c.hasError('min') || c.hasError('max'))
-      ? 'floor-area-error'
-      : null;
-  }
-
-  protected leaseYearErrorId(): string | null {
-    const c = this.predictionForm.controls.leaseCommenceYear;
-    return c.touched && (c.hasError('min') || c.hasError('max'))
-      ? 'lease-year-error'
-      : null;
   }
 
   protected leaseYearRangeMessage(): string {
@@ -641,13 +604,10 @@ export class PredictionToolComponent implements OnInit {
       );
 
     if (!savedForm) {
-      this.trendData.set(
-        createDefaultTrendData()
-      );
       return;
     }
 
-    const restoredFormValue: PredictionFormValue = {
+    this.predictionModel.set({
       mlModel: coerceOption(savedForm.mlModel, ml_model_list),
       town: coerceOption(savedForm.town, town_list),
       storeyRange: coerceOption(savedForm.storeyRange, storey_range_list),
@@ -658,36 +618,12 @@ export class PredictionToolComponent implements OnInit {
         MAX_FLOOR_AREA,
         MIN_FLOOR_AREA
       ),
-      // Stored as string to match the combobox CVA; clampNumber coerces safely.
       leaseCommenceYear: String(clampNumber(
         savedForm.leaseCommenceYear,
         MIN_YEAR,
         MAX_YEAR,
         MAX_YEAR
       ))
-    };
-
-    this.predictionForm.setValue(restoredFormValue, {
-      emitEvent: false
-    });
-    this.trendData.set(
-      createDefaultTrendData()
-    );
-    this.syncSummaryWithForm(restoredFormValue);
-  }
-
-  private syncSummaryWithForm(
-    value: Partial<PredictionFormValue> = this.predictionForm.getRawValue()
-  ): void {
-    this.summaryValues.set({
-      mlModel: coerceOption(value.mlModel, ml_model_list),
-      town: coerceOption(value.town, town_list),
-      leaseCommenceYear: clampNumber(
-        value.leaseCommenceYear,
-        MIN_YEAR,
-        MAX_YEAR,
-        MAX_YEAR
-      )
     });
   }
 
@@ -696,7 +632,7 @@ export class PredictionToolComponent implements OnInit {
       return;
     }
 
-    const currentLanguage = this.translationService.currentLang();
+    const currentLanguage = this.translationService.lang();
     this.document.documentElement.lang = currentLanguage;
     this.document.documentElement.setAttribute(
       'data-lang',
@@ -823,9 +759,6 @@ function clampNumber(
   max: number,
   fallback: number
 ): number {
-  // Accept both plain numbers and string-encoded numbers (e.g. from combobox CVA
-  // which always emits strings, or from localStorage where JSON round-trips may
-  // preserve the original number type).
   const n = typeof value === 'number' ? value
           : typeof value === 'string' ? Number(value)
           : NaN;

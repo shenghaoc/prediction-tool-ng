@@ -101,8 +101,7 @@
               <h2 id="form-heading" class="section-title">{{ t('prediction_form') }}</h2>
 
               <form
-                [formGroup]="predictionForm"
-                (ngSubmit)="onSubmit()"
+                (submit)="onSubmit(); $event.preventDefault()"
                 novalidate
               >
                 <div class="form-grid">
@@ -110,7 +109,7 @@
                     <label class="field-label" for="field-ml-model">{{ t('ml_model') }}</label>
                     <app-combobox
                       inputId="field-ml-model"
-                      formControlName="mlModel"
+                      [field]="predictionForm.mlModel"
                       [options]="mlModelOptions()"
                       [placeholder]="t('ml_model')"
                       [ariaLabel]="t('ml_model')"
@@ -124,7 +123,7 @@
                     <label class="field-label" for="field-town">{{ t('town') }}</label>
                     <app-combobox
                       inputId="field-town"
-                      formControlName="town"
+                      [field]="predictionForm.town"
                       [options]="townOptions()"
                       [placeholder]="t('town')"
                       [ariaLabel]="t('town')"
@@ -138,7 +137,7 @@
                     <label class="field-label" for="field-storey-range">{{ t('storey_range') }}</label>
                     <app-combobox
                       inputId="field-storey-range"
-                      formControlName="storeyRange"
+                      [field]="predictionForm.storeyRange"
                       [options]="storeyRangeOptions()"
                       [placeholder]="t('storey_range')"
                       [ariaLabel]="t('storey_range')"
@@ -152,7 +151,7 @@
                     <label class="field-label" for="field-flat-model">{{ t('flat_model') }}</label>
                     <app-combobox
                       inputId="field-flat-model"
-                      formControlName="flatModel"
+                      [field]="predictionForm.flatModel"
                       [options]="flatModelOptions()"
                       [placeholder]="t('flat_model')"
                       [ariaLabel]="t('flat_model')"
@@ -166,7 +165,7 @@
                     <label class="field-label" for="field-floor-area">{{ t('floor_area') }}</label>
                     <app-number-field
                       inputId="field-floor-area"
-                      formControlName="floorAreaSqm"
+                      [field]="predictionForm.floorAreaSqm"
                       [min]="20"
                       [max]="300"
                       [step]="1"
@@ -177,16 +176,9 @@
                       [decreaseLabel]="t('decrease_value')"
                       [increaseLabel]="t('increase_value')"
                     ></app-number-field>
-                    @if (
-                      predictionForm.controls.floorAreaSqm.hasError('required') &&
-                      predictionForm.controls.floorAreaSqm.touched
-                    ) {
+                    @if (floorAreaRequiredError()) {
                       <span id="floor-area-error" class="field-error">{{ t('missing_floor_area') }}</span>
-                    } @else if (
-                      (predictionForm.controls.floorAreaSqm.hasError('min') ||
-                        predictionForm.controls.floorAreaSqm.hasError('max')) &&
-                      predictionForm.controls.floorAreaSqm.touched
-                    ) {
+                    } @else if (floorAreaRangeError()) {
                       <span id="floor-area-error" class="field-error">{{ t('floor_area_range') }}</span>
                     }
                   </div>
@@ -195,7 +187,7 @@
                     <label class="field-label" for="field-lease-year">{{ t('lease_commence_date') }}</label>
                     <app-combobox
                       inputId="field-lease-year"
-                      formControlName="leaseCommenceYear"
+                      [field]="predictionForm.leaseCommenceYear"
                       [options]="leaseYearOptions()"
                       [placeholder]="t('lease_commence_date')"
                       [ariaLabel]="t('lease_commence_date')"
@@ -204,11 +196,7 @@
                       [toggleLabel]="t('toggle_options')"
                       [required]="true"
                     ></app-combobox>
-                    @if (
-                      (predictionForm.controls.leaseCommenceYear.hasError('min') ||
-                        predictionForm.controls.leaseCommenceYear.hasError('max')) &&
-                      predictionForm.controls.leaseCommenceYear.touched
-                    ) {
+                    @if (leaseYearRangeError()) {
                       <span id="lease-year-error" class="field-error">{{ leaseYearRangeMessage() }}</span>
                     }
                   </div>
@@ -217,7 +205,7 @@
                     <button
                       class="btn-primary"
                       type="submit"
-                      [disabled]="predictionForm.invalid || loading()"
+                      [disabled]="predictionForm().invalid() || loading()"
                     >
                       <span [class.loading-pulse]="loading()">
                         {{ loading() ? t('predicting') : t('get_prediction') }}
