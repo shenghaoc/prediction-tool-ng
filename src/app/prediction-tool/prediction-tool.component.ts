@@ -528,6 +528,7 @@ export class PredictionToolComponent implements OnInit {
 
   protected resetForm(): void {
     this.predictionModel.set({ ...INITIAL_FORM_VALUE });
+    // Clear touched/dirty/error state; the model update above does not reset interaction flags.
     this.predictionForm().reset();
     this.hasPrediction.set(false);
     this.errorMessage.set('');
@@ -563,11 +564,11 @@ export class PredictionToolComponent implements OnInit {
     return this.translationService.translateOption(group, value);
   }
 
-  protected leaseYearRangeMessage(): string {
-    return this.t('lease_year_range')
+  protected readonly leaseYearRangeMessage = computed(() =>
+    this.t('lease_year_range')
       .replace('{min}', String(MIN_YEAR))
-      .replace('{max}', String(MAX_YEAR));
-  }
+      .replace('{max}', String(MAX_YEAR))
+  );
 
   protected formatCurrency(value: number): string {
     return formatCurrency(value);
