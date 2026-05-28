@@ -76,10 +76,10 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
+  min-height: var(--height-button, 32px);
   padding: 8px 14px;
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  border-radius: calc(var(--radius) * 1.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 3px);
   background: var(--card);
   color: var(--foreground);
   font: inherit;
@@ -113,11 +113,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: var(--height-button, 32px);
+  height: var(--height-button, 32px);
   padding: 0;
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  border-radius: calc(var(--radius) * 1.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 3px);
   background: var(--card);
   color: var(--foreground);
   cursor: pointer;
@@ -146,7 +146,7 @@
 
 /* ── Skeleton ───────────────────────────────────────────────────── */
 .skeleton {
-  border-radius: calc(var(--radius) * 1.4);
+  border-radius: var(--radius-sm, 3px);
   background: var(--muted);
 }
 
@@ -174,26 +174,12 @@
 .panel-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  border-radius: calc(var(--radius) * 1.8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 6px);
   background: var(--card);
-  box-shadow:
-    0 1px 3px color-mix(in oklab, var(--foreground) 4%, transparent),
-    0 4px 16px color-mix(in oklab, var(--foreground) 6%, transparent);
   transition:
     background 200ms ease,
-    border-color 200ms ease,
-    box-shadow 300ms ease;
-}
-.panel-card:hover {
-  box-shadow:
-    0 1px 3px color-mix(in oklab, var(--foreground) 4%, transparent),
-    0 4px 16px color-mix(in oklab, var(--foreground) 6%, transparent),
-    0 8px 32px color-mix(in oklab, var(--primary) 5%, transparent);
-}
-
-.panel-card-accent {
-  border-left: 4px solid color-mix(in oklab, var(--primary) 70%, transparent);
+    border-color 200ms ease;
 }
 
 .card-inner {
@@ -257,8 +243,8 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  border-radius: calc(var(--radius) * 1.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 3px);
   background: color-mix(in oklab, var(--card) 90%, transparent);
   box-shadow: 0 1px 2px color-mix(in oklab, var(--foreground) 2%, transparent);
   transition:
@@ -280,7 +266,7 @@
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  border-radius: calc(var(--radius) * 1.4);
+  border-radius: var(--radius-sm, 3px);
   background: color-mix(in oklab, var(--primary) 10%, transparent);
   border: 1px solid color-mix(in oklab, var(--primary) 15%, transparent);
   color: var(--primary);
@@ -374,72 +360,64 @@
 .field-select,
 .field-input {
   width: 100%;
-  min-height: 42px;
-  padding: 10px 14px;
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  border-radius: calc(var(--radius) * 1.4);
+  min-height: var(--height-field, 32px);
+  padding: 0 32px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 3px);
   background: var(--card);
   color: var(--foreground);
   font: inherit;
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 500;
+  font-size: 0.875rem;
   outline: none;
   appearance: none;
   -webkit-appearance: none;
   transition:
     border-color 200ms ease,
-    box-shadow 200ms ease,
-    background 200ms ease,
-    color 200ms ease;
+    box-shadow 200ms ease;
 }
 
 .field-select {
   cursor: pointer;
   background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 14px center;
-  padding-right: 38px;
+  background-position: right 10px center;
 }
 
 .field-input {
   cursor: text;
+  padding: 0 10px;
 }
 
-.field-select:hover,
-.field-input:hover {
-  border-color: color-mix(in oklab, var(--primary) 30%, transparent);
-}
-
-.field-select:focus-visible,
-.field-input:focus-visible {
+.field-select:focus,
+.field-input:focus {
+  outline: none;
   border-color: color-mix(in oklab, var(--primary) 50%, transparent);
-  box-shadow:
-    0 0 0 3px color-mix(in oklab, var(--ring) 15%, transparent),
-    0 4px 12px color-mix(in oklab, var(--primary) 5%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 18%, transparent);
 }
 
 .field-input::placeholder {
   color: var(--muted-foreground);
-  font-weight: 500;
+  font-weight: 400;
 }
 
-/* Unit input wrapper */
+/* Unit input wrapper (legacy — kept for non-replaced inputs) */
 .unit-wrap {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .unit-wrap .field-input {
-  border-radius: calc(var(--radius) * 1.4) 0 0 calc(var(--radius) * 1.4);
+  border-radius: var(--radius-sm, 3px) 0 0 var(--radius-sm, 3px);
 }
 
 .unit-tag {
   display: inline-flex;
   align-items: center;
-  padding: 0 14px;
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  padding: 0 12px;
+  border: 1px solid var(--border);
   border-left: none;
-  border-radius: 0 calc(var(--radius) * 1.4) calc(var(--radius) * 1.4) 0;
+  border-radius: 0 var(--radius-sm, 3px) var(--radius-sm, 3px) 0;
   background: var(--muted);
   color: var(--muted-foreground);
   font-size: 12px;
@@ -472,10 +450,10 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 46px;
-  padding: 12px 24px;
+  min-height: var(--height-button, 32px);
+  padding: 6px 20px;
   border: none;
-  border-radius: calc(var(--radius) * 1.4);
+  border-radius: var(--radius-sm, 3px);
   background: var(--primary);
   color: var(--primary-foreground);
   font: inherit;
@@ -515,10 +493,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 46px;
-  padding: 12px 24px;
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  border-radius: calc(var(--radius) * 1.4);
+  min-height: var(--height-button, 32px);
+  padding: 6px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 3px);
   background: transparent;
   color: var(--foreground);
   font: inherit;
@@ -551,7 +529,7 @@
 .error-display {
   margin: 0;
   padding: 12px 14px;
-  border-radius: calc(var(--radius) * 1.4);
+  border-radius: var(--radius-sm, 3px);
   border: 1px solid color-mix(in oklab, var(--destructive) 30%, transparent);
   background: color-mix(in oklab, var(--destructive) 5%, transparent);
   color: var(--destructive);
@@ -588,21 +566,12 @@
 /* ── Results Panel ──────────────────────────────────────────────── */
 .results-card {
   padding: 22px;
-  border-radius: calc(var(--radius) * 1.8);
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--card) 92%, transparent) 0%,
-      color-mix(in oklab, var(--secondary) 84%, transparent) 100%
-    );
-  box-shadow:
-    0 1px 3px color-mix(in oklab, var(--foreground) 4%, transparent),
-    0 4px 16px color-mix(in oklab, var(--foreground) 6%, transparent);
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--border);
+  background: var(--card);
   transition:
     background 200ms ease,
-    border-color 200ms ease,
-    box-shadow 300ms ease;
+    border-color 200ms ease;
   display: grid;
   gap: 18px;
 }
@@ -655,8 +624,8 @@
   flex-shrink: 0;
   min-width: 180px;
   padding: 16px 18px;
-  border-radius: calc(var(--radius) * 1.4);
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
+  border-radius: var(--radius-sm, 3px);
+  border: 1px solid var(--border);
   background:
     linear-gradient(
       135deg,
@@ -681,7 +650,7 @@
     color-mix(in oklab, var(--primary) 18%, transparent),
     transparent 55%
   );
-  border-radius: calc(var(--radius) * 1.2);
+  border-radius: var(--radius-sm, 3px);
   padding: 6px;
   margin: -8px;
 }
@@ -733,8 +702,8 @@
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  border-radius: calc(var(--radius) * 1.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 3px);
   background: color-mix(in oklab, var(--card) 90%, transparent);
   transition:
     transform 200ms ease,
@@ -753,7 +722,7 @@
   flex-shrink: 0;
   width: 34px;
   height: 34px;
-  border-radius: calc(var(--radius) * 1.2);
+  border-radius: var(--radius-sm, 3px);
   background: color-mix(in oklab, var(--primary) 10%, transparent);
   border: 1px solid color-mix(in oklab, var(--primary) 15%, transparent);
   color: var(--primary);
@@ -836,8 +805,8 @@
 
 .chart-summary-card {
   padding: 12px 14px;
-  border: 1px solid color-mix(in oklab, var(--border) 60%, transparent);
-  border-radius: calc(var(--radius) * 1.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 3px);
   background: color-mix(in oklab, var(--secondary) 40%, transparent);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -907,8 +876,8 @@
   align-items: stretch;
   justify-content: center;
   padding: 8px;
-  border-radius: calc(var(--radius) * 1.4);
-  border: 1px solid color-mix(in oklab, var(--border) 40%, transparent);
+  border-radius: var(--radius-sm, 3px);
+  border: 1px solid var(--border);
   background: linear-gradient(
     180deg,
     color-mix(in oklab, var(--secondary) 20%, transparent) 0%,
@@ -937,8 +906,8 @@
   align-content: center;
   min-height: 260px;
   padding: 28px;
-  border-radius: calc(var(--radius) * 1.4);
-  border: 1px dashed color-mix(in oklab, var(--border) 70%, transparent);
+  border-radius: var(--radius-sm, 3px);
+  border: 1px dashed var(--border);
   background: linear-gradient(
     180deg,
     color-mix(in oklab, var(--muted) 30%, transparent) 0%,
@@ -993,7 +962,7 @@
   max-width: 1280px;
   margin: 0 auto 20px;
   height: 44px;
-  border-radius: calc(var(--radius) * 1.4);
+  border-radius: var(--radius-sm, 3px);
   background: linear-gradient(
     110deg,
     var(--secondary) 8%,
@@ -1014,7 +983,7 @@
 
 .skeleton-card {
   height: 280px;
-  border-radius: calc(var(--radius) * 1.8);
+  border-radius: var(--radius-md, 6px);
   background: linear-gradient(
     110deg,
     var(--secondary) 8%,
@@ -1030,47 +999,9 @@
 }
 
 /* ── Animations ─────────────────────────────────────────────────── */
-.animate-fade-in-deep {
-  animation: fade-up-deep 0.5s ease-out both;
-}
-
-.animate-fade-in-form {
-  animation: fade-up-deep 0.5s ease-out 0.1s both;
-}
-
-.animate-stagger > *:nth-child(1) { animation: fade-up 0.4s ease-out 0.05s both; }
-.animate-stagger > *:nth-child(2) { animation: fade-up 0.4s ease-out 0.12s both; }
-.animate-stagger > *:nth-child(3) { animation: fade-up 0.4s ease-out 0.19s both; }
-
 .loading-pulse {
   display: inline-block;
   animation: pulse 1s ease-in-out infinite alternate;
-}
-
-/* ── Decorative blobs on intro card ─────────────────────────────── */
-.intro-blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.intro-blob-1 {
-  width: 200px;
-  height: 200px;
-  top: -80px;
-  right: -60px;
-  background: color-mix(in oklab, var(--primary) 15%, transparent);
-  filter: blur(48px);
-}
-
-.intro-blob-2 {
-  width: 160px;
-  height: 160px;
-  bottom: -60px;
-  left: -40px;
-  background: color-mix(in oklab, var(--chart-2) 15%, transparent);
-  filter: blur(48px);
 }
 
 /* ── Responsive ─────────────────────────────────────────────────── */

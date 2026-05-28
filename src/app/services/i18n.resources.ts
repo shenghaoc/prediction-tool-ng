@@ -36,6 +36,7 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       floor_area_range: 'Floor area must be between 20 and 300 m²',
       enter_floor_area: 'Enter floor area',
       lease_commence_date: 'Lease Commence Year',
+      lease_year_range: 'Lease commence year must be between {min} and {max}',
       get_prediction: 'Get prediction',
       predicting: 'Predicting...',
       reset_form: 'Reset',
@@ -54,7 +55,13 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       floor_area_unit_short: 'm²',
       models_count: 'Models',
       towns_count: 'Towns',
-      flat_types_count: 'Flat Types'
+      flat_types_count: 'Flat Types',
+      combobox_no_matches: 'No matches',
+      prediction_complete: 'Prediction complete. Latest predicted price: {price}',
+      decrease_value: 'Decrease value',
+      increase_value: 'Increase value',
+      skip_to_form: 'Skip to form',
+      toggle_options: 'Toggle options'
     },
     options: {
       ml_models: {
@@ -155,6 +162,7 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       floor_area_range: '面积必须在20到300平方米之间',
       enter_floor_area: '输入面积',
       lease_commence_date: '租约开始年份',
+      lease_year_range: '租约开始年份必须在{min}到{max}之间',
       get_prediction: '获取预测',
       predicting: '预测中...',
       reset_form: '重置',
@@ -173,7 +181,13 @@ export const TRANSLATION_RESOURCES: Record<Lang, TranslationResource> = {
       floor_area_unit_short: 'm²',
       models_count: '模型',
       towns_count: '城镇',
-      flat_types_count: '房型'
+      flat_types_count: '房型',
+      combobox_no_matches: '无匹配项',
+      prediction_complete: '预测完成。最新预测价格：{price}',
+      decrease_value: '减少数值',
+      increase_value: '增加数值',
+      skip_to_form: '跳至表单',
+      toggle_options: '切换选项'
     },
     options: {
       ml_models: {

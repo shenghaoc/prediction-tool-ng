@@ -1,0 +1,63 @@
+<div class="cb-wrap" [attr.data-open]="isOpen() || null">
+  <div class="cb-input-wrap">
+    <input #inputEl
+      [id]="resolvedInputId()"
+      type="text"
+      role="combobox"
+      [attr.aria-expanded]="isOpen()"
+      [attr.aria-controls]="isOpen() ? listboxId() : null"
+      [attr.aria-activedescendant]="activeOptionId()"
+      aria-autocomplete="list"
+      aria-haspopup="listbox"
+      [attr.aria-label]="ariaLabel() || null"
+      [attr.aria-describedby]="ariaDescribedby()"
+      [attr.aria-required]="required() || null"
+      [value]="inputDisplayValue()"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      (input)="onInput($event)"
+      (keydown)="onKeyDown($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+      class="cb-input"
+      [class.cb-input-focused]="focused()"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <button type="button" tabindex="-1" [attr.aria-label]="toggleLabel()"
+      class="cb-chevron"
+      [class.cb-chevron-open]="isOpen()"
+      [disabled]="disabled()"
+      (mousedown)="$event.preventDefault()"
+      (click)="toggleOpen()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+  </div>
+  @if (isOpen()) {
+    <ul #listboxEl [id]="listboxId()" role="listbox" [attr.aria-label]="ariaLabel() || null" class="cb-listbox"
+        (mousedown)="$event.preventDefault()">
+      @if (filtered().length === 0) {
+        <li class="cb-empty" role="option" aria-disabled="true">{{ noMatchesLabel() }}</li>
+      } @else {
+        @for (opt of filtered(); track opt.value; let i = $index) {
+          <li [id]="'opt-' + resolvedInputId() + '-' + i"
+            role="option"
+            [attr.aria-selected]="opt.value === value()"
+            class="cb-option"
+            [class.cb-option-active]="i === activeIndex()"
+            [class.cb-option-selected]="opt.value === value()"
+            (click)="selectOption(opt.value)"
+            (mouseenter)="activeIndex.set(i)">
+            <span class="cb-option-text">{{ opt.label }}</span>
+            @if (opt.value === value()) {
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+            }
+          </li>
+        }
+        @if (query() && filtered().length < options().length) {
+          <li class="cb-count" role="presentation">{{ filtered().length }} / {{ options().length }}</li>
+        }
+      }
+    </ul>
+  }
+</div>

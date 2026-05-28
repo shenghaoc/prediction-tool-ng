@@ -4,6 +4,7 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  HostListener,
   OnInit,
   PLATFORM_ID,
   ViewChild,
@@ -29,6 +30,8 @@ import {
   TranslationService
 } from '../services/translation.service';
 import type { OptionGroup } from '../services/translation.service';
+import { ComboboxComponent } from './combobox/combobox.component';
+import { NumberFieldComponent } from './number-field/number-field.component';
 
 type MlModel = (typeof ml_model_list)[number];
 type Town = (typeof town_list)[number];
@@ -41,13 +44,18 @@ type PredictionFormValue = {
   storeyRange: StoreyRange;
   flatModel: FlatModel;
   floorAreaSqm: number;
-  leaseCommenceYear: number;
+  // string because the combobox CVA always emits strings; Angular's min/max
+  // validators coerce via parseFloat so validation still works correctly.
+  leaseCommenceYear: string;
 };
 
-type SummaryValues = Pick<
-  PredictionFormValue,
-  'mlModel' | 'town' | 'leaseCommenceYear'
->;
+// leaseCommenceYear is stored as a number here (clamped from the string form
+// value) so the template can render it directly without further conversion.
+type SummaryValues = {
+  mlModel: MlModel;
+  town: Town;
+  leaseCommenceYear: number;
+};
 
 type TrendPoint = {
   label: string;
@@ -86,7 +94,7 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
   storeyRange: storey_range_list[0],
   flatModel: flat_model_list[0],
   floorAreaSqm: MIN_FLOOR_AREA,
-  leaseCommenceYear: MAX_YEAR
+  leaseCommenceYear: String(MAX_YEAR)
 };
 
 @Component({
@@ -96,7 +104,9 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
-    BaseChartDirective
+    BaseChartDirective,
+    ComboboxComponent,
+    NumberFieldComponent
   ]
 })
 export class PredictionToolComponent implements OnInit {
@@ -109,6 +119,7 @@ export class PredictionToolComponent implements OnInit {
 
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
   @ViewChild('resultsAnchor') resultsAnchor?: ElementRef<HTMLElement>;
+  @ViewChild('resultsHeading') resultsHeadingEl?: ElementRef<HTMLElement>;
 
   protected readonly lang = this.translationService.lang;
   protected readonly mlModels = ml_model_list;
@@ -125,14 +136,53 @@ export class PredictionToolComponent implements OnInit {
   protected readonly darkMode = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly hasPrediction = signal(false);
+  protected readonly liveMessage = signal('');
   protected readonly trendData = signal<TrendPoint[]>(
     createDefaultTrendData()
   );
   protected readonly summaryValues = signal<SummaryValues>({
     mlModel: INITIAL_FORM_VALUE.mlModel,
     town: INITIAL_FORM_VALUE.town,
-    leaseCommenceYear: INITIAL_FORM_VALUE.leaseCommenceYear
+    leaseCommenceYear: Number(INITIAL_FORM_VALUE.leaseCommenceYear)
   });
+
+  protected readonly mlModelOptions = computed(() => {
+    void this.lang();
+    return this.mlModels.map((m) => ({
+      value: m,
+      label: this.translationService.translateOption('ml_models', m)
+    }));
+  });
+
+  protected readonly townOptions = computed(() => {
+    // Depend on lang signal so options re-translate on language switch
+    void this.lang();
+    return this.towns.map((town) => ({
+      value: town,
+      label: this.translationService.translateOption('towns', town)
+    }));
+  });
+
+  protected readonly storeyRangeOptions = computed(() => {
+    void this.lang();
+    return this.storeyRanges.map((s) => ({
+      value: s,
+      label: this.translationService.translateOption('storey_ranges', s)
+    }));
+  });
+
+  protected readonly flatModelOptions = computed(() => {
+    void this.lang();
+    return this.flatModels.map((f) => ({
+      value: f,
+      label: this.translationService.translateOption('flat_models', f)
+    }));
+  });
+
+  // leaseYears are plain numbers; no translation needed.
+  protected readonly leaseYearOptions = computed(() =>
+    this.leaseYears.map((y) => ({ value: String(y), label: String(y) }))
+  );
 
   protected readonly predictedPrice = computed(() => {
     const latestPoint = this.trendData().at(-1);
@@ -159,6 +209,9 @@ export class PredictionToolComponent implements OnInit {
     ChartConfiguration<'line'>['data']
   >(() => {
     void this.darkMode();
+    if (!this.isBrowser) {
+      return { labels: [], datasets: [] };
+    }
     return {
       labels: this.trendData().map((point) => point.label),
       datasets: [
@@ -178,14 +231,63 @@ export class PredictionToolComponent implements OnInit {
     };
   });
 
+  // Chart plugin color cache: updated once in ngOnInit and on every theme toggle.
+  // The plugin array is stable (never recreated), so Chart.js doesn't re-register
+  // plugins on each theme change.
+  private readonly chartColors = { c1: '', c2: '', glow: '' };
+
+  protected readonly chartPlugins = [
+    {
+      id: 'gradientLine',
+      beforeDatasetDraw: (chart: any) => {
+        const { ctx, chartArea, data } = chart;
+        if (!chartArea || !data.datasets[0]) return;
+        const c1 = this.chartColors.c1;
+        const c2 = this.chartColors.c2;
+        // Guard: colors are empty strings until updateChartColorsCache() runs;
+        // addColorStop throws a DOMException with an empty/invalid color value.
+        if (!c1 || !c2) return;
+        const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
+        gradient.addColorStop(0, c1);
+        gradient.addColorStop(1, c2);
+        data.datasets[0].borderColor = gradient;
+      }
+    },
+    {
+      id: 'latestGlow',
+      afterDatasetsDraw: (chart: any) => {
+        const { ctx } = chart;
+        // Guard: glow is '' until updateChartColorsCache() runs; an empty
+        // fillStyle produces an invisible fill, not a crash, but skip early
+        // to stay consistent with the gradientLine guard above.
+        if (!this.chartColors.glow) return;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data || meta.data.length === 0) return;
+        const last = meta.data[meta.data.length - 1];
+        if (!last) return;
+        const { x, y } = last.getCenterPoint();
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, 9, 0, Math.PI * 2);
+        ctx.fillStyle = this.chartColors.glow;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+  ];
+
   protected readonly chartOptions = computed<
     ChartConfiguration<'line'>['options']
   >(() => {
     void this.darkMode();
-    const labelColor = readCssVar('--muted-foreground', this.document);
-    const panelColor = readCssVar('--popover', this.document);
-    const tooltipBorder = colorWithAlpha(readCssVar('--primary', this.document), 0.16);
-    const gridColor = colorWithAlpha(readCssVar('--foreground', this.document), 0.08);
+    if (!this.isBrowser) return {};
+    const doc = this.document;
+    const labelColor = readCssVar('--muted-foreground', doc);
+    const panelColor = readCssVar('--popover', doc);
+    const foregroundColor = readCssVar('--foreground', doc);
+    const tooltipBorder = colorWithAlpha(readCssVar('--primary', doc), 0.16);
+    const gridColor = colorWithAlpha(foregroundColor, 0.08);
+    const dashedGridColor = colorWithAlpha(foregroundColor, 0.06);
 
     return {
       responsive: true,
@@ -200,8 +302,8 @@ export class PredictionToolComponent implements OnInit {
         tooltip: {
           displayColors: false,
           backgroundColor: panelColor,
-          titleColor: readCssVar('--foreground', this.document),
-          bodyColor: readCssVar('--foreground', this.document),
+          titleColor: foregroundColor,
+          bodyColor: foregroundColor,
           borderColor: tooltipBorder,
           borderWidth: 1,
           callbacks: {
@@ -231,8 +333,17 @@ export class PredictionToolComponent implements OnInit {
           }
         },
         y: {
+          // grace adds padding above/below the data range so the line is
+          // never squashed against the top or bottom of the chart area.
+          // Without this Chart.js defaults to starting at 0, which pushes
+          // HDB resale prices ($300k–$700k) into a thin band at the top.
+          grace: '15%',
           grid: {
-            color: gridColor,
+            color: (context: any) =>
+              context.index === 0 ? gridColor : dashedGridColor,
+            lineWidth: 1,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            borderDash: ((context: any) => context.index === 0 ? [] : [3, 4]) as any,
             drawBorder: false
           },
           ticks: {
@@ -266,6 +377,30 @@ export class PredictionToolComponent implements OnInit {
     ]
   });
 
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeyDown(event: KeyboardEvent): void {
+    // Ignore events already handled by child components (e.g. Escape inside Combobox).
+    if (event.defaultPrevented) {
+      return;
+    }
+
+    const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+
+    if (isCtrlOrCmd && event.key === 'Enter') {
+      event.preventDefault();
+      void this.onSubmit();
+      return;
+    }
+
+    if (event.key === 'Escape' && !this.loading()) {
+      const active = this.document.activeElement as HTMLElement | null;
+      // Only reset if focus is within the form area (not a combobox dropdown, etc.)
+      if (active && active.closest('form')) {
+        this.resetForm();
+      }
+    }
+  }
+
   ngOnInit(): void {
     if (this.isBrowser) {
       this.restoreTheme();
@@ -274,6 +409,7 @@ export class PredictionToolComponent implements OnInit {
 
     this.syncSummaryWithForm();
     this.syncDocumentState();
+    this.updateChartColorsCache();
 
     this.mounted.set(true);
 
@@ -304,8 +440,9 @@ export class PredictionToolComponent implements OnInit {
   }
 
   protected async onSubmit(): Promise<void> {
-    if (this.predictionForm.invalid || !this.isBrowser) {
-      this.predictionForm.markAllAsTouched();
+    if (this.predictionForm.invalid || !this.isBrowser || this.loading()) {
+      // Only mark touched when the form is invalid (not when blocking a concurrent request)
+      if (!this.loading()) this.predictionForm.markAllAsTouched();
       return;
     }
 
@@ -357,14 +494,34 @@ export class PredictionToolComponent implements OnInit {
       }
 
       const serverData = parsePredictionResponse(responseText, requestPayload);
+      const normalizedData = normalizeTrendData(serverData);
 
       this.hasPrediction.set(true);
-      this.trendData.set(normalizeTrendData(serverData));
+      this.trendData.set(normalizedData);
       this.chart?.update();
 
       if (this.isBrowser) {
+        const latestValue = normalizedData.at(-1)?.value ?? 0;
+        const priceStr = formatCurrency(sanitizeCurrencyValue(latestValue));
+        const announcement = this.t('prediction_complete').replace('{price}', priceStr);
+        // Clear the live region first so identical consecutive announcements
+        // are still re-read by assistive technology.
+        this.liveMessage.set('');
         requestAnimationFrame(() => {
+          this.liveMessage.set(announcement);
           this.resultsAnchor?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          // Focus the results heading for keyboard users, then drop the
+          // temporary tabindex once focus leaves so it isn't left interactive.
+          const heading = this.resultsHeadingEl?.nativeElement;
+          if (heading) {
+            heading.setAttribute('tabindex', '-1');
+            heading.focus({ preventScroll: true });
+            heading.addEventListener(
+              'blur',
+              () => heading.removeAttribute('tabindex'),
+              { once: true }
+            );
+          }
         });
       }
     } catch (error: unknown) {
@@ -404,6 +561,7 @@ export class PredictionToolComponent implements OnInit {
     }
 
     this.syncDocumentState();
+    this.updateChartColorsCache();
     this.chart?.update();
   }
 
@@ -420,6 +578,34 @@ export class PredictionToolComponent implements OnInit {
     return this.translationService.translateOption(group, value);
   }
 
+  // A plain method (not a computed signal) is correct here. statusChanges
+  // only emits on VALID/INVALID/PENDING transitions — it does NOT emit when
+  // markAllAsTouched() is called on an already-INVALID control (touched state
+  // changes but validation status stays INVALID). A plain method is always
+  // re-evaluated during the CD run that follows any zone-triggered event
+  // (including the form submit that calls markAllAsTouched()), so it reliably
+  // reflects the current touched+error state without missing the key case.
+  protected floorAreaErrorId(): string | null {
+    const c = this.predictionForm.controls.floorAreaSqm;
+    return c.touched &&
+      (c.hasError('required') || c.hasError('min') || c.hasError('max'))
+      ? 'floor-area-error'
+      : null;
+  }
+
+  protected leaseYearErrorId(): string | null {
+    const c = this.predictionForm.controls.leaseCommenceYear;
+    return c.touched && (c.hasError('min') || c.hasError('max'))
+      ? 'lease-year-error'
+      : null;
+  }
+
+  protected leaseYearRangeMessage(): string {
+    return this.t('lease_year_range')
+      .replace('{min}', String(MIN_YEAR))
+      .replace('{max}', String(MAX_YEAR));
+  }
+
   protected formatCurrency(value: number): string {
     return formatCurrency(value);
   }
@@ -432,6 +618,14 @@ export class PredictionToolComponent implements OnInit {
     const roundedValue = Math.abs(roundValue(value)).toLocaleString();
     const sign = value >= 0 ? '+' : '-';
     return `${sign}$${roundedValue}`;
+  }
+
+  private updateChartColorsCache(): void {
+    if (!this.isBrowser) return;
+    const doc = this.document;
+    this.chartColors.c1 = readCssVar('--chart-1', doc);
+    this.chartColors.c2 = readCssVar('--chart-2', doc);
+    this.chartColors.glow = colorWithAlpha(readCssVar('--primary', doc), 0.15);
   }
 
   private restoreTheme(): void {
@@ -464,12 +658,13 @@ export class PredictionToolComponent implements OnInit {
         MAX_FLOOR_AREA,
         MIN_FLOOR_AREA
       ),
-      leaseCommenceYear: clampNumber(
+      // Stored as string to match the combobox CVA; clampNumber coerces safely.
+      leaseCommenceYear: String(clampNumber(
         savedForm.leaseCommenceYear,
         MIN_YEAR,
         MAX_YEAR,
         MAX_YEAR
-      )
+      ))
     };
 
     this.predictionForm.setValue(restoredFormValue, {
@@ -491,7 +686,7 @@ export class PredictionToolComponent implements OnInit {
         value.leaseCommenceYear,
         MIN_YEAR,
         MAX_YEAR,
-        INITIAL_FORM_VALUE.leaseCommenceYear
+        MAX_YEAR
       )
     });
   }
@@ -628,11 +823,17 @@ function clampNumber(
   max: number,
   fallback: number
 ): number {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
+  // Accept both plain numbers and string-encoded numbers (e.g. from combobox CVA
+  // which always emits strings, or from localStorage where JSON round-trips may
+  // preserve the original number type).
+  const n = typeof value === 'number' ? value
+          : typeof value === 'string' ? Number(value)
+          : NaN;
+  if (!Number.isFinite(n)) {
     return fallback;
   }
 
-  return Math.min(max, Math.max(min, Math.round(value)));
+  return Math.min(max, Math.max(min, Math.round(n)));
 }
 
 function sanitizeCurrencyValue(value: number): number {

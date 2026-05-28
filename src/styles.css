@@ -1,46 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
-
 /* ── Design Tokens ────────────────────────────────────────────────
-   Indigo primary on taupe-neutral surfaces. Colors use light-dark()
+   Source Sans 3 only (all-sans, no serif). Colors use light-dark()
    so dark mode is automatic — no separate .dark block needed for
    most values. body[data-theme] mirrors the shadcn .dark convention. */
 
 :root {
   color-scheme: light;
 
-  --font-body: 'DM Sans', 'Avenir Next', 'SF Pro Text', 'Helvetica Neue',
+  --font-body: 'Source Sans 3', 'Avenir Next', 'SF Pro Text', 'Helvetica Neue',
     'Segoe UI', Arial, sans-serif;
-  --font-display: 'Lora', 'Iowan Old Style', 'Palatino Linotype',
-    'Book Antiqua', Georgia, serif;
+  --font-display: 'Source Sans 3', 'Avenir Next', 'SF Pro Text', 'Helvetica Neue',
+    'Segoe UI', Arial, sans-serif;
   --font-body-cjk: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC',
     'Noto Sans SC', 'Microsoft YaHei', 'Source Han Sans SC', 'Heiti SC',
     sans-serif;
 
-  --background: light-dark(#f2f3f8, #0c0f1d);
-  --foreground: light-dark(#0f172a, #f1f5f9);
-  --card: light-dark(#ffffff, #161929);
-  --card-foreground: light-dark(#0f172a, #f1f5f9);
-  --popover: light-dark(#ffffff, #161929);
-  --popover-foreground: light-dark(#0f172a, #f1f5f9);
+  --background: light-dark(#f4f5f7, #0f1117);
+  --foreground: light-dark(#1a1a2e, #e8eaf0);
+  --card: light-dark(#ffffff, #1a1c25);
+  --card-foreground: light-dark(#1a1a2e, #e8eaf0);
+  --popover: light-dark(#ffffff, #1a1c25);
+  --popover-foreground: light-dark(#1a1a2e, #e8eaf0);
   --primary: light-dark(#4f46e5, #818cf8);
   --primary-foreground: light-dark(#ffffff, #0f172a);
-  --secondary: light-dark(#f4f5fa, #111427);
+  --secondary: light-dark(#eef0f4, #1e2029);
   --secondary-foreground: light-dark(#475569, #94a3b8);
-  --muted: light-dark(#f4f5fa, #111427);
+  --muted: light-dark(#eef0f4, #1e2029);
   --muted-foreground: light-dark(#64748b, #94a3b8);
   --accent: light-dark(#eef2ff, rgba(129, 140, 248, 0.12));
   --accent-foreground: light-dark(#4338ca, #e0e7ff);
   --destructive: light-dark(#dc2626, #f87171);
   --destructive-foreground: light-dark(#ffffff, #2a0c0c);
-  --border: light-dark(#e2e8f0, #272b42);
-  --input: light-dark(#e2e8f0, #353a55);
+  --border: light-dark(#dde1e8, #2a2d3a);
+  --input: light-dark(#dde1e8, #353a55);
   --ring: var(--primary);
   --chart-1: var(--primary);
   --chart-2: light-dark(#6366f1, #a5b4fc);
   --chart-3: light-dark(#8b5cf6, #c4b5fd);
   --chart-4: light-dark(#10b981, #4ade80);
   --chart-5: light-dark(#f59e0b, #fbbf24);
-  --radius: 0.625rem;
+  --radius: 6px;
+  --radius-sm: 3px;
+  --radius-md: 6px;
+
+  /* Component height tokens */
+  --height-field: 32px;
+  --height-button: 32px;
 
   /* Legacy aliases kept for chart + internal references */
   --color-page: var(--background);
@@ -91,24 +95,6 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-image:
-    radial-gradient(
-      ellipse 80% 50% at 50% -20%,
-      color-mix(in oklab, var(--primary) 12%, transparent),
-      transparent
-    ),
-    radial-gradient(
-      circle,
-      color-mix(in oklab, var(--primary) 10%, transparent) 1px,
-      transparent 1px
-    );
-  background-size:
-    100% 480px,
-    22px 22px;
-  background-position:
-    center top,
-    center center;
-  background-repeat: no-repeat, repeat;
 }
 
 button,
@@ -116,6 +102,40 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+/* ── Focus visible ──────────────────────────────────────────────── */
+:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  /* No border-radius override — browsers automatically match the outline
+     shape to the element's own border-radius in all modern engines. */
+}
+
+/* ── Scrollbar for listboxes ────────────────────────────────────── */
+[role="listbox"]::-webkit-scrollbar {
+  width: 4px;
+}
+
+[role="listbox"]::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--foreground) 15%, transparent);
+  border-radius: 9999px;
+}
+
+/* ── Number input spin button hiding ────────────────────────────── */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
 }
 
 /* ── Theme transitions (applied after mount) ───────────────────── */
@@ -130,28 +150,6 @@ textarea {
 }
 
 /* ── Animations ─────────────────────────────────────────────────── */
-@keyframes fade-up-deep {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes settle {
   0% {
     transform: scale(0.96);
@@ -222,11 +220,40 @@ textarea {
   }
 }
 
+/* ── Screen reader only ─────────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ── Skip nav ───────────────────────────────────────────────────── */
+.skip-nav {
+  position: absolute;
+  top: -999px;
+  left: 0;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: var(--radius-sm, 3px);
+}
+.skip-nav:focus {
+  top: 8px;
+  left: 8px;
+}
+
 /* ── Reduced motion ─────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-in-deep,
   .animate-settle,
-  .animate-stagger > *,
   .animate-glow {
     animation: none !important;
   }
