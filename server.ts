@@ -8,6 +8,16 @@ import bootstrap from './src/main.server';
 // The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
   const server = express();
+
+  // Security enhancements
+  server.disable('x-powered-by');
+  server.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
+  });
+
   const serverDistFolder = dirname(fileURLToPath(import.meta.url));
   const browserDistFolder = resolve(serverDistFolder, '../browser');
   const indexHtml = join(serverDistFolder, 'index.server.html');
@@ -38,6 +48,13 @@ export function app(): express.Express {
       })
       .then((html) => res.send(html))
       .catch((err) => next(err));
+  });
+
+  // Security: Global error handler to prevent leaking stack traces
+  // Must be after all other routes
+  server.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('Server error:', err.message || err);
+    res.status(500).send('Internal Server Error');
   });
 
   return server;
