@@ -135,6 +135,7 @@ export class PredictionToolComponent implements OnInit {
   protected readonly mounted = signal(false);
   protected readonly loading = signal(false);
   protected readonly darkMode = signal(false);
+  protected readonly isMac = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly hasPrediction = signal(false);
   protected readonly liveMessage = signal('');
@@ -433,6 +434,7 @@ export class PredictionToolComponent implements OnInit {
       this.restoreFormState();
       this.syncDocumentState();
       this.updateChartColorsCache();
+      this.isMac.set(navigator.userAgent.includes('Mac OS X'));
     }
 
     this.mounted.set(true);
