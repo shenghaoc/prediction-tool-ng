@@ -1,0 +1,3 @@
+## 2026-05-30 - Avoid synchronous layout thrashing in Angular Signals
+**Learning:** Calling `getComputedStyle` inside Angular `computed` signals is a major performance anti-pattern. Because computed properties re-evaluate synchronously whenever their dependencies change, accessing DOM styles repeatedly causes synchronous layout thrashing.
+**Action:** When a computed property needs CSS variable values, read all needed styles once (e.g. during initialization or theme toggling), cache them in a dedicated state signal (like `themeColors`), and have the `computed` properties depend on that state signal instead of interacting with the DOM.
