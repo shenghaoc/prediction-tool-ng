@@ -52,7 +52,9 @@ export function app(): express.Express {
   // Security: Global error handler to prevent leaking stack traces
   // Must be after all other routes
   server.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    console.error('Server error:', err.message || err);
+    // Log the full error (including stack) server-side for debugging; only the
+    // generic body below is ever sent to the client.
+    console.error('Server error:', err);
 
     // If the response has already started (e.g. during streaming), defer to
     // the default Express error handler instead of throwing ERR_HTTP_HEADERS_SENT.
@@ -65,9 +67,12 @@ export function app(): express.Express {
     const status = err.status ?? err.statusCode;
     const resolvedStatus =
       typeof status === 'number' && status >= 400 && status < 600 ? status : 500;
+    // For 5xx keep the body generic to avoid leaking internals; for 4xx the
+    // client error message is safe to surface (and 'Bad Request' would mislabel
+    // 401/403/404 etc.).
     res
       .status(resolvedStatus)
-      .send(resolvedStatus >= 500 ? 'Internal Server Error' : 'Bad Request');
+      .send(resolvedStatus >= 500 ? 'Internal Server Error' : (err.message || 'Client Error'));
   });
 
   return server;
