@@ -1,0 +1,3 @@
+## 2024-05-29 - Avoid `getComputedStyle` in computed properties or render cycles
+**Learning:** Calling `getComputedStyle(document.body)` inside Angular signals or component rendering cycles (like `chartData` and `chartOptions`) triggers synchronous style recalculations. If these signals are re-evaluated frequently (e.g. when data updates), this can cause severe layout thrashing and performance bottlenecks.
+**Action:** When a component relies on CSS variables for styling elements (like Chart.js configs), extract the variables via `getComputedStyle` *exactly once* during initialization and on theme toggle. Store the resolved colors in a simple cache object, and read from the cache during regular change detection.
