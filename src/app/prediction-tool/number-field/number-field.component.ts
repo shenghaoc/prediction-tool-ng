@@ -6,6 +6,7 @@ import {
   computed,
   effect,
   input,
+  untracked,
   model,
   signal,
   viewChild
@@ -26,6 +27,7 @@ export class NumberFieldComponent implements FormValueControl<number | null>, On
   readonly value = model<number | null>(null);
   readonly disabled = input(false);
   readonly touched = model(false);
+  readonly required = input(false);
   readonly min = input<number | undefined>(undefined);
   readonly max = input<number | undefined>(undefined);
   readonly step = input(1);
@@ -54,7 +56,7 @@ export class NumberFieldComponent implements FormValueControl<number | null>, On
     // won't clobber in-progress input such as a trailing ".".
     effect(() => {
       const v = this.value();
-      if (v !== this.numericValue()) {
+      if (v !== untracked(() => this.numericValue())) {
         this.rawValue.set(v ?? '');
       }
     });

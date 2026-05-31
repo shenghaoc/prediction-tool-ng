@@ -4,6 +4,7 @@ import {
   ElementRef,
   OnDestroy,
   computed,
+  effect,
   inject,
   input,
   model,
@@ -95,6 +96,15 @@ export class ComboboxComponent implements FormValueControl<string>, OnDestroy {
   });
 
   private readonly _elementRef = inject(ElementRef);
+
+  constructor() {
+    // Reset escapeDismissed when the bound field value changes externally
+    // (e.g. form reset) so the dropdown can auto-open on the next focus.
+    effect(() => {
+      this.value();
+      this.escapeDismissed = false;
+    });
+  }
 
   // Timeout ID for the post-open scroll; tracked so it can be cancelled on destroy.
   private scrollTimeoutId: ReturnType<typeof setTimeout> | null = null;
