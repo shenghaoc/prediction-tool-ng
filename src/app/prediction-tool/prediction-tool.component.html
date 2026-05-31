@@ -313,6 +313,7 @@
                   @if (isBrowser) {
                     <div class="chart-frame">
                       <canvas
+                        #chart
                         baseChart
                         [type]="'line'"
                         [data]="chartData()"

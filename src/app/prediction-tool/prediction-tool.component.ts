@@ -119,7 +119,7 @@ export class PredictionToolComponent implements OnInit {
   private readonly translationService = inject(TranslationService);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly chart = viewChild(BaseChartDirective);
+  protected readonly chart = viewChild<BaseChartDirective>('chart');
   protected readonly resultsAnchor = viewChild<ElementRef<HTMLElement>>('resultsAnchor');
   protected readonly resultsHeadingEl = viewChild<ElementRef<HTMLElement>>('resultsHeading');
 
@@ -367,8 +367,10 @@ export class PredictionToolComponent implements OnInit {
             color: (context: any) =>
               context.index === 0 ? colors.gridColor : colors.dashedGridColor,
             lineWidth: 1,
-            borderDash: ((context: any) => (context.index === 0 ? [] : [3, 4])) as any,
-            drawBorder: false
+            borderDash: ((context: any) => (context.index === 0 ? [] : [3, 4])) as any
+          },
+          border: {
+            display: false
           },
           ticks: {
             color: colors.mutedForeground,
@@ -473,7 +475,7 @@ export class PredictionToolComponent implements OnInit {
         console.error('Prediction request failed', { error, request: request.payload });
         this.errorMessage.set(this.t('error_fetch'));
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   protected onDocumentKeyDown(event: KeyboardEvent): void {
