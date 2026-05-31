@@ -143,6 +143,20 @@ export class PredictionToolComponent implements OnInit {
     createDefaultTrendData()
   );
 
+  // Cached theme colors to avoid calling getComputedStyle in computed properties.
+  // Only read by the chartData/chartOptions computed signals, never the template.
+  private readonly themeColors = signal({
+    primary: '',
+    chartFill: '',
+    card: '',
+    mutedForeground: '',
+    popover: '',
+    foreground: '',
+    tooltipBorder: '',
+    gridColor: '',
+    dashedGridColor: ''
+  });
+
   protected readonly mlModelOptions = computed(() =>
     this.mlModels.map((m) => ({
       value: m,
@@ -199,21 +213,21 @@ export class PredictionToolComponent implements OnInit {
   protected readonly chartData = computed<
     ChartConfiguration<'line'>['data']
   >(() => {
-    void this.darkMode();
     if (!this.isBrowser) {
       return { labels: [], datasets: [] };
     }
+    const colors = this.themeColors();
     return {
       labels: this.trendData().map((point) => point.label),
       datasets: [
         {
           data: this.trendData().map((point) => point.value),
           label: this.t('predicted_price'),
-          borderColor: this.chartColors.primary,
-          backgroundColor: this.chartColors.chartFill,
-          pointBackgroundColor: this.chartColors.primary,
-          pointHoverBackgroundColor: this.chartColors.primary,
-          pointHoverBorderColor: this.chartColors.card,
+          borderColor: colors.primary,
+          backgroundColor: colors.chartFill,
+          pointBackgroundColor: colors.primary,
+          pointHoverBackgroundColor: colors.primary,
+          pointHoverBorderColor: colors.card,
           fill: true,
           tension: 0.35,
           borderWidth: 3
@@ -225,20 +239,7 @@ export class PredictionToolComponent implements OnInit {
   // Chart plugin color cache: updated once in ngOnInit and on every theme toggle.
   // The plugin array is stable (never recreated), so Chart.js doesn't re-register
   // plugins on each theme change.
-  private readonly chartColors = {
-    c1: '',
-    c2: '',
-    glow: '',
-    primary: '',
-    chartFill: '',
-    card: '',
-    mutedForeground: '',
-    popover: '',
-    foreground: '',
-    tooltipBorder: '',
-    gridColor: '',
-    dashedGridColor: ''
-  };
+  private readonly chartColors = { c1: '', c2: '', glow: '' };
 
   protected readonly chartPlugins = [
     {
@@ -281,8 +282,8 @@ export class PredictionToolComponent implements OnInit {
   protected readonly chartOptions = computed<
     ChartConfiguration<'line'>['options']
   >(() => {
-    void this.darkMode();
     if (!this.isBrowser) return {};
+    const colors = this.themeColors();
 
     return {
       responsive: true,
@@ -296,10 +297,10 @@ export class PredictionToolComponent implements OnInit {
         },
         tooltip: {
           displayColors: false,
-          backgroundColor: this.chartColors.popover,
-          titleColor: this.chartColors.foreground,
-          bodyColor: this.chartColors.foreground,
-          borderColor: this.chartColors.tooltipBorder,
+          backgroundColor: colors.popover,
+          titleColor: colors.foreground,
+          bodyColor: colors.foreground,
+          borderColor: colors.tooltipBorder,
           borderWidth: 1,
           callbacks: {
             label: (context) => {
@@ -322,7 +323,7 @@ export class PredictionToolComponent implements OnInit {
             display: false
           },
           ticks: {
-            color: this.chartColors.mutedForeground,
+            color: colors.mutedForeground,
             maxRotation: 0,
             autoSkip: true
           }
@@ -333,14 +334,14 @@ export class PredictionToolComponent implements OnInit {
           grace: '15%',
           grid: {
             color: (context: any) =>
-              context.index === 0 ? this.chartColors.gridColor : this.chartColors.dashedGridColor,
+              context.index === 0 ? colors.gridColor : colors.dashedGridColor,
             lineWidth: 1,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             borderDash: ((context: any) => context.index === 0 ? [] : [3, 4]) as any,
             drawBorder: false
           },
           ticks: {
-            color: this.chartColors.mutedForeground,
+            color: colors.mutedForeground,
             callback: (value) => formatCompactCurrency(Number(value))
           }
         }
@@ -608,30 +609,59 @@ export class PredictionToolComponent implements OnInit {
 
   private updateChartColorsCache(): void {
     if (!this.isBrowser) return;
+    const doc = this.document;
 
-    // Get computed styles exactly once per theme change
-    const styles = getComputedStyle(this.document.body);
+    // The theme tokens in styles.css are defined with light-dark(), which
+    // getComputedStyle().getPropertyValue() returns *unresolved* (the literal
+    // "light-dark(...)" string) for unregistered custom properties. Chart.js
+    // and colorWithAlpha() can't parse that, so resolve each var to a concrete
+    // rgb() value by letting the browser compute it on a throwaway element.
+    // Reads are batched here (init + theme toggle only), not in computed
+    // signals, so this still avoids per-recompute layout thrashing.
+    const probe = doc.createElement('span');
+    probe.style.display = 'none';
+    doc.body.appendChild(probe);
+    const resolveVar = (name: string) => {
+      probe.style.color = `var(${name})`;
+      return getComputedStyle(probe).color;
+    };
 
-    // Helper to read without repeating getComputedStyle
-    const read = (name: string) => styles.getPropertyValue(name).trim();
+    let primary: string;
+    let foreground: string;
+    let chart1: string;
+    let chart2: string;
+    let chartFill: string;
+    let card: string;
+    let mutedForeground: string;
+    let popover: string;
+    try {
+      primary = resolveVar('--primary');
+      foreground = resolveVar('--foreground');
+      chart1 = resolveVar('--chart-1');
+      chart2 = resolveVar('--chart-2');
+      chartFill = resolveVar('--chart-fill');
+      card = resolveVar('--card');
+      mutedForeground = resolveVar('--muted-foreground');
+      popover = resolveVar('--popover');
+    } finally {
+      doc.body.removeChild(probe);
+    }
 
-    this.chartColors.c1 = read('--chart-1');
-    this.chartColors.c2 = read('--chart-2');
-
-    const primary = read('--primary');
-    this.chartColors.primary = primary;
+    this.chartColors.c1 = chart1;
+    this.chartColors.c2 = chart2;
     this.chartColors.glow = colorWithAlpha(primary, 0.15);
 
-    this.chartColors.chartFill = read('--chart-fill');
-    this.chartColors.card = read('--card');
-    this.chartColors.mutedForeground = read('--muted-foreground');
-    this.chartColors.popover = read('--popover');
-
-    const foreground = read('--foreground');
-    this.chartColors.foreground = foreground;
-    this.chartColors.tooltipBorder = colorWithAlpha(primary, 0.16);
-    this.chartColors.gridColor = colorWithAlpha(foreground, 0.08);
-    this.chartColors.dashedGridColor = colorWithAlpha(foreground, 0.06);
+    this.themeColors.set({
+      primary,
+      chartFill,
+      card,
+      mutedForeground,
+      popover,
+      foreground,
+      tooltipBorder: colorWithAlpha(primary, 0.16),
+      gridColor: colorWithAlpha(foreground, 0.08),
+      dashedGridColor: colorWithAlpha(foreground, 0.06)
+    });
   }
 
   private restoreTheme(): void {
