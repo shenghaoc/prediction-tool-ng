@@ -16,7 +16,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
 import { Temporal } from '@js-temporal/polyfill';
 import { firstValueFrom } from 'rxjs';
-import { Field, form, max, min, required, submit, validate } from '@angular/forms/signals';
+import { FormField, form, max, min, required, submit, validate } from '@angular/forms/signals';
 
 import {
   flat_model_list,
@@ -43,8 +43,9 @@ type PredictionFormValue = {
   town: Town;
   storeyRange: StoreyRange;
   flatModel: FlatModel;
-  floorAreaSqm: number;
-  // string because the combobox CVA always emits strings.
+  // null represents an empty/cleared input; the required validator flags it.
+  floorAreaSqm: number | null;
+  // string because the combobox value model is always a string.
   leaseCommenceYear: string;
 };
 
@@ -105,7 +106,7 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
     '(document:keydown)': 'onDocumentKeyDown($event)'
   },
   imports: [
-    Field,
+    FormField,
     BaseChartDirective,
     ComboboxComponent,
     NumberFieldComponent
@@ -359,6 +360,7 @@ export class PredictionToolComponent implements OnInit {
     required(s.floorAreaSqm);
     min(s.floorAreaSqm, MIN_FLOOR_AREA);
     max(s.floorAreaSqm, MAX_FLOOR_AREA);
+    required(s.leaseCommenceYear);
     validate(s.leaseCommenceYear, ({ value }) => {
       const n = Number(value());
       if (!Number.isFinite(n) || n < MIN_YEAR || n > MAX_YEAR) {

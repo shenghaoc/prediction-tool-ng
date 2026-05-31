@@ -4,13 +4,14 @@ import {
   ElementRef,
   OnDestroy,
   computed,
-  forwardRef,
+  effect,
   inject,
   input,
+  model,
   signal,
   viewChild
 } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { FormValueControl } from '@angular/forms/signals';
 
 export interface ComboboxOption {
   value: string;
@@ -22,18 +23,17 @@ export interface ComboboxOption {
   templateUrl: './combobox.component.html',
   styleUrl: './combobox.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ComboboxComponent),
-      multi: true
-    }
-  ],
   host: {
     '(document:pointerdown)': 'onDocumentPointerDown($event)'
   }
 })
-export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
+export class ComboboxComponent implements FormValueControl<string>, OnDestroy {
+  // Signal Forms control contract: the [formField] directive keeps `value` in
+  // sync with the bound field, and auto-binds `disabled`/`required`/`touched`
+  // from the field's state and validators.
+  readonly value = model<string>('');
+  readonly disabled = input(false);
+  readonly touched = model(false);
   readonly options = input<ComboboxOption[]>([]);
   readonly placeholder = input('');
   readonly inputId = input('');
@@ -46,12 +46,10 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
   protected readonly inputEl = viewChild<ElementRef<HTMLInputElement>>('inputEl');
   protected readonly listboxEl = viewChild<ElementRef<HTMLUListElement>>('listboxEl');
 
-  protected readonly value = signal<string>('');
   protected readonly query = signal<string>('');
   protected readonly isOpen = signal(false);
   protected readonly focused = signal(false);
   protected readonly activeIndex = signal(-1);
-  protected readonly disabled = signal(false);
   // Tracks whether the user has started typing since the dropdown was opened.
   // While false the input shows the selected option's label; once true it shows
   // the live query string so the user sees their own keystrokes.
@@ -99,8 +97,15 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
 
   private readonly _elementRef = inject(ElementRef);
 
-  private onChange: (value: string) => void = () => {};
-  private onTouched: () => void = () => {};
+  constructor() {
+    // Reset escapeDismissed when the bound field value changes externally
+    // (e.g. form reset) so the dropdown can auto-open on the next focus.
+    effect(() => {
+      this.value();
+      this.escapeDismissed = false;
+    });
+  }
+
   // Timeout ID for the post-open scroll; tracked so it can be cancelled on destroy.
   private scrollTimeoutId: ReturnType<typeof setTimeout> | null = null;
   // Blur close is delayed so touch-taps on options (where mousedown can't
@@ -135,30 +140,6 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
     }
   }
 
-  writeValue(val: string): void {
-    this.value.set(val ?? '');
-    // Reset dismiss flag so the dropdown behaves normally after a form reset.
-    this.escapeDismissed = false;
-    // If a programmatic value change arrives while the dropdown is open and
-    // the user has an active search query, close it so the new value is
-    // immediately visible rather than hidden behind stale query state.
-    if (this.isOpen()) {
-      this.close();
-    }
-  }
-
-  registerOnChange(fn: (value: string) => void): void {
-    this.onChange = fn;
-  }
-
-  registerOnTouched(fn: () => void): void {
-    this.onTouched = fn;
-  }
-
-  setDisabledState(isDisabled: boolean): void {
-    this.disabled.set(isDisabled);
-  }
-
   protected onFocus(): void {
     // Programmatic focus (e.g. from assistive technology or parent code) can
     // bypass the [disabled] attribute; guard against it here.
@@ -178,7 +159,7 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
 
   protected onBlur(): void {
     this.focused.set(false);
-    this.onTouched();
+    this.touched.set(true);
     // The Escape-dismiss flag should only suppress the re-open for the duration
     // of the current focus session.  Clear it here so that after the user
     // presses Escape, navigates away, and tabs back, the dropdown opens normally.
@@ -292,7 +273,6 @@ export class ComboboxComponent implements ControlValueAccessor, OnDestroy {
 
   protected selectOption(val: string): void {
     this.value.set(val);
-    this.onChange(val);
     // Do NOT clear query here — close() handles it atomically so there is no
     // intermediate state where isOpen=true + query='' + userTyped=true, which
     // would cause inputDisplayValue to briefly return '' (a visible flash).
