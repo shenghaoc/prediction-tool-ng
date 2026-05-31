@@ -110,13 +110,12 @@
                     <label class="field-label" for="field-ml-model">{{ t('ml_model') }}</label>
                     <app-combobox
                       inputId="field-ml-model"
-                      [field]="predictionForm.mlModel"
+                      [formField]="predictionForm.mlModel"
                       [options]="mlModelOptions()"
                       [placeholder]="t('ml_model')"
                       [ariaLabel]="t('ml_model')"
                       [noMatchesLabel]="t('combobox_no_matches')"
                       [toggleLabel]="t('toggle_options')"
-                      [required]="true"
                     ></app-combobox>
                   </div>
 
@@ -124,13 +123,12 @@
                     <label class="field-label" for="field-town">{{ t('town') }}</label>
                     <app-combobox
                       inputId="field-town"
-                      [field]="predictionForm.town"
+                      [formField]="predictionForm.town"
                       [options]="townOptions()"
                       [placeholder]="t('town')"
                       [ariaLabel]="t('town')"
                       [noMatchesLabel]="t('combobox_no_matches')"
                       [toggleLabel]="t('toggle_options')"
-                      [required]="true"
                     ></app-combobox>
                   </div>
 
@@ -138,13 +136,12 @@
                     <label class="field-label" for="field-storey-range">{{ t('storey_range') }}</label>
                     <app-combobox
                       inputId="field-storey-range"
-                      [field]="predictionForm.storeyRange"
+                      [formField]="predictionForm.storeyRange"
                       [options]="storeyRangeOptions()"
                       [placeholder]="t('storey_range')"
                       [ariaLabel]="t('storey_range')"
                       [noMatchesLabel]="t('combobox_no_matches')"
                       [toggleLabel]="t('toggle_options')"
-                      [required]="true"
                     ></app-combobox>
                   </div>
 
@@ -152,13 +149,12 @@
                     <label class="field-label" for="field-flat-model">{{ t('flat_model') }}</label>
                     <app-combobox
                       inputId="field-flat-model"
-                      [field]="predictionForm.flatModel"
+                      [formField]="predictionForm.flatModel"
                       [options]="flatModelOptions()"
                       [placeholder]="t('flat_model')"
                       [ariaLabel]="t('flat_model')"
                       [noMatchesLabel]="t('combobox_no_matches')"
                       [toggleLabel]="t('toggle_options')"
-                      [required]="true"
                     ></app-combobox>
                   </div>
 
@@ -166,9 +162,7 @@
                     <label class="field-label" for="field-floor-area">{{ t('floor_area') }}</label>
                     <app-number-field
                       inputId="field-floor-area"
-                      [field]="predictionForm.floorAreaSqm"
-                      [min]="20"
-                      [max]="300"
+                      [formField]="predictionForm.floorAreaSqm"
                       [step]="1"
                       [unit]="t('floor_area_unit_short')"
                       [placeholder]="t('enter_floor_area')"
@@ -188,14 +182,13 @@
                     <label class="field-label" for="field-lease-year">{{ t('lease_commence_date') }}</label>
                     <app-combobox
                       inputId="field-lease-year"
-                      [field]="predictionForm.leaseCommenceYear"
+                      [formField]="predictionForm.leaseCommenceYear"
                       [options]="leaseYearOptions()"
                       [placeholder]="t('lease_commence_date')"
                       [ariaLabel]="t('lease_commence_date')"
                       [ariaDescribedby]="leaseYearErrorId()"
                       [noMatchesLabel]="t('combobox_no_matches')"
                       [toggleLabel]="t('toggle_options')"
-                      [required]="true"
                     ></app-combobox>
                     @if (leaseYearRangeError()) {
                       <span id="lease-year-error" class="field-error">{{ leaseYearRangeMessage() }}</span>

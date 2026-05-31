@@ -4,29 +4,30 @@ import {
   ElementRef,
   OnDestroy,
   computed,
-  forwardRef,
+  effect,
   input,
+  model,
   signal,
   viewChild
 } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { FormValueControl } from '@angular/forms/signals';
 
 @Component({
   selector: 'app-number-field',
   templateUrl: './number-field.component.html',
   styleUrl: './number-field.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => NumberFieldComponent),
-      multi: true
-    }
-  ]
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
-  readonly min = input(0);
-  readonly max = input(999);
+export class NumberFieldComponent implements FormValueControl<number | null>, OnDestroy {
+  // Signal Forms control contract: the [formField] directive keeps `value` in
+  // sync with the bound field and auto-binds `disabled`/`min`/`max`/`touched`
+  // from the field's state and validators. `min`/`max` therefore come from the
+  // schema's min()/max() rules, not from parent template bindings.
+  readonly value = model<number | null>(null);
+  readonly disabled = input(false);
+  readonly touched = model(false);
+  readonly min = input<number | undefined>(undefined);
+  readonly max = input<number | undefined>(undefined);
   readonly step = input(1);
   readonly placeholder = input('');
   readonly inputId = input('');
@@ -40,7 +41,24 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
 
   protected readonly rawValue = signal<number | string>('');
   protected readonly focused = signal(false);
-  protected readonly disabled = signal(false);
+
+  // The directive binds min()/max() from the schema when present; fall back to
+  // sensible defaults so the component also works standalone.
+  protected readonly minValue = computed(() => this.min() ?? 0);
+  protected readonly maxValue = computed(() => this.max() ?? 999);
+
+  constructor() {
+    // Keep the visible raw value in sync when the bound field value changes
+    // externally (form reset / programmatic update). User edits already update
+    // rawValue and set value === numericValue, so this no-ops for them and
+    // won't clobber in-progress input such as a trailing ".".
+    effect(() => {
+      const v = this.value();
+      if (v !== this.numericValue()) {
+        this.rawValue.set(v ?? '');
+      }
+    });
+  }
 
   protected readonly numericValue = computed(() => {
     const v = this.rawValue();
@@ -62,16 +80,13 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
 
   protected readonly atMin = computed(() => {
     const n = this.numericValue();
-    return n !== null && n <= this.min();
+    return n !== null && n <= this.minValue();
   });
 
   protected readonly atMax = computed(() => {
     const n = this.numericValue();
-    return n !== null && n >= this.max();
+    return n !== null && n >= this.maxValue();
   });
-
-  private onChange: (value: number | null) => void = () => {};
-  private onTouched: () => void = () => {};
 
   private holdTimerId: ReturnType<typeof setTimeout> | null = null;
   private holdIntervalId: ReturnType<typeof setInterval> | null = null;
@@ -80,38 +95,8 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     this.stopHold();
   }
 
-  writeValue(val: unknown): void {
-    // The CVA interface accepts any; null, undefined, and empty/whitespace
-    // strings all mean "no value" and must clear the field.  Guard them before
-    // Number() because Number(null) === 0 and Number("") === 0.
-    if (val === null || val === undefined) {
-      this.rawValue.set('');
-      return;
-    }
-    if (typeof val === 'string' && val.trim() === '') {
-      this.rawValue.set('');
-      return;
-    }
-    const n = typeof val === 'number' ? val : Number(val);
-    this.rawValue.set(
-      typeof n === 'number' && Number.isFinite(n) && !Number.isNaN(n) ? n : ''
-    );
-  }
-
-  registerOnChange(fn: (value: number | null) => void): void {
-    this.onChange = fn;
-  }
-
-  registerOnTouched(fn: () => void): void {
-    this.onTouched = fn;
-  }
-
-  setDisabledState(isDisabled: boolean): void {
-    this.disabled.set(isDisabled);
-  }
-
   protected increment(): void {
-    const current = this.numericValue() ?? this.min();
+    const current = this.numericValue() ?? this.minValue();
     const step = this.step();
     // Defensive: non-positive step would make the stepper a no-op or reverse
     // direction, breaking spinbutton semantics.
@@ -119,26 +104,26 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     // Round the raw sum first (eliminates float drift), then clamp — so the
     // clamp always wins at the boundary even when max is a repeating decimal.
     const snapped = Number((current + step).toFixed(12));
-    const next = Math.min(this.max(), snapped);
+    const next = Math.min(this.maxValue(), snapped);
     this.setValue(next);
     // When the boundary is reached the button becomes [disabled], which stops
     // the browser from dispatching further pointer events on it — so pointerup/
     // pointerleave can never cancel the hold.  Stop it here explicitly.
-    if (next >= this.max()) {
+    if (next >= this.maxValue()) {
       this.stopHold();
     }
   }
 
   protected decrement(): void {
-    const current = this.numericValue() ?? this.min();
+    const current = this.numericValue() ?? this.minValue();
     const step = this.step();
     if (step <= 0 || !Number.isFinite(step)) return;
     // Same pattern: round first, clamp second.
     const snapped = Number((current - step).toFixed(12));
-    const next = Math.max(this.min(), snapped);
+    const next = Math.max(this.minValue(), snapped);
     this.setValue(next);
     // Same boundary-reached stop as increment (min side).
-    if (next <= this.min()) {
+    if (next <= this.minValue()) {
       this.stopHold();
     }
   }
@@ -186,7 +171,7 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
     if (!raw.trim()) {
       this.rawValue.set('');
       // Notify the form control so validation (e.g. required) reacts immediately.
-      this.onChange(null);
+      this.value.set(null);
       return;
     }
     // Use Number() (strict) rather than parseFloat (permissive) so that partial
@@ -196,12 +181,12 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
       // Store the raw string so a trailing decimal point ("25.") is preserved
       // while the user is mid-entry; Angular's [value] binding won't strip it.
       this.rawValue.set(raw);
-      this.onChange(n);
+      this.value.set(n);
     } else {
       // Invalid characters typed: immediately notify the form control so
       // validation fires and Ctrl+Enter cannot submit the stale previous value.
       // Do NOT update rawValue — blur will restore the DOM to the last valid value.
-      this.onChange(null);
+      this.value.set(null);
     }
   }
 
@@ -226,22 +211,22 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
         break;
       case 'Home':
         event.preventDefault();
-        this.setValue(this.min());
+        this.setValue(this.minValue());
         break;
       case 'End':
         event.preventDefault();
-        this.setValue(this.max());
+        this.setValue(this.maxValue());
         break;
     }
   }
 
   protected onBlur(): void {
     this.focused.set(false);
-    this.onTouched();
+    this.touched.set(true);
     // Clamp and snap to the nearest step multiple on blur.
     const n = this.numericValue();
     if (n !== null) {
-      const min = this.min(), max = this.max(), step = this.step();
+      const min = this.minValue(), max = this.maxValue(), step = this.step();
       const clamped = Math.min(max, Math.max(min, n));
       // Defensive guard: division by zero or negative step would produce
       // NaN/erratic values in the snap-to-step calculation below.
@@ -267,7 +252,7 @@ export class NumberFieldComponent implements ControlValueAccessor, OnDestroy {
 
   private setValue(n: number): void {
     this.rawValue.set(n);
-    this.onChange(n);
+    this.value.set(n);
   }
 
   /** If the DOM input shows invalid text, restore it to the last valid display value. */
