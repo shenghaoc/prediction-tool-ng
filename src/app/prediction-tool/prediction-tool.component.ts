@@ -209,11 +209,11 @@ export class PredictionToolComponent implements OnInit {
         {
           data: this.trendData().map((point) => point.value),
           label: this.t('predicted_price'),
-          borderColor: readCssVar('--primary', this.document),
-          backgroundColor: readCssVar('--chart-fill', this.document),
-          pointBackgroundColor: readCssVar('--primary', this.document),
-          pointHoverBackgroundColor: readCssVar('--primary', this.document),
-          pointHoverBorderColor: readCssVar('--card', this.document),
+          borderColor: this.chartColors.primary,
+          backgroundColor: this.chartColors.chartFill,
+          pointBackgroundColor: this.chartColors.primary,
+          pointHoverBackgroundColor: this.chartColors.primary,
+          pointHoverBorderColor: this.chartColors.card,
           fill: true,
           tension: 0.35,
           borderWidth: 3
@@ -225,7 +225,20 @@ export class PredictionToolComponent implements OnInit {
   // Chart plugin color cache: updated once in ngOnInit and on every theme toggle.
   // The plugin array is stable (never recreated), so Chart.js doesn't re-register
   // plugins on each theme change.
-  private readonly chartColors = { c1: '', c2: '', glow: '' };
+  private readonly chartColors = {
+    c1: '',
+    c2: '',
+    glow: '',
+    primary: '',
+    chartFill: '',
+    card: '',
+    mutedForeground: '',
+    popover: '',
+    foreground: '',
+    tooltipBorder: '',
+    gridColor: '',
+    dashedGridColor: ''
+  };
 
   protected readonly chartPlugins = [
     {
@@ -270,13 +283,6 @@ export class PredictionToolComponent implements OnInit {
   >(() => {
     void this.darkMode();
     if (!this.isBrowser) return {};
-    const doc = this.document;
-    const labelColor = readCssVar('--muted-foreground', doc);
-    const panelColor = readCssVar('--popover', doc);
-    const foregroundColor = readCssVar('--foreground', doc);
-    const tooltipBorder = colorWithAlpha(readCssVar('--primary', doc), 0.16);
-    const gridColor = colorWithAlpha(foregroundColor, 0.08);
-    const dashedGridColor = colorWithAlpha(foregroundColor, 0.06);
 
     return {
       responsive: true,
@@ -290,10 +296,10 @@ export class PredictionToolComponent implements OnInit {
         },
         tooltip: {
           displayColors: false,
-          backgroundColor: panelColor,
-          titleColor: foregroundColor,
-          bodyColor: foregroundColor,
-          borderColor: tooltipBorder,
+          backgroundColor: this.chartColors.popover,
+          titleColor: this.chartColors.foreground,
+          bodyColor: this.chartColors.foreground,
+          borderColor: this.chartColors.tooltipBorder,
           borderWidth: 1,
           callbacks: {
             label: (context) => {
@@ -316,7 +322,7 @@ export class PredictionToolComponent implements OnInit {
             display: false
           },
           ticks: {
-            color: labelColor,
+            color: this.chartColors.mutedForeground,
             maxRotation: 0,
             autoSkip: true
           }
@@ -327,14 +333,14 @@ export class PredictionToolComponent implements OnInit {
           grace: '15%',
           grid: {
             color: (context: any) =>
-              context.index === 0 ? gridColor : dashedGridColor,
+              context.index === 0 ? this.chartColors.gridColor : this.chartColors.dashedGridColor,
             lineWidth: 1,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             borderDash: ((context: any) => context.index === 0 ? [] : [3, 4]) as any,
             drawBorder: false
           },
           ticks: {
-            color: labelColor,
+            color: this.chartColors.mutedForeground,
             callback: (value) => formatCompactCurrency(Number(value))
           }
         }
@@ -434,7 +440,7 @@ export class PredictionToolComponent implements OnInit {
       this.restoreFormState();
       this.syncDocumentState();
       this.updateChartColorsCache();
-      this.isMac.set(navigator.userAgent.includes('Mac OS X'));
+      this.isMac.set(this.detectMac());
     }
 
     this.mounted.set(true);
@@ -442,6 +448,19 @@ export class PredictionToolComponent implements OnInit {
     if (this.isBrowser) {
       this.document.body.classList.add('theme-ready');
     }
+  }
+
+  // navigator.userAgent contains "Mac OS X" on iOS too ("... like Mac OS X"),
+  // so prefer the modern userAgentData.platform and fall back to a "Macintosh"
+  // check, which real Macs report but iPhones do not.
+  private detectMac(): boolean {
+    const uaData = (
+      navigator as Navigator & { userAgentData?: { platform?: string } }
+    ).userAgentData;
+    if (uaData?.platform) {
+      return uaData.platform === 'macOS';
+    }
+    return navigator.userAgent.includes('Macintosh');
   }
 
   protected async onSubmit(): Promise<void> {
@@ -589,10 +608,30 @@ export class PredictionToolComponent implements OnInit {
 
   private updateChartColorsCache(): void {
     if (!this.isBrowser) return;
-    const doc = this.document;
-    this.chartColors.c1 = readCssVar('--chart-1', doc);
-    this.chartColors.c2 = readCssVar('--chart-2', doc);
-    this.chartColors.glow = colorWithAlpha(readCssVar('--primary', doc), 0.15);
+
+    // Get computed styles exactly once per theme change
+    const styles = getComputedStyle(this.document.body);
+
+    // Helper to read without repeating getComputedStyle
+    const read = (name: string) => styles.getPropertyValue(name).trim();
+
+    this.chartColors.c1 = read('--chart-1');
+    this.chartColors.c2 = read('--chart-2');
+
+    const primary = read('--primary');
+    this.chartColors.primary = primary;
+    this.chartColors.glow = colorWithAlpha(primary, 0.15);
+
+    this.chartColors.chartFill = read('--chart-fill');
+    this.chartColors.card = read('--card');
+    this.chartColors.mutedForeground = read('--muted-foreground');
+    this.chartColors.popover = read('--popover');
+
+    const foreground = read('--foreground');
+    this.chartColors.foreground = foreground;
+    this.chartColors.tooltipBorder = colorWithAlpha(primary, 0.16);
+    this.chartColors.gridColor = colorWithAlpha(foreground, 0.08);
+    this.chartColors.dashedGridColor = colorWithAlpha(foreground, 0.06);
   }
 
   private restoreTheme(): void {
@@ -791,10 +830,6 @@ function roundValue(value: number): number {
 
 function formatCurrency(value: number): string {
   return `$${sanitizeCurrencyValue(value).toLocaleString()}`;
-}
-
-function readCssVar(name: string, doc: Document): string {
-  return getComputedStyle(doc.body).getPropertyValue(name).trim();
 }
 
 function colorWithAlpha(color: string, alpha: number): string {

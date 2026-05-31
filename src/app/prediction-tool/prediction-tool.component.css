@@ -497,6 +497,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-height: var(--height-button, 32px);
   padding: 6px 20px;
   border: 1px solid var(--border);
@@ -911,7 +912,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 6px;
   padding: 0 4px;
   min-width: 20px;
   height: 18px;
