@@ -595,24 +595,42 @@ export class PredictionToolComponent implements OnInit {
     if (!this.isBrowser) return;
     const doc = this.document;
 
-    // Batch read all CSS variables needed for charts to avoid
-    // calling getComputedStyle repeatedly in computed signals
-    const style = getComputedStyle(doc.body);
-    const getVar = (name: string) => style.getPropertyValue(name).trim();
+    // The theme tokens in styles.css are defined with light-dark(), which
+    // getComputedStyle().getPropertyValue() returns *unresolved* (the literal
+    // "light-dark(...)" string) for unregistered custom properties. Chart.js
+    // and colorWithAlpha() can't parse that, so resolve each var to a concrete
+    // rgb() value by letting the browser compute it on a throwaway element.
+    // Reads are batched here (init + theme toggle only), not in computed
+    // signals, so this still avoids per-recompute layout thrashing.
+    const probe = doc.createElement('span');
+    probe.style.display = 'none';
+    doc.body.appendChild(probe);
+    const resolveVar = (name: string) => {
+      probe.style.color = `var(${name})`;
+      return getComputedStyle(probe).color;
+    };
 
-    const primary = getVar('--primary');
-    const foreground = getVar('--foreground');
+    const primary = resolveVar('--primary');
+    const foreground = resolveVar('--foreground');
+    const chart1 = resolveVar('--chart-1');
+    const chart2 = resolveVar('--chart-2');
+    const chartFill = resolveVar('--chart-fill');
+    const card = resolveVar('--card');
+    const mutedForeground = resolveVar('--muted-foreground');
+    const popover = resolveVar('--popover');
 
-    this.chartColors.c1 = getVar('--chart-1');
-    this.chartColors.c2 = getVar('--chart-2');
+    doc.body.removeChild(probe);
+
+    this.chartColors.c1 = chart1;
+    this.chartColors.c2 = chart2;
     this.chartColors.glow = colorWithAlpha(primary, 0.15);
 
     this.themeColors.set({
       primary,
-      chartFill: getVar('--chart-fill'),
-      card: getVar('--card'),
-      mutedForeground: getVar('--muted-foreground'),
-      popover: getVar('--popover'),
+      chartFill,
+      card,
+      mutedForeground,
+      popover,
       foreground,
       tooltipBorder: colorWithAlpha(primary, 0.16),
       gridColor: colorWithAlpha(foreground, 0.08),
