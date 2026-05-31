@@ -169,6 +169,14 @@ export class PredictionToolComponent implements OnInit {
   );
 
   protected readonly hasResult = computed(
+    () =>
+      this.hasPrediction() &&
+      this.predictionResource.hasValue() &&
+      !this.loading()
+  );
+
+  /** Keeps chart visible while a subsequent prediction is loading. */
+  protected readonly showChart = computed(
     () => this.hasPrediction() && this.predictionResource.hasValue()
   );
 
@@ -517,45 +525,18 @@ export class PredictionToolComponent implements OnInit {
     }
 
     const raw = this.predictionForm.getRawValue();
-    const floorArea = clampNumber(
-      raw.floor_area_sqm,
-      MIN_FLOOR_AREA,
-      MAX_FLOOR_AREA,
-      MIN_FLOOR_AREA
-    );
-    const leaseYear = clampNumber(
-      raw.lease_commence_year,
-      MIN_YEAR,
-      MAX_YEAR,
-      MAX_YEAR
-    );
-
-    if (floorArea !== raw.floor_area_sqm) {
-      this.predictionForm.controls.floor_area_sqm.setValue(floorArea);
-    }
-    if (leaseYear !== raw.lease_commence_year) {
-      this.predictionForm.controls.lease_commence_year.setValue(leaseYear);
-    }
-
     this.errorMessage.set('');
     const payload = buildPredictionRequestPayload({
       ml_model: raw.ml_model,
       town: raw.town,
       storey_range: raw.storey_range,
       flat_model: raw.flat_model,
-      floor_area_sqm: floorArea,
-      lease_commence_year: leaseYear
+      floor_area_sqm: raw.floor_area_sqm!,
+      lease_commence_year: raw.lease_commence_year!
     });
 
     const seq = ++this.predictionRequestSeq;
-    const current = this.predictionRequest();
-
-    if (current && JSON.stringify(current.payload) === JSON.stringify(payload)) {
-      this.predictionResource.reload();
-      this.predictionRequest.set({ seq, payload });
-    } else {
-      this.predictionRequest.set({ seq, payload });
-    }
+    this.predictionRequest.set({ seq, payload });
   }
 
   protected resetForm(): void {

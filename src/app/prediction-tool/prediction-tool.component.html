@@ -245,7 +245,7 @@
 
               <div
                 class="price-panel"
-                [class.price-panel-glow]="hasResult()"
+                [class.price-panel-glow]="hasPrediction()"
               >
                 <div class="price-panel-inner">
                   <span class="price-label">{{ t('prediction') }}</span>
@@ -301,7 +301,7 @@
 
             <!-- Chart area -->
             <div class="chart-shell">
-              @if (hasResult()) {
+              @if (showChart()) {
                 <div class="chart-header">
                   <div class="chart-copy">
                     <span class="chart-kicker">{{ t('predicted_trends') }}</span>
@@ -334,7 +334,7 @@
                   </div>
                 </div>
 
-                @defer (when hasResult()) {
+                @defer (when showChart()) {
                   @if (isBrowser) {
                     <div class="chart-frame">
                       <canvas
