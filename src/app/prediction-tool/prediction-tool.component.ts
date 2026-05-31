@@ -211,7 +211,6 @@ export class PredictionToolComponent implements OnInit {
   protected readonly chartData = computed<
     ChartConfiguration<'line'>['data']
   >(() => {
-    void this.darkMode();
     if (!this.isBrowser) {
       return { labels: [], datasets: [] };
     }
@@ -281,7 +280,6 @@ export class PredictionToolComponent implements OnInit {
   protected readonly chartOptions = computed<
     ChartConfiguration<'line'>['options']
   >(() => {
-    void this.darkMode();
     if (!this.isBrowser) return {};
     const colors = this.themeColors();
 
@@ -818,10 +816,6 @@ function roundValue(value: number): number {
 
 function formatCurrency(value: number): string {
   return `$${sanitizeCurrencyValue(value).toLocaleString()}`;
-}
-
-function readCssVar(name: string, doc: Document): string {
-  return getComputedStyle(doc.body).getPropertyValue(name).trim();
 }
 
 function colorWithAlpha(color: string, alpha: number): string {
