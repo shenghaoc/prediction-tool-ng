@@ -135,6 +135,7 @@ export class PredictionToolComponent implements OnInit {
   protected readonly mounted = signal(false);
   protected readonly loading = signal(false);
   protected readonly darkMode = signal(false);
+  protected readonly isMac = signal(false);
   protected readonly errorMessage = signal('');
   protected readonly hasPrediction = signal(false);
   protected readonly liveMessage = signal('');
@@ -439,6 +440,7 @@ export class PredictionToolComponent implements OnInit {
       this.restoreFormState();
       this.syncDocumentState();
       this.updateChartColorsCache();
+      this.isMac.set(this.detectMac());
     }
 
     this.mounted.set(true);
@@ -446,6 +448,19 @@ export class PredictionToolComponent implements OnInit {
     if (this.isBrowser) {
       this.document.body.classList.add('theme-ready');
     }
+  }
+
+  // navigator.userAgent contains "Mac OS X" on iOS too ("... like Mac OS X"),
+  // so prefer the modern userAgentData.platform and fall back to a "Macintosh"
+  // check, which real Macs report but iPhones do not.
+  private detectMac(): boolean {
+    const uaData = (
+      navigator as Navigator & { userAgentData?: { platform?: string } }
+    ).userAgentData;
+    if (uaData?.platform) {
+      return uaData.platform === 'macOS';
+    }
+    return navigator.userAgent.includes('Macintosh');
   }
 
   protected async onSubmit(): Promise<void> {

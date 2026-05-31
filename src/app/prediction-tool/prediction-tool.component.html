@@ -207,18 +207,22 @@
                       class="btn-primary"
                       type="submit"
                       [disabled]="predictionForm().invalid() || loading()"
+                      [attr.aria-keyshortcuts]="isMac() ? 'Meta+Enter' : 'Control+Enter'"
                     >
                       <span [class.loading-pulse]="loading()">
                         {{ loading() ? t('predicting') : t('get_prediction') }}
                       </span>
+                      <kbd class="shortcut-hint" aria-hidden="true">{{ isMac() ? '⌘ ↵' : 'Ctrl ↵' }}</kbd>
                     </button>
                     <button
                       class="btn-reset"
                       type="button"
                       [disabled]="loading()"
                       (click)="resetForm()"
+                      aria-keyshortcuts="Escape"
                     >
                       {{ t('reset_form') }}
+                      <kbd class="shortcut-hint" aria-hidden="true">Esc</kbd>
                     </button>
                   </div>
                 </div>
