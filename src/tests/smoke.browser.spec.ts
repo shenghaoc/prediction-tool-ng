@@ -39,7 +39,7 @@ describe('Prediction Tool - Browser Smoke Test', () => {
     await firstOption.click();
 
     // Verify the combobox value was updated
-    const el = (await mlModelInput.findElement()) as HTMLInputElement;
+    const el = mlModelInput.element() as HTMLInputElement;
     expect(el.value).toBeTruthy();
   });
 
@@ -56,13 +56,12 @@ describe('Prediction Tool - Browser Smoke Test', () => {
     await increaseButton.click();
 
     // Value should have increased
-    const input = (await numberInput.findElement()) as HTMLInputElement;
+    const input = numberInput.element() as HTMLInputElement;
     expect(Number(input.value)).toBeGreaterThan(120);
   });
 
   it('should have aria-required on the number field', async () => {
     const numberInput = page.getByRole('spinbutton');
-    const el = (await numberInput.findElement()) as HTMLInputElement;
-    expect(el.getAttribute('aria-required')).toBe('true');
+    await expect.element(numberInput).toHaveAttribute('aria-required', 'true');
   });
 });

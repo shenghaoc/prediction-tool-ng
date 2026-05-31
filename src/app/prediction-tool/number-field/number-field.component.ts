@@ -57,6 +57,12 @@ export class NumberFieldComponent implements FormValueControl<number | null>, On
     effect(() => {
       const v = this.value();
       if (v !== untracked(() => this.numericValue())) {
+        // When the user types an invalid character, onInput sets value=null but
+        // preserves rawValue so onBlur can restore the previous valid display.
+        // Don't clear rawValue while focused — the user is still editing.
+        if (v === null && untracked(() => this.focused())) {
+          return;
+        }
         this.rawValue.set(v ?? '');
       }
     });
