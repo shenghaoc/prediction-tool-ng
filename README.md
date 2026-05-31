@@ -68,7 +68,7 @@ src/app/services/translation.service.ts           # language signal and translat
 src/app/services/storage.service.ts               # localStorage persistence wrapper
 src/app/lists.ts                                   # prediction option lists
 src/app/app.component.ts                           # root Angular shell
-src/app/app.config.ts                              # application providers (zoneless CD, HttpClient, charts)
+src/app/app.config.ts                              # application providers (zoneless change detection, HttpClient, charts)
 worker/index.ts                                    # Cloudflare Worker: /api/prices handler + asset serving
 wrangler.jsonc                                     # Cloudflare Worker / D1 configuration
 ```
