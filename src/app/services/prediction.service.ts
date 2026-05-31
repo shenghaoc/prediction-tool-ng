@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Temporal } from '@js-temporal/polyfill';
-import { firstValueFrom, fromEvent, takeUntil } from 'rxjs';
+import { EmptyError, firstValueFrom, fromEvent, takeUntil } from 'rxjs';
 
 import {
   flat_model_list,
@@ -73,8 +73,15 @@ export class PredictionService {
       request$ = request$.pipe(takeUntil(fromEvent(abortSignal, 'abort')));
     }
 
-    const responseText = await firstValueFrom(request$);
-    return parsePredictionResponse(responseText, payload);
+    try {
+      const responseText = await firstValueFrom(request$);
+      return parsePredictionResponse(responseText, payload);
+    } catch (error) {
+      if (error instanceof EmptyError || abortSignal?.aborted) {
+        throw new DOMException('Prediction request aborted', 'AbortError');
+      }
+      throw error;
+    }
   }
 }
 

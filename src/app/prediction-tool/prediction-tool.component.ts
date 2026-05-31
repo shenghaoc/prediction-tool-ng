@@ -46,7 +46,6 @@ import {
   coerceOption,
   createDefaultTrendData,
   normalizeTrendData,
-  roundValue,
   sanitizeCurrencyValue,
   type ApiResponse,
   type FlatModel,
@@ -157,11 +156,7 @@ export class PredictionToolComponent implements OnInit {
     }
   });
 
-  protected readonly loading = computed(
-    () =>
-      this.predictionResource.isLoading() ||
-      this.predictionResource.status() === 'reloading'
-  );
+  protected readonly loading = this.predictionResource.isLoading;
 
   protected readonly hasResult = computed(
     () =>
@@ -222,6 +217,12 @@ export class PredictionToolComponent implements OnInit {
       label: this.translationService.translateOption('flat_models', f)
     }))
   );
+
+  protected readonly stats = computed(() => [
+    { labelKey: 'models_count', value: this.mlModels.length, icon: 'model' },
+    { labelKey: 'towns_count', value: this.towns.length, icon: 'town' },
+    { labelKey: 'flat_types_count', value: this.flatModels.length, icon: 'flat' }
+  ]);
 
   protected readonly priceLocale = computed(() =>
     this.lang() === 'zh' ? 'zh-SG' : 'en-SG'
@@ -580,8 +581,8 @@ export class PredictionToolComponent implements OnInit {
     return formatCurrency(
       sanitizeCurrencyValue(value),
       this.priceLocale(),
+      '$',
       'SGD',
-      'symbol',
       '1.0-0'
     );
   }
@@ -591,14 +592,7 @@ export class PredictionToolComponent implements OnInit {
   }
 
   protected formatDeltaCurrency(value: number): string {
-    const roundedValue = Math.abs(roundValue(value));
-    const formatted = formatCurrency(
-      roundedValue,
-      this.priceLocale(),
-      'SGD',
-      'symbol',
-      '1.0-0'
-    );
+    const formatted = this.formatChartCurrency(Math.abs(value));
     const sign = value >= 0 ? '+' : '-';
     return `${sign}${formatted}`;
   }

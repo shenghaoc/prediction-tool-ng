@@ -58,11 +58,7 @@
                 <p class="lead">{{ t('intro_blurb') }}</p>
 
                 <div class="figure-row">
-                  @for (stat of [
-                    { labelKey: 'models_count', value: mlModels.length, icon: 'model' },
-                    { labelKey: 'towns_count', value: towns.length, icon: 'town' },
-                    { labelKey: 'flat_types_count', value: flatModels.length, icon: 'flat' }
-                  ]; track stat.labelKey) {
+                  @for (stat of stats(); track stat.labelKey) {
                     <div class="stat-tile">
                       <div class="stat-tile-icon" aria-hidden="true">
                         @switch (stat.icon) {
