@@ -4,11 +4,12 @@
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
     "types": [
-      "jasmine"
+      "vitest"
     ]
   },
   "include": [
     "src/**/*.spec.ts",
+    "src/**/*.browser.spec.ts",
     "src/**/*.d.ts"
   ]
 }
