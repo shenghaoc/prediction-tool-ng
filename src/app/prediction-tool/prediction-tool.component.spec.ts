@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -40,12 +41,12 @@ describe('PredictionToolComponent', () => {
     const form = component['predictionForm'];
 
     form().markAsTouched();
-    expect(form().touched()).toBeTrue();
+    expect(form().touched()).toBe(true);
 
     const compiled = fixture.nativeElement as HTMLElement;
     compiled.querySelector<HTMLButtonElement>('.btn-reset')?.click();
     await fixture.whenStable();
 
-    expect(form().touched()).toBeFalse();
+    expect(form().touched()).toBe(false);
   });
 });
