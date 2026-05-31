@@ -142,8 +142,9 @@ export class PredictionToolComponent implements OnInit {
     createDefaultTrendData()
   );
 
-  // Cached theme colors to avoid calling getComputedStyle in computed properties
-  protected readonly themeColors = signal({
+  // Cached theme colors to avoid calling getComputedStyle in computed properties.
+  // Only read by the chartData/chartOptions computed signals, never the template.
+  private readonly themeColors = signal({
     primary: '',
     chartFill: '',
     card: '',
@@ -610,16 +611,26 @@ export class PredictionToolComponent implements OnInit {
       return getComputedStyle(probe).color;
     };
 
-    const primary = resolveVar('--primary');
-    const foreground = resolveVar('--foreground');
-    const chart1 = resolveVar('--chart-1');
-    const chart2 = resolveVar('--chart-2');
-    const chartFill = resolveVar('--chart-fill');
-    const card = resolveVar('--card');
-    const mutedForeground = resolveVar('--muted-foreground');
-    const popover = resolveVar('--popover');
-
-    doc.body.removeChild(probe);
+    let primary: string;
+    let foreground: string;
+    let chart1: string;
+    let chart2: string;
+    let chartFill: string;
+    let card: string;
+    let mutedForeground: string;
+    let popover: string;
+    try {
+      primary = resolveVar('--primary');
+      foreground = resolveVar('--foreground');
+      chart1 = resolveVar('--chart-1');
+      chart2 = resolveVar('--chart-2');
+      chartFill = resolveVar('--chart-fill');
+      card = resolveVar('--card');
+      mutedForeground = resolveVar('--muted-foreground');
+      popover = resolveVar('--popover');
+    } finally {
+      doc.body.removeChild(probe);
+    }
 
     this.chartColors.c1 = chart1;
     this.chartColors.c2 = chart2;
