@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Temporal } from '@js-temporal/polyfill';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, fromEvent, takeUntil } from 'rxjs';
 
 import {
   flat_model_list,
@@ -56,11 +56,24 @@ export const PREDICTION_MONTHS = [...month_list.slice(-13)];
 export class PredictionService {
   private readonly http = inject(HttpClient);
 
-  async fetchPrediction(payload: PredictionRequestPayload): Promise<ApiResponse> {
+  async fetchPrediction(
+    payload: PredictionRequestPayload,
+    abortSignal?: AbortSignal
+  ): Promise<ApiResponse> {
+    if (abortSignal?.aborted) {
+      throw new DOMException('Prediction request aborted', 'AbortError');
+    }
+
     const formData = createPredictionFormData(payload);
-    const responseText = await firstValueFrom(
-      this.http.post(PREDICTION_API_URL, formData, { responseType: 'text' })
-    );
+    let request$ = this.http.post(PREDICTION_API_URL, formData, {
+      responseType: 'text'
+    });
+
+    if (abortSignal) {
+      request$ = request$.pipe(takeUntil(fromEvent(abortSignal, 'abort')));
+    }
+
+    const responseText = await firstValueFrom(request$);
     return parsePredictionResponse(responseText, payload);
   }
 }
@@ -142,12 +155,18 @@ function parsePredictionResponse(
     );
   }
 
+  const predictions =
+    parsedResponse &&
+    typeof parsedResponse === 'object' &&
+    'predictions' in parsedResponse &&
+    Array.isArray(parsedResponse.predictions)
+      ? parsedResponse.predictions
+      : null;
+
   if (
-    !parsedResponse ||
-    typeof parsedResponse !== 'object' ||
-    !('predictions' in parsedResponse) ||
-    !Array.isArray(parsedResponse.predictions) ||
-    parsedResponse.predictions.length === 0
+    !predictions ||
+    predictions.length === 0 ||
+    !predictions.every(isValidPredictionEntry)
   ) {
     throw new Error(
       formatPredictionError(
@@ -158,7 +177,20 @@ function parsePredictionResponse(
     );
   }
 
-  return parsedResponse as ApiResponse;
+  return { predictions };
+}
+
+function isValidPredictionEntry(
+  entry: unknown
+): entry is ApiResponse['predictions'][number] {
+  return (
+    typeof entry === 'object' &&
+    entry !== null &&
+    'month' in entry &&
+    typeof entry.month === 'string' &&
+    'predictedPrice' in entry &&
+    typeof entry.predictedPrice === 'number'
+  );
 }
 
 function formatPredictionError(

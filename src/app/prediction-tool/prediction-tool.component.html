@@ -105,11 +105,7 @@
                 <div class="form-grid material-form-grid">
                   <mat-form-field class="field-group" appearance="outline">
                     <mat-label>{{ t('ml_model') }}</mat-label>
-                    <mat-select
-                      id="field-ml-model"
-                      formControlName="ml_model"
-                      [attr.aria-label]="t('ml_model')"
-                    >
+                    <mat-select id="field-ml-model" formControlName="ml_model">
                       @for (option of mlModelOptions(); track option.value) {
                         <mat-option [value]="option.value">{{ option.label }}</mat-option>
                       }
@@ -118,11 +114,7 @@
 
                   <mat-form-field class="field-group" appearance="outline">
                     <mat-label>{{ t('town') }}</mat-label>
-                    <mat-select
-                      id="field-town"
-                      formControlName="town"
-                      [attr.aria-label]="t('town')"
-                    >
+                    <mat-select id="field-town" formControlName="town">
                       @for (option of townOptions(); track option.value) {
                         <mat-option [value]="option.value">{{ option.label }}</mat-option>
                       }
@@ -131,11 +123,7 @@
 
                   <mat-form-field class="field-group" appearance="outline">
                     <mat-label>{{ t('storey_range') }}</mat-label>
-                    <mat-select
-                      id="field-storey-range"
-                      formControlName="storey_range"
-                      [attr.aria-label]="t('storey_range')"
-                    >
+                    <mat-select id="field-storey-range" formControlName="storey_range">
                       @for (option of storeyRangeOptions(); track option.value) {
                         <mat-option [value]="option.value">{{ option.label }}</mat-option>
                       }
@@ -144,11 +132,7 @@
 
                   <mat-form-field class="field-group" appearance="outline">
                     <mat-label>{{ t('flat_model') }}</mat-label>
-                    <mat-select
-                      id="field-flat-model"
-                      formControlName="flat_model"
-                      [attr.aria-label]="t('flat_model')"
-                    >
+                    <mat-select id="field-flat-model" formControlName="flat_model">
                       @for (option of flatModelOptions(); track option.value) {
                         <mat-option [value]="option.value">{{ option.label }}</mat-option>
                       }
@@ -162,7 +146,6 @@
                       id="field-floor-area"
                       type="number"
                       formControlName="floor_area_sqm"
-                      [attr.aria-label]="t('floor_area')"
                       [placeholder]="t('enter_floor_area')"
                       min="20"
                       max="300"
@@ -178,11 +161,7 @@
 
                   <mat-form-field class="field-group field-full" appearance="outline">
                     <mat-label>{{ t('lease_commence_date') }}</mat-label>
-                    <mat-select
-                      id="field-lease-year"
-                      formControlName="lease_commence_year"
-                      [attr.aria-label]="t('lease_commence_date')"
-                    >
+                    <mat-select id="field-lease-year" formControlName="lease_commence_year">
                       @for (year of leaseYears; track year) {
                         <mat-option [value]="year">{{ year }}</mat-option>
                       }
@@ -334,7 +313,7 @@
                   </div>
                 </div>
 
-                @defer (when showChart()) {
+                @defer (on viewport) {
                   @if (isBrowser) {
                     <div class="chart-frame">
                       <canvas

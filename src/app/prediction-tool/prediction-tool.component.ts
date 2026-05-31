@@ -74,16 +74,11 @@ type PredictionFormValue = {
 
 type StoredPredictionFormValue = {
   mlModel?: MlModel;
-  ml_model?: MlModel;
   town?: Town;
   storeyRange?: StoreyRange;
-  storey_range?: StoreyRange;
   flatModel?: FlatModel;
-  flat_model?: FlatModel;
   floorAreaSqm?: number | null;
-  floor_area_sqm?: number | null;
   leaseCommenceYear?: number | string | null;
-  lease_commence_year?: number | null;
 };
 
 type PredictionRequestTrigger = {
@@ -154,11 +149,11 @@ export class PredictionToolComponent implements OnInit {
 
   protected readonly predictionResource = resource({
     params: () => this.predictionRequest(),
-    loader: async ({ params: request }) => {
+    loader: async ({ params: request, abortSignal }) => {
       if (!request) {
         return undefined;
       }
-      return this.predictionService.fetchPrediction(request.payload);
+      return this.predictionService.fetchPrediction(request.payload, abortSignal);
     }
   });
 
@@ -456,7 +451,11 @@ export class PredictionToolComponent implements OnInit {
         return;
       }
 
-      if (status === 'resolved' && this.predictionResource.hasValue()) {
+      if (
+        status === 'resolved' &&
+        this.predictionResource.hasValue() &&
+        request.seq === this.predictionRequest()?.seq
+      ) {
         this.hasPrediction.set(true);
         this.errorMessage.set('');
         this.chart()?.update();
@@ -719,27 +718,18 @@ export class PredictionToolComponent implements OnInit {
     }
 
     this.predictionForm.patchValue({
-      ml_model: coerceOption(
-        savedForm.ml_model ?? savedForm.mlModel,
-        ml_model_list
-      ),
+      ml_model: coerceOption(savedForm.mlModel, ml_model_list),
       town: coerceOption(savedForm.town, town_list),
-      storey_range: coerceOption(
-        savedForm.storey_range ?? savedForm.storeyRange,
-        storey_range_list
-      ),
-      flat_model: coerceOption(
-        savedForm.flat_model ?? savedForm.flatModel,
-        flat_model_list
-      ),
+      storey_range: coerceOption(savedForm.storeyRange, storey_range_list),
+      flat_model: coerceOption(savedForm.flatModel, flat_model_list),
       floor_area_sqm: clampNumber(
-        savedForm.floor_area_sqm ?? savedForm.floorAreaSqm,
+        savedForm.floorAreaSqm,
         MIN_FLOOR_AREA,
         MAX_FLOOR_AREA,
         MIN_FLOOR_AREA
       ),
       lease_commence_year: clampNumber(
-        savedForm.lease_commence_year ?? savedForm.leaseCommenceYear,
+        savedForm.leaseCommenceYear,
         MIN_YEAR,
         MAX_YEAR,
         MAX_YEAR
