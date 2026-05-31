@@ -5,8 +5,6 @@ import { AppComponent } from '../app/app.component';
 import { appConfig } from '../app/app.config';
 
 describe('Prediction Tool - Browser Smoke Test', () => {
-  // Mount the Angular application once before all tests.
-  // Guard against watch-mode reruns where beforeAll may fire again.
   beforeAll(async () => {
     if (!document.querySelector('app-root')) {
       const appRoot = document.createElement('app-root');
@@ -15,13 +13,10 @@ describe('Prediction Tool - Browser Smoke Test', () => {
     }
   });
 
-  // Wait for the app to render before each test
   beforeEach(async () => {
     await expect.element(page.getByRole('main')).toBeVisible();
   });
 
-  // Reset form state between tests so earlier tests' selections
-  // don't leak into later tests (e.g. combobox select affecting spinbutton).
   afterEach(async () => {
     const resetBtn = page.getByRole('button', { name: /reset/i });
     if ((await resetBtn.all()).length > 0) {
@@ -34,45 +29,28 @@ describe('Prediction Tool - Browser Smoke Test', () => {
     await expect.element(headings.first()).toBeVisible();
   });
 
-  it('should open the ML Model combobox and select an option', async () => {
-    // First combobox on the page (ML Model)
-    const mlModelInput = page.getByRole('combobox').first();
-    await expect.element(mlModelInput).toBeVisible();
+  it('should open the ML Model select and choose an option', async () => {
+    const mlModelSelect = page.getByRole('combobox', { name: /ml model/i });
+    await expect.element(mlModelSelect).toBeVisible();
+    await mlModelSelect.click();
 
-    // Click the first toggle button (ML Model combobox's chevron)
-    const toggleButton = page.getByRole('button', { name: /toggle/i }).first();
-    await toggleButton.click();
+    const ridgeOption = page.getByRole('option', { name: /ridge regression/i });
+    await ridgeOption.click();
 
-    // Wait for the listbox to appear and select first option
-    const listbox = page.getByRole('listbox');
-    await expect.element(listbox).toBeVisible();
-    const firstOption = listbox.getByRole('option').first();
-    await firstOption.click();
-
-    // Verify the combobox value was updated
-    const el = mlModelInput.element() as HTMLInputElement;
-    expect(el.value).toBeTruthy();
+    await expect.element(mlModelSelect).toHaveTextContent(/ridge regression/i);
   });
 
-  it('should type in the number field and verify stepper works', async () => {
-    // The number field uses role="spinbutton"
-    const numberInput = page.getByRole('spinbutton');
-    await expect.element(numberInput).toBeVisible();
+  it('should type in the floor area field', async () => {
+    const floorAreaInput = page.getByRole('spinbutton', { name: /floor area/i });
+    await expect.element(floorAreaInput).toBeVisible();
+    await floorAreaInput.fill('120');
 
-    // Clear and type a value
-    await numberInput.fill('120');
-
-    // Click the increase stepper button
-    const increaseButton = page.getByRole('button', { name: /increase/i });
-    await increaseButton.click();
-
-    // Value should have increased
-    const input = numberInput.element() as HTMLInputElement;
-    expect(Number(input.value)).toBeGreaterThan(120);
+    const input = floorAreaInput.element() as HTMLInputElement;
+    expect(Number(input.value)).toBe(120);
   });
 
-  it('should have aria-required on the number field', async () => {
-    const numberInput = page.getByRole('spinbutton');
-    await expect.element(numberInput).toHaveAttribute('aria-required', 'true');
+  it('should mark the floor area field as required', async () => {
+    const floorAreaInput = page.getByRole('spinbutton', { name: /floor area/i });
+    await expect.element(floorAreaInput).toHaveAttribute('required');
   });
 });

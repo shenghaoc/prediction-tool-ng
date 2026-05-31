@@ -13,10 +13,12 @@
   },
   "private": true,
   "dependencies": {
+    "@angular/cdk": "^21.2.13",
     "@angular/common": "^21.2.15",
     "@angular/compiler": "^21.2.15",
     "@angular/core": "^21.2.15",
     "@angular/forms": "^21.2.15",
+    "@angular/material": "^21.2.13",
     "@angular/platform-browser": "^21.2.15",
     "@js-temporal/polyfill": "^0.5.1",
     "chart.js": "^4.5.1",
