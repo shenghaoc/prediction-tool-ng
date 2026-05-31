@@ -216,7 +216,10 @@ export default {
 			} else if (request.method === 'POST') {
 				response = await handleApiPrices(request, env);
 			} else {
-				response = jsonResponse({ error: 'Method Not Allowed' }, { status: 405 });
+				response = jsonResponse(
+					{ error: 'Method Not Allowed' },
+					{ status: 405, headers: { Allow: 'POST, OPTIONS' } }
+				);
 			}
 		} else {
 			response = await env.ASSETS.fetch(request);
