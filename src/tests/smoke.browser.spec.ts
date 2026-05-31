@@ -1,21 +1,32 @@
-import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
 import { page } from 'vitest/browser';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from '../app/app.component';
 import { appConfig } from '../app/app.config';
 
 describe('Prediction Tool - Browser Smoke Test', () => {
-  // Mount the Angular application once before all tests
+  // Mount the Angular application once before all tests.
+  // Guard against watch-mode reruns where beforeAll may fire again.
   beforeAll(async () => {
-    // Create the root element Angular expects to bootstrap onto
-    const appRoot = document.createElement('app-root');
-    document.body.appendChild(appRoot);
-    await bootstrapApplication(AppComponent, appConfig);
+    if (!document.querySelector('app-root')) {
+      const appRoot = document.createElement('app-root');
+      document.body.appendChild(appRoot);
+      await bootstrapApplication(AppComponent, appConfig);
+    }
   });
 
   // Wait for the app to render before each test
   beforeEach(async () => {
     await expect.element(page.getByRole('main')).toBeVisible();
+  });
+
+  // Reset form state between tests so earlier tests' selections
+  // don't leak into later tests (e.g. combobox select affecting spinbutton).
+  afterEach(async () => {
+    const resetBtn = page.getByRole('button', { name: /reset/i });
+    if ((await resetBtn.all()).length > 0) {
+      await resetBtn.click();
+    }
   });
 
   it('should render the form heading', async () => {
