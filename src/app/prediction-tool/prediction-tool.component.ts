@@ -1,5 +1,9 @@
-import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import {
+  CurrencyPipe,
+  DOCUMENT,
+  formatCurrency,
+  isPlatformBrowser
+} from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,92 +13,91 @@ import {
   computed,
   effect,
   inject,
+  resource,
   signal,
   viewChild
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  FormBuilder,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { BaseChartDirective } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
-import { Temporal } from '@js-temporal/polyfill';
-import { firstValueFrom } from 'rxjs';
-import { FormField, form, max, min, required, submit, validate } from '@angular/forms/signals';
 
 import {
   flat_model_list,
   ml_model_list,
-  month_list,
   storey_range_list,
   town_list
 } from '../lists';
+import {
+  MAX_FLOOR_AREA,
+  MAX_YEAR,
+  MIN_FLOOR_AREA,
+  MIN_YEAR,
+  PredictionService,
+  buildPredictionRequestPayload,
+  clampNumber,
+  coerceOption,
+  createDefaultTrendData,
+  normalizeTrendData,
+  roundValue,
+  sanitizeCurrencyValue,
+  type ApiResponse,
+  type FlatModel,
+  type MlModel,
+  type PredictionRequestPayload,
+  type StoreyRange,
+  type Town,
+  type TrendPoint
+} from '../services/prediction.service';
 import { StorageService } from '../services/storage.service';
 import {
   TranslationService
 } from '../services/translation.service';
 import type { OptionGroup } from '../services/translation.service';
-import { ComboboxComponent } from './combobox/combobox.component';
-import { NumberFieldComponent } from './number-field/number-field.component';
-
-type MlModel = (typeof ml_model_list)[number];
-type Town = (typeof town_list)[number];
-type StoreyRange = (typeof storey_range_list)[number];
-type FlatModel = (typeof flat_model_list)[number];
+import { integerValidator } from './prediction-form.validators';
 
 type PredictionFormValue = {
-  mlModel: MlModel;
+  ml_model: MlModel;
   town: Town;
-  storeyRange: StoreyRange;
-  flatModel: FlatModel;
-  // null represents an empty/cleared input; the required validator flags it.
-  floorAreaSqm: number | null;
-  // string because the combobox value model is always a string.
-  leaseCommenceYear: string;
+  storey_range: StoreyRange;
+  flat_model: FlatModel;
+  floor_area_sqm: number | null;
+  lease_commence_year: number | null;
 };
 
-// leaseCommenceYear is stored as a number here (clamped from the string form
-// value) so the template can render it directly without further conversion.
-type SummaryValues = {
-  mlModel: MlModel;
-  town: Town;
-  leaseCommenceYear: number;
+type StoredPredictionFormValue = {
+  mlModel?: MlModel;
+  ml_model?: MlModel;
+  town?: Town;
+  storeyRange?: StoreyRange;
+  storey_range?: StoreyRange;
+  flatModel?: FlatModel;
+  flat_model?: FlatModel;
+  floorAreaSqm?: number | null;
+  floor_area_sqm?: number | null;
+  leaseCommenceYear?: number | string | null;
+  lease_commence_year?: number | null;
 };
 
-type TrendPoint = {
-  label: string;
-  value: number;
+type PredictionRequestTrigger = {
+  seq: number;
+  payload: PredictionRequestPayload;
 };
-
-type ApiResponse = {
-  predictions: Array<{
-    month: string;
-    predictedPrice: number;
-  }>;
-};
-
-type PredictionRequestPayload = {
-  model: MlModel;
-  monthStart: string;
-  monthEnd: string;
-  town: Town;
-  storeyRange: StoreyRange;
-  flatModel: FlatModel;
-  floorAreaSqm: string;
-  leaseCommenceYear: string;
-};
-
-const MIN_YEAR = 1960;
-const MAX_YEAR = Temporal.PlainYearMonth.from(month_list[month_list.length - 1]).year;
-const MIN_FLOOR_AREA = 20;
-const MAX_FLOOR_AREA = 300;
-const PREDICTION_API_URL =
-  'https://ee4802-g20-tool-ng.shenghaoc.workers.dev/api/prices';
-const PREDICTION_MONTHS = [...month_list.slice(-13)];
 
 const INITIAL_FORM_VALUE: PredictionFormValue = {
-  mlModel: ml_model_list[0],
+  ml_model: ml_model_list[0],
   town: town_list[0],
-  storeyRange: storey_range_list[0],
-  flatModel: flat_model_list[0],
-  floorAreaSqm: MIN_FLOOR_AREA,
-  leaseCommenceYear: String(MAX_YEAR)
+  storey_range: storey_range_list[0],
+  flat_model: flat_model_list[0],
+  floor_area_sqm: MIN_FLOOR_AREA,
+  lease_commence_year: MAX_YEAR
 };
 
 @Component({
@@ -106,18 +109,21 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
     '(document:keydown)': 'onDocumentKeyDown($event)'
   },
   imports: [
-    FormField,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule,
     BaseChartDirective,
-    ComboboxComponent,
-    NumberFieldComponent
+    CurrencyPipe
   ]
 })
 export class PredictionToolComponent implements OnInit {
   protected readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly document = inject(DOCUMENT);
   private readonly storageService = inject(StorageService);
-  private readonly http = inject(HttpClient);
+  private readonly predictionService = inject(PredictionService);
   private readonly translationService = inject(TranslationService);
+  private readonly fb = inject(FormBuilder);
 
   protected readonly chart = viewChild(BaseChartDirective);
   protected readonly resultsAnchor = viewChild<ElementRef<HTMLElement>>('resultsAnchor');
@@ -134,18 +140,46 @@ export class PredictionToolComponent implements OnInit {
   );
 
   protected readonly mounted = signal(false);
-  protected readonly loading = signal(false);
   protected readonly darkMode = signal(false);
   protected readonly isMac = signal(false);
-  protected readonly errorMessage = signal('');
   protected readonly hasPrediction = signal(false);
   protected readonly liveMessage = signal('');
-  protected readonly trendData = signal<TrendPoint[]>(
-    createDefaultTrendData()
+  protected readonly errorMessage = signal('');
+
+  private readonly predictionRequest = signal<PredictionRequestTrigger | undefined>(
+    undefined
+  );
+  private predictionRequestSeq = 0;
+  private lastAnnouncedSeq = -1;
+
+  protected readonly predictionResource = resource({
+    params: () => this.predictionRequest(),
+    loader: async ({ params: request }) => {
+      if (!request) {
+        return undefined;
+      }
+      return this.predictionService.fetchPrediction(request.payload);
+    }
+  });
+
+  protected readonly loading = computed(
+    () =>
+      this.predictionResource.isLoading() ||
+      this.predictionResource.status() === 'reloading'
   );
 
-  // Cached theme colors to avoid calling getComputedStyle in computed properties.
-  // Only read by the chartData/chartOptions computed signals, never the template.
+  protected readonly hasResult = computed(
+    () => this.hasPrediction() && this.predictionResource.hasValue()
+  );
+
+  protected readonly trendData = computed<TrendPoint[]>(() => {
+    const response = this.predictionResource.value();
+    if (response) {
+      return normalizeTrendData(response);
+    }
+    return createDefaultTrendData();
+  });
+
   private readonly themeColors = signal({
     primary: '',
     chartFill: '',
@@ -186,8 +220,8 @@ export class PredictionToolComponent implements OnInit {
     }))
   );
 
-  protected readonly leaseYearOptions = computed(() =>
-    this.leaseYears.map((y) => ({ value: String(y), label: String(y) }))
+  protected readonly priceLocale = computed(() =>
+    this.lang() === 'zh' ? 'zh-SG' : 'en-SG'
   );
 
   protected readonly predictedPrice = computed(() => {
@@ -237,9 +271,6 @@ export class PredictionToolComponent implements OnInit {
     };
   });
 
-  // Chart plugin color cache: updated once in ngOnInit and on every theme toggle.
-  // The plugin array is stable (never recreated), so Chart.js doesn't re-register
-  // plugins on each theme change.
   private readonly chartColors = { c1: '', c2: '', glow: '' };
 
   protected readonly chartPlugins = [
@@ -250,8 +281,6 @@ export class PredictionToolComponent implements OnInit {
         if (!chartArea || !data.datasets[0]) return;
         const c1 = this.chartColors.c1;
         const c2 = this.chartColors.c2;
-        // Guard: colors are empty strings until updateChartColorsCache() runs;
-        // addColorStop throws a DOMException with an empty/invalid color value.
         if (!c1 || !c2) return;
         const gradient = ctx.createLinearGradient(chartArea.left, 0, chartArea.right, 0);
         gradient.addColorStop(0, c1);
@@ -263,7 +292,6 @@ export class PredictionToolComponent implements OnInit {
       id: 'latestGlow',
       afterDatasetsDraw: (chart: any) => {
         const { ctx } = chart;
-        // Guard: glow is '' until updateChartColorsCache() runs.
         if (!this.chartColors.glow) return;
         const meta = chart.getDatasetMeta(0);
         if (!meta || !meta.data || meta.data.length === 0) return;
@@ -306,7 +334,7 @@ export class PredictionToolComponent implements OnInit {
           callbacks: {
             label: (context) => {
               const value = Number(context.raw ?? 0);
-              return formatCurrency(value);
+              return this.formatChartCurrency(value);
             }
           }
         }
@@ -330,15 +358,12 @@ export class PredictionToolComponent implements OnInit {
           }
         },
         y: {
-          // grace adds padding above/below the data range so the line is
-          // never squashed against the top or bottom of the chart area.
           grace: '15%',
           grid: {
             color: (context: any) =>
               context.index === 0 ? colors.gridColor : colors.dashedGridColor,
             lineWidth: 1,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            borderDash: ((context: any) => context.index === 0 ? [] : [3, 4]) as any,
+            borderDash: ((context: any) => (context.index === 0 ? [] : [3, 4])) as any,
             drawBorder: false
           },
           ticks: {
@@ -350,72 +375,100 @@ export class PredictionToolComponent implements OnInit {
     };
   });
 
-  private readonly predictionModel = signal<PredictionFormValue>({ ...INITIAL_FORM_VALUE });
-
-  protected readonly predictionForm = form(this.predictionModel, (s) => {
-    required(s.mlModel);
-    required(s.town);
-    required(s.storeyRange);
-    required(s.flatModel);
-    required(s.floorAreaSqm);
-    min(s.floorAreaSqm, MIN_FLOOR_AREA);
-    max(s.floorAreaSqm, MAX_FLOOR_AREA);
-    required(s.leaseCommenceYear);
-    validate(s.leaseCommenceYear, ({ value }) => {
-      const n = Number(value());
-      if (!Number.isFinite(n) || n < MIN_YEAR || n > MAX_YEAR) {
-        return { kind: 'range' };
+  protected readonly predictionForm = this.fb.group({
+    ml_model: this.fb.nonNullable.control<MlModel>(INITIAL_FORM_VALUE.ml_model, {
+      validators: Validators.required
+    }),
+    town: this.fb.nonNullable.control<Town>(INITIAL_FORM_VALUE.town, {
+      validators: Validators.required
+    }),
+    storey_range: this.fb.nonNullable.control<StoreyRange>(
+      INITIAL_FORM_VALUE.storey_range,
+      { validators: Validators.required }
+    ),
+    flat_model: this.fb.nonNullable.control<FlatModel>(
+      INITIAL_FORM_VALUE.flat_model,
+      { validators: Validators.required }
+    ),
+    floor_area_sqm: this.fb.control<number | null>(
+      INITIAL_FORM_VALUE.floor_area_sqm,
+      {
+        validators: [
+          Validators.required,
+          Validators.min(MIN_FLOOR_AREA),
+          Validators.max(MAX_FLOOR_AREA),
+          integerValidator
+        ]
       }
-      return undefined;
-    });
+    ),
+    lease_commence_year: this.fb.control<number | null>(
+      INITIAL_FORM_VALUE.lease_commence_year,
+      {
+        validators: [
+          Validators.required,
+          Validators.min(MIN_YEAR),
+          Validators.max(MAX_YEAR)
+        ]
+      }
+    )
   });
 
   protected readonly summaryValues = computed<SummaryValues>(() => {
-    const value = this.predictionModel();
+    const value = this.predictionForm.getRawValue();
     return {
-      mlModel: coerceOption(value.mlModel, ml_model_list),
+      mlModel: coerceOption(value.ml_model, ml_model_list),
       town: coerceOption(value.town, town_list),
-      leaseCommenceYear: clampNumber(value.leaseCommenceYear, MIN_YEAR, MAX_YEAR, MAX_YEAR)
+      leaseCommenceYear: clampNumber(
+        value.lease_commence_year,
+        MIN_YEAR,
+        MAX_YEAR,
+        MAX_YEAR
+      )
     };
   });
 
-  protected readonly floorAreaErrorId = computed(() => {
-    const state = this.predictionForm.floorAreaSqm();
-    return state.touched() && state.errors().length > 0 ? 'floor-area-error' : null;
-  });
-
-  protected readonly floorAreaRequiredError = computed(() => {
-    const state = this.predictionForm.floorAreaSqm();
-    return state.touched() && state.errors().some(e => e.kind === 'required');
-  });
-
-  protected readonly floorAreaRangeError = computed(() => {
-    const state = this.predictionForm.floorAreaSqm();
-    return state.touched() && state.errors().some(e => e.kind === 'min' || e.kind === 'max');
-  });
-
-  protected readonly leaseYearErrorId = computed(() => {
-    const state = this.predictionForm.leaseCommenceYear();
-    return state.touched() && state.errors().length > 0 ? 'lease-year-error' : null;
-  });
-
-  protected readonly leaseYearRangeError = computed(() => {
-    const state = this.predictionForm.leaseCommenceYear();
-    return state.touched() && state.errors().some(e => e.kind === 'range');
-  });
+  protected readonly leaseYearRangeMessage = computed(() =>
+    this.t('lease_year_range')
+      .replace('{min}', String(MIN_YEAR))
+      .replace('{max}', String(MAX_YEAR))
+  );
 
   constructor() {
-    // Persist form state to localStorage whenever the model changes.
-    // Writing to localStorage is a valid effect use case (imperative side effect).
-    effect(() => {
+    this.predictionForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       if (this.isBrowser) {
-        this.storageService.setItem('predictionFormData', this.predictionModel());
+        this.persistFormState();
+      }
+    });
+
+    effect(() => {
+      const request = this.predictionRequest();
+      const status = this.predictionResource.status();
+
+      if (!request) {
+        return;
+      }
+
+      if (status === 'resolved' && this.predictionResource.hasValue()) {
+        this.hasPrediction.set(true);
+        this.errorMessage.set('');
+        this.chart()?.update();
+
+        if (request.seq !== this.lastAnnouncedSeq) {
+          this.lastAnnouncedSeq = request.seq;
+          this.announcePredictionComplete(this.predictionResource.value()!);
+        }
+        return;
+      }
+
+      if (status === 'error') {
+        const error = this.predictionResource.error();
+        console.error('Prediction request failed', { error, request: request.payload });
+        this.errorMessage.set(this.t('error_fetch'));
       }
     });
   }
 
   protected onDocumentKeyDown(event: KeyboardEvent): void {
-    // Ignore events already handled by child components (e.g. Escape inside Combobox).
     if (event.defaultPrevented) {
       return;
     }
@@ -430,7 +483,6 @@ export class PredictionToolComponent implements OnInit {
 
     if (event.key === 'Escape' && !this.loading()) {
       const active = this.document.activeElement as HTMLElement | null;
-      // Only reset if focus is within the form area (not a combobox dropdown, etc.)
       if (active && active.closest('form')) {
         this.resetForm();
       }
@@ -453,111 +505,66 @@ export class PredictionToolComponent implements OnInit {
     }
   }
 
-  // navigator.userAgent contains "Mac OS X" on iOS too ("... like Mac OS X"),
-  // so prefer the modern userAgentData.platform and fall back to a "Macintosh"
-  // check, which real Macs report but iPhones do not.
-  private detectMac(): boolean {
-    const uaData = (
-      navigator as Navigator & { userAgentData?: { platform?: string } }
-    ).userAgentData;
-    if (uaData?.platform) {
-      return uaData.platform === 'macOS';
-    }
-    return navigator.userAgent.includes('Macintosh');
-  }
-
   protected async onSubmit(): Promise<void> {
-    if (!this.isBrowser || this.loading()) return;
+    if (!this.isBrowser || this.loading()) {
+      return;
+    }
 
-    await submit(this.predictionForm, async () => {
-      this.loading.set(true);
-      this.errorMessage.set('');
+    this.predictionForm.markAllAsTouched();
 
-      const formValue = this.predictionModel();
-      const clampedFloorArea = clampNumber(
-        formValue.floorAreaSqm,
-        MIN_FLOOR_AREA,
-        MAX_FLOOR_AREA,
-        MIN_FLOOR_AREA
-      );
+    if (this.predictionForm.invalid) {
+      return;
+    }
 
-      if (clampedFloorArea !== formValue.floorAreaSqm) {
-        this.predictionModel.update(v => ({ ...v, floorAreaSqm: clampedFloorArea }));
-      }
+    const raw = this.predictionForm.getRawValue();
+    const floorArea = clampNumber(
+      raw.floor_area_sqm,
+      MIN_FLOOR_AREA,
+      MAX_FLOOR_AREA,
+      MIN_FLOOR_AREA
+    );
+    const leaseYear = clampNumber(
+      raw.lease_commence_year,
+      MIN_YEAR,
+      MAX_YEAR,
+      MAX_YEAR
+    );
 
-      const predictionWindow = getPredictionWindow();
-      const requestPayload: PredictionRequestPayload = {
-        model: formValue.mlModel,
-        monthStart: predictionWindow.monthStart,
-        monthEnd: predictionWindow.monthEnd,
-        town: formValue.town,
-        storeyRange: formValue.storeyRange,
-        flatModel: formValue.flatModel,
-        floorAreaSqm: clampedFloorArea.toString(),
-        leaseCommenceYear: formValue.leaseCommenceYear.toString()
-      };
-      const formData = createPredictionFormData(requestPayload);
+    if (floorArea !== raw.floor_area_sqm) {
+      this.predictionForm.controls.floor_area_sqm.setValue(floorArea);
+    }
+    if (leaseYear !== raw.lease_commence_year) {
+      this.predictionForm.controls.lease_commence_year.setValue(leaseYear);
+    }
 
-      try {
-        const responseText = await firstValueFrom(
-          this.http.post(PREDICTION_API_URL, formData, { responseType: 'text' })
-        );
-        const serverData = parsePredictionResponse(responseText, requestPayload);
-        const normalizedData = normalizeTrendData(serverData);
-
-        this.hasPrediction.set(true);
-        this.trendData.set(normalizedData);
-        this.chart()?.update();
-
-        const latestValue = normalizedData.at(-1)?.value ?? 0;
-        const priceStr = formatCurrency(sanitizeCurrencyValue(latestValue));
-        const announcement = this.t('prediction_complete').replace('{price}', priceStr);
-        // Clear the live region first so identical consecutive announcements
-        // are still re-read by assistive technology.
-        this.liveMessage.set('');
-        requestAnimationFrame(() => {
-          this.liveMessage.set(announcement);
-          this.resultsAnchor()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          // Focus the results heading for keyboard users, then drop the
-          // temporary tabindex once focus leaves so it isn't left interactive.
-          const heading = this.resultsHeadingEl()?.nativeElement;
-          if (heading) {
-            heading.setAttribute('tabindex', '-1');
-            heading.focus({ preventScroll: true });
-            heading.addEventListener(
-              'blur',
-              () => heading.removeAttribute('tabindex'),
-              { once: true }
-            );
-          }
-        });
-      } catch (error: unknown) {
-        if (error instanceof HttpErrorResponse) {
-          console.error('Prediction request failed', {
-            summary: formatPredictionError(
-              `API request failed with ${error.status} ${error.statusText}`,
-              typeof error.error === 'string' ? error.error : '',
-              requestPayload
-            )
-          });
-        } else {
-          console.error('Prediction request failed', { error, requestPayload });
-        }
-        this.errorMessage.set(this.t('error_fetch'));
-      } finally {
-        this.loading.set(false);
-      }
+    this.errorMessage.set('');
+    const payload = buildPredictionRequestPayload({
+      ml_model: raw.ml_model,
+      town: raw.town,
+      storey_range: raw.storey_range,
+      flat_model: raw.flat_model,
+      floor_area_sqm: floorArea,
+      lease_commence_year: leaseYear
     });
+
+    const seq = ++this.predictionRequestSeq;
+    const current = this.predictionRequest();
+
+    if (current && JSON.stringify(current.payload) === JSON.stringify(payload)) {
+      this.predictionResource.reload();
+      this.predictionRequest.set({ seq, payload });
+    } else {
+      this.predictionRequest.set({ seq, payload });
+    }
   }
 
   protected resetForm(): void {
-    this.predictionModel.set({ ...INITIAL_FORM_VALUE });
-    // Signal Forms API: call the field tree for FieldState, then reset interaction
-    // flags on the form and all descendants (documented as form().reset()).
-    this.predictionForm().reset();
+    this.predictionForm.reset({ ...INITIAL_FORM_VALUE });
+    this.predictionRequest.set(undefined);
+    this.predictionResource.set(undefined);
     this.hasPrediction.set(false);
     this.errorMessage.set('');
-    this.trendData.set(createDefaultTrendData());
+    this.lastAnnouncedSeq = -1;
   }
 
   protected toggleTheme(): void {
@@ -589,37 +596,85 @@ export class PredictionToolComponent implements OnInit {
     return this.translationService.translateOption(group, value);
   }
 
-  protected readonly leaseYearRangeMessage = computed(() =>
-    this.t('lease_year_range')
-      .replace('{min}', String(MIN_YEAR))
-      .replace('{max}', String(MAX_YEAR))
-  );
-
-  protected formatCurrency(value: number): string {
-    return formatCurrency(value);
+  protected formatChartCurrency(value: number): string {
+    return formatCurrency(
+      sanitizeCurrencyValue(value),
+      this.priceLocale(),
+      'SGD',
+      'symbol',
+      '1.0-0'
+    );
   }
 
   protected formatCurrencyRange(lowValue: number, peakValue: number): string {
-    return `${formatCurrency(lowValue)} - ${formatCurrency(peakValue)}`;
+    return `${this.formatChartCurrency(lowValue)} - ${this.formatChartCurrency(peakValue)}`;
   }
 
   protected formatDeltaCurrency(value: number): string {
-    const roundedValue = Math.abs(roundValue(value)).toLocaleString();
+    const roundedValue = Math.abs(roundValue(value));
+    const formatted = formatCurrency(
+      roundedValue,
+      this.priceLocale(),
+      'SGD',
+      'symbol',
+      '1.0-0'
+    );
     const sign = value >= 0 ? '+' : '-';
-    return `${sign}$${roundedValue}`;
+    return `${sign}${formatted}`;
+  }
+
+  protected showFloorAreaRequiredError(): boolean {
+    const control = this.predictionForm.controls.floor_area_sqm;
+    return control.touched && control.hasError('required');
+  }
+
+  protected showFloorAreaRangeError(): boolean {
+    const control = this.predictionForm.controls.floor_area_sqm;
+    return (
+      control.touched &&
+      (control.hasError('min') ||
+        control.hasError('max') ||
+        control.hasError('integer'))
+    );
+  }
+
+  protected showLeaseYearRangeError(): boolean {
+    const control = this.predictionForm.controls.lease_commence_year;
+    return (
+      control.touched &&
+      (control.hasError('min') || control.hasError('max') || control.hasError('required'))
+    );
+  }
+
+  private announcePredictionComplete(response: ApiResponse): void {
+    const normalizedData = normalizeTrendData(response);
+    const latestValue = normalizedData.at(-1)?.value ?? 0;
+    const priceStr = this.formatChartCurrency(latestValue);
+    const announcement = this.t('prediction_complete').replace('{price}', priceStr);
+    this.liveMessage.set('');
+    requestAnimationFrame(() => {
+      this.liveMessage.set(announcement);
+      this.resultsAnchor()?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+      const heading = this.resultsHeadingEl()?.nativeElement;
+      if (heading) {
+        heading.setAttribute('tabindex', '-1');
+        heading.focus({ preventScroll: true });
+        heading.addEventListener(
+          'blur',
+          () => heading.removeAttribute('tabindex'),
+          { once: true }
+        );
+      }
+    });
   }
 
   private updateChartColorsCache(): void {
     if (!this.isBrowser) return;
     const doc = this.document;
 
-    // The theme tokens in styles.css are defined with light-dark(), which
-    // getComputedStyle().getPropertyValue() returns *unresolved* (the literal
-    // "light-dark(...)" string) for unregistered custom properties. Chart.js
-    // and colorWithAlpha() can't parse that, so resolve each var to a concrete
-    // rgb() value by letting the browser compute it on a throwaway element.
-    // Reads are batched here (init + theme toggle only), not in computed
-    // signals, so this still avoids per-recompute layout thrashing.
     const probe = doc.createElement('span');
     probe.style.display = 'none';
     doc.body.appendChild(probe);
@@ -674,7 +729,7 @@ export class PredictionToolComponent implements OnInit {
 
   private restoreFormState(): void {
     const savedForm =
-      this.storageService.getItem<Partial<PredictionFormValue>>(
+      this.storageService.getItem<StoredPredictionFormValue>(
         'predictionFormData'
       );
 
@@ -682,23 +737,44 @@ export class PredictionToolComponent implements OnInit {
       return;
     }
 
-    this.predictionModel.set({
-      mlModel: coerceOption(savedForm.mlModel, ml_model_list),
+    this.predictionForm.patchValue({
+      ml_model: coerceOption(
+        savedForm.ml_model ?? savedForm.mlModel,
+        ml_model_list
+      ),
       town: coerceOption(savedForm.town, town_list),
-      storeyRange: coerceOption(savedForm.storeyRange, storey_range_list),
-      flatModel: coerceOption(savedForm.flatModel, flat_model_list),
-      floorAreaSqm: clampNumber(
-        savedForm.floorAreaSqm,
+      storey_range: coerceOption(
+        savedForm.storey_range ?? savedForm.storeyRange,
+        storey_range_list
+      ),
+      flat_model: coerceOption(
+        savedForm.flat_model ?? savedForm.flatModel,
+        flat_model_list
+      ),
+      floor_area_sqm: clampNumber(
+        savedForm.floor_area_sqm ?? savedForm.floorAreaSqm,
         MIN_FLOOR_AREA,
         MAX_FLOOR_AREA,
         MIN_FLOOR_AREA
       ),
-      leaseCommenceYear: String(clampNumber(
-        savedForm.leaseCommenceYear,
+      lease_commence_year: clampNumber(
+        savedForm.lease_commence_year ?? savedForm.leaseCommenceYear,
         MIN_YEAR,
         MAX_YEAR,
         MAX_YEAR
-      ))
+      )
+    });
+  }
+
+  private persistFormState(): void {
+    const value = this.predictionForm.getRawValue();
+    this.storageService.setItem('predictionFormData', {
+      mlModel: value.ml_model,
+      town: value.town,
+      storeyRange: value.storey_range,
+      flatModel: value.flat_model,
+      floorAreaSqm: value.floor_area_sqm,
+      leaseCommenceYear: value.lease_commence_year
     });
   }
 
@@ -718,151 +794,23 @@ export class PredictionToolComponent implements OnInit {
       this.darkMode() ? 'dark' : 'light'
     );
   }
-}
 
-function normalizeTrendData(data: ApiResponse): TrendPoint[] {
-  return data.predictions.map((entry) => ({
-    label: entry.month,
-    value: sanitizeCurrencyValue(entry.predictedPrice)
-  }));
-}
-
-function createPredictionFormData(
-  payload: PredictionRequestPayload
-): FormData {
-  const formData = new FormData();
-
-  Object.entries(payload).forEach(([key, value]) => {
-    formData.append(key, value);
-  });
-
-  return formData;
-}
-
-function parsePredictionResponse(
-  responseText: string,
-  requestPayload: PredictionRequestPayload
-): ApiResponse {
-  let parsedResponse: unknown;
-
-  try {
-    parsedResponse = JSON.parse(responseText) as unknown;
-  } catch {
-    throw new Error(
-      formatPredictionError(
-        'API returned invalid JSON',
-        responseText,
-        requestPayload
-      )
-    );
+  private detectMac(): boolean {
+    const uaData = (
+      navigator as Navigator & { userAgentData?: { platform?: string } }
+    ).userAgentData;
+    if (uaData?.platform) {
+      return uaData.platform === 'macOS';
+    }
+    return navigator.userAgent.includes('Macintosh');
   }
-
-  if (
-    !parsedResponse ||
-    typeof parsedResponse !== 'object' ||
-    !('predictions' in parsedResponse) ||
-    !Array.isArray(parsedResponse.predictions) ||
-    parsedResponse.predictions.length === 0
-  ) {
-    throw new Error(
-      formatPredictionError(
-        'API returned an unexpected payload',
-        responseText,
-        requestPayload
-      )
-    );
-  }
-
-  return parsedResponse as ApiResponse;
 }
 
-function formatPredictionError(
-  summary: string,
-  responseText: string,
-  requestPayload: PredictionRequestPayload
-): string {
-  const responsePreview = formatDebugValue(responseText);
-  const requestPreview = JSON.stringify(requestPayload);
-  return `${summary}. Response: ${responsePreview}. Request: ${requestPreview}`;
-}
-
-function formatDebugValue(value: string, maxLength = 280): string {
-  const compactValue = value.replace(/\s+/g, ' ').trim();
-
-  if (!compactValue) {
-    return '(empty response body)';
-  }
-
-  if (compactValue.length <= maxLength) {
-    return compactValue;
-  }
-
-  return `${compactValue.slice(0, maxLength)}...`;
-}
-
-function createDefaultTrendData(): TrendPoint[] {
-  return PREDICTION_MONTHS.map((month) => ({
-    label: month,
-    value: 0
-  }));
-}
-
-function getPredictionWindow(): {
-  monthStart: string;
-  monthEnd: string;
-} {
-  return {
-    monthStart: PREDICTION_MONTHS[0] ?? month_list[0],
-    monthEnd: PREDICTION_MONTHS[PREDICTION_MONTHS.length - 1] ?? month_list[month_list.length - 1]
-  };
-}
-
-function coerceOption<T extends readonly string[]>(
-  value: unknown,
-  options: T
-): T[number] {
-  if (typeof value === 'string' && options.includes(value as T[number])) {
-    return value as T[number];
-  }
-
-  return options[0];
-}
-
-function clampNumber(
-  value: unknown,
-  min: number,
-  max: number,
-  fallback: number
-): number {
-  const n = typeof value === 'number' ? value
-          : typeof value === 'string' ? Number(value)
-          : NaN;
-  if (!Number.isFinite(n)) {
-    return fallback;
-  }
-
-  return Math.min(max, Math.max(min, Math.round(n)));
-}
-
-function sanitizeCurrencyValue(value: number): number {
-  if (!Number.isFinite(value)) {
-    return 0;
-  }
-
-  return Math.max(0, Math.round(value));
-}
-
-function roundValue(value: number): number {
-  if (!Number.isFinite(value)) {
-    return 0;
-  }
-
-  return Math.round(value);
-}
-
-function formatCurrency(value: number): string {
-  return `$${sanitizeCurrencyValue(value).toLocaleString()}`;
-}
+type SummaryValues = {
+  mlModel: MlModel;
+  town: Town;
+  leaseCommenceYear: number;
+};
 
 function colorWithAlpha(color: string, alpha: number): string {
   const trimmed = color.trim();
@@ -878,9 +826,10 @@ function colorWithAlpha(color: string, alpha: number): string {
 
   if (trimmed.startsWith('#')) {
     const hex = trimmed.slice(1);
-    const full = hex.length === 3
-      ? hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2]
-      : hex;
+    const full =
+      hex.length === 3
+        ? hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2]
+        : hex;
     const r = parseInt(full.slice(0, 2), 16);
     const g = parseInt(full.slice(2, 4), 16);
     const b = parseInt(full.slice(4, 6), 16);

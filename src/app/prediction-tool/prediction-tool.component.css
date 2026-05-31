@@ -1089,3 +1089,34 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Angular Material form fields ─────────────────────────────── */
+.material-form-grid mat-form-field {
+  width: 100%;
+}
+
+.material-form-grid .mat-mdc-form-field-subscript-wrapper {
+  margin-top: 2px;
+}
+
+.material-form-grid .mat-mdc-text-field-wrapper {
+  background: var(--card);
+}
+
+.material-form-grid .mdc-notched-outline__leading,
+.material-form-grid .mdc-notched-outline__notch,
+.material-form-grid .mdc-notched-outline__trailing {
+  border-color: var(--border);
+}
+
+.material-form-grid .mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+.material-form-grid .mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+.material-form-grid .mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--primary);
+}
+
+.material-form-grid .mat-mdc-form-field-error {
+  color: var(--destructive);
+  font-size: 12px;
+  font-weight: 600;
+}

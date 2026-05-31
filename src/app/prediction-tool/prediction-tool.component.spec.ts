@@ -36,17 +36,17 @@ describe('PredictionToolComponent', () => {
       .toContain('Awaiting prediction');
   });
 
-  it('should reset form interaction state via predictionForm().reset()', async () => {
+  it('should reset form interaction state when reset is clicked', async () => {
     await fixture.whenStable();
     const form = component['predictionForm'];
 
-    form().markAsTouched();
-    expect(form().touched()).toBe(true);
+    form.markAllAsTouched();
+    expect(form.touched).toBe(true);
 
     const compiled = fixture.nativeElement as HTMLElement;
     compiled.querySelector<HTMLButtonElement>('.btn-reset')?.click();
     await fixture.whenStable();
 
-    expect(form().touched()).toBe(false);
+    expect(form.touched).toBe(false);
   });
 });

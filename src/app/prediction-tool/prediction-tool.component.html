@@ -58,35 +58,31 @@
                 <p class="lead">{{ t('intro_blurb') }}</p>
 
                 <div class="figure-row">
-                  <div class="stat-tile">
-                    <div class="stat-tile-icon" aria-hidden="true">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>
+                  @for (stat of [
+                    { labelKey: 'models_count', value: mlModels.length, icon: 'model' },
+                    { labelKey: 'towns_count', value: towns.length, icon: 'town' },
+                    { labelKey: 'flat_types_count', value: flatModels.length, icon: 'flat' }
+                  ]; track stat.labelKey) {
+                    <div class="stat-tile">
+                      <div class="stat-tile-icon" aria-hidden="true">
+                        @switch (stat.icon) {
+                          @case ('model') {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="15.5"/><polyline points="22 8.5 12 15.5 2 8.5"/></svg>
+                          }
+                          @case ('town') {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                          }
+                          @default {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                          }
+                        }
+                      </div>
+                      <div class="stat-tile-text">
+                        <span class="stat-tile-label">{{ t(stat.labelKey) }}</span>
+                        <strong class="stat-tile-value">{{ stat.value }}</strong>
+                      </div>
                     </div>
-                    <div class="stat-tile-text">
-                      <span class="stat-tile-label">{{ t('models_count') }}</span>
-                      <strong class="stat-tile-value">{{ mlModels.length }}</strong>
-                    </div>
-                  </div>
-
-                  <div class="stat-tile">
-                    <div class="stat-tile-icon" aria-hidden="true">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                    </div>
-                    <div class="stat-tile-text">
-                      <span class="stat-tile-label">{{ t('towns_count') }}</span>
-                      <strong class="stat-tile-value">{{ towns.length }}</strong>
-                    </div>
-                  </div>
-
-                  <div class="stat-tile">
-                    <div class="stat-tile-icon" aria-hidden="true">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                    </div>
-                    <div class="stat-tile-text">
-                      <span class="stat-tile-label">{{ t('flat_types_count') }}</span>
-                      <strong class="stat-tile-value">{{ flatModels.length }}</strong>
-                    </div>
-                  </div>
+                  }
                 </div>
 
                 <p class="caption">{{ t('intro_caption') }}</p>
@@ -102,104 +98,105 @@
               <h2 id="form-heading" class="section-title">{{ t('prediction_form') }}</h2>
 
               <form
-                (submit)="$event.preventDefault(); onSubmit()"
+                [formGroup]="predictionForm"
+                (ngSubmit)="onSubmit()"
                 novalidate
               >
-                <div class="form-grid">
-                  <div class="field-group">
-                    <label class="field-label" for="field-ml-model">{{ t('ml_model') }}</label>
-                    <app-combobox
-                      inputId="field-ml-model"
-                      [formField]="predictionForm.mlModel"
-                      [options]="mlModelOptions()"
-                      [placeholder]="t('ml_model')"
-                      [ariaLabel]="t('ml_model')"
-                      [noMatchesLabel]="t('combobox_no_matches')"
-                      [toggleLabel]="t('toggle_options')"
-                    ></app-combobox>
-                  </div>
+                <div class="form-grid material-form-grid">
+                  <mat-form-field class="field-group" appearance="outline">
+                    <mat-label>{{ t('ml_model') }}</mat-label>
+                    <mat-select
+                      id="field-ml-model"
+                      formControlName="ml_model"
+                      [attr.aria-label]="t('ml_model')"
+                    >
+                      @for (option of mlModelOptions(); track option.value) {
+                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
 
-                  <div class="field-group">
-                    <label class="field-label" for="field-town">{{ t('town') }}</label>
-                    <app-combobox
-                      inputId="field-town"
-                      [formField]="predictionForm.town"
-                      [options]="townOptions()"
-                      [placeholder]="t('town')"
-                      [ariaLabel]="t('town')"
-                      [noMatchesLabel]="t('combobox_no_matches')"
-                      [toggleLabel]="t('toggle_options')"
-                    ></app-combobox>
-                  </div>
+                  <mat-form-field class="field-group" appearance="outline">
+                    <mat-label>{{ t('town') }}</mat-label>
+                    <mat-select
+                      id="field-town"
+                      formControlName="town"
+                      [attr.aria-label]="t('town')"
+                    >
+                      @for (option of townOptions(); track option.value) {
+                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
 
-                  <div class="field-group">
-                    <label class="field-label" for="field-storey-range">{{ t('storey_range') }}</label>
-                    <app-combobox
-                      inputId="field-storey-range"
-                      [formField]="predictionForm.storeyRange"
-                      [options]="storeyRangeOptions()"
-                      [placeholder]="t('storey_range')"
-                      [ariaLabel]="t('storey_range')"
-                      [noMatchesLabel]="t('combobox_no_matches')"
-                      [toggleLabel]="t('toggle_options')"
-                    ></app-combobox>
-                  </div>
+                  <mat-form-field class="field-group" appearance="outline">
+                    <mat-label>{{ t('storey_range') }}</mat-label>
+                    <mat-select
+                      id="field-storey-range"
+                      formControlName="storey_range"
+                      [attr.aria-label]="t('storey_range')"
+                    >
+                      @for (option of storeyRangeOptions(); track option.value) {
+                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
 
-                  <div class="field-group">
-                    <label class="field-label" for="field-flat-model">{{ t('flat_model') }}</label>
-                    <app-combobox
-                      inputId="field-flat-model"
-                      [formField]="predictionForm.flatModel"
-                      [options]="flatModelOptions()"
-                      [placeholder]="t('flat_model')"
-                      [ariaLabel]="t('flat_model')"
-                      [noMatchesLabel]="t('combobox_no_matches')"
-                      [toggleLabel]="t('toggle_options')"
-                    ></app-combobox>
-                  </div>
+                  <mat-form-field class="field-group" appearance="outline">
+                    <mat-label>{{ t('flat_model') }}</mat-label>
+                    <mat-select
+                      id="field-flat-model"
+                      formControlName="flat_model"
+                      [attr.aria-label]="t('flat_model')"
+                    >
+                      @for (option of flatModelOptions(); track option.value) {
+                        <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
 
-                  <div class="field-group field-full">
-                    <label class="field-label" for="field-floor-area">{{ t('floor_area') }}</label>
-                    <app-number-field
-                      inputId="field-floor-area"
-                      [formField]="predictionForm.floorAreaSqm"
-                      [step]="1"
-                      [unit]="t('floor_area_unit_short')"
+                  <mat-form-field class="field-group field-full" appearance="outline">
+                    <mat-label>{{ t('floor_area') }}</mat-label>
+                    <input
+                      matInput
+                      id="field-floor-area"
+                      type="number"
+                      formControlName="floor_area_sqm"
+                      [attr.aria-label]="t('floor_area')"
                       [placeholder]="t('enter_floor_area')"
-                      [ariaLabel]="t('floor_area')"
-                      [ariaDescribedby]="floorAreaErrorId()"
-                      [decreaseLabel]="t('decrease_value')"
-                      [increaseLabel]="t('increase_value')"
-                    ></app-number-field>
-                    @if (floorAreaRequiredError()) {
-                      <span id="floor-area-error" class="field-error">{{ t('missing_floor_area') }}</span>
-                    } @else if (floorAreaRangeError()) {
-                      <span id="floor-area-error" class="field-error">{{ t('floor_area_range') }}</span>
+                      min="20"
+                      max="300"
+                      step="1"
+                    />
+                    <span matTextSuffix>{{ t('floor_area_unit_short') }}</span>
+                    @if (showFloorAreaRequiredError()) {
+                      <mat-error>{{ t('missing_floor_area') }}</mat-error>
+                    } @else if (showFloorAreaRangeError()) {
+                      <mat-error>{{ t('floor_area_range') }}</mat-error>
                     }
-                  </div>
+                  </mat-form-field>
 
-                  <div class="field-group field-full">
-                    <label class="field-label" for="field-lease-year">{{ t('lease_commence_date') }}</label>
-                    <app-combobox
-                      inputId="field-lease-year"
-                      [formField]="predictionForm.leaseCommenceYear"
-                      [options]="leaseYearOptions()"
-                      [placeholder]="t('lease_commence_date')"
-                      [ariaLabel]="t('lease_commence_date')"
-                      [ariaDescribedby]="leaseYearErrorId()"
-                      [noMatchesLabel]="t('combobox_no_matches')"
-                      [toggleLabel]="t('toggle_options')"
-                    ></app-combobox>
-                    @if (leaseYearRangeError()) {
-                      <span id="lease-year-error" class="field-error">{{ leaseYearRangeMessage() }}</span>
+                  <mat-form-field class="field-group field-full" appearance="outline">
+                    <mat-label>{{ t('lease_commence_date') }}</mat-label>
+                    <mat-select
+                      id="field-lease-year"
+                      formControlName="lease_commence_year"
+                      [attr.aria-label]="t('lease_commence_date')"
+                    >
+                      @for (year of leaseYears; track year) {
+                        <mat-option [value]="year">{{ year }}</mat-option>
+                      }
+                    </mat-select>
+                    @if (showLeaseYearRangeError()) {
+                      <mat-error>{{ leaseYearRangeMessage() }}</mat-error>
                     }
-                  </div>
+                  </mat-form-field>
 
                   <div class="button-row field-full">
                     <button
                       class="btn-primary"
                       type="submit"
-                      [disabled]="predictionForm().invalid() || loading()"
+                      [disabled]="predictionForm.invalid || loading()"
                       [attr.aria-keyshortcuts]="isMac() ? 'Meta+Enter' : 'Control+Enter'"
                     >
                       <span [class.loading-pulse]="loading()">
@@ -248,13 +245,13 @@
 
               <div
                 class="price-panel"
-                [class.price-panel-glow]="hasPrediction()"
+                [class.price-panel-glow]="hasResult()"
               >
                 <div class="price-panel-inner">
                   <span class="price-label">{{ t('prediction') }}</span>
-                  @if (hasPrediction()) {
+                  @if (hasResult()) {
                     <strong class="price-value has-value">
-                      {{ formatCurrency(predictedPrice()) }}
+                      {{ predictedPrice() | currency: 'SGD' : 'symbol' : '1.0-0' : priceLocale() }}
                     </strong>
                   } @else if (loading()) {
                     <strong class="price-value awaiting">
@@ -304,7 +301,7 @@
 
             <!-- Chart area -->
             <div class="chart-shell">
-              @if (hasPrediction()) {
+              @if (hasResult()) {
                 <div class="chart-header">
                   <div class="chart-copy">
                     <span class="chart-kicker">{{ t('predicted_trends') }}</span>
@@ -314,7 +311,7 @@
                   <div class="chart-summary-grid">
                     <div class="chart-summary-card">
                       <span class="chart-summary-label">{{ t('chart_latest') }}</span>
-                      <strong class="chart-summary-value">{{ formatCurrency(chartMetrics().latestValue) }}</strong>
+                      <strong class="chart-summary-value">{{ formatChartCurrency(chartMetrics().latestValue) }}</strong>
                     </div>
                     <div class="chart-summary-card">
                       <span class="chart-summary-label">{{ t('chart_range') }}</span>
@@ -337,17 +334,23 @@
                   </div>
                 </div>
 
-                @if (isBrowser) {
-                  <div class="chart-frame">
-                    <canvas
-                      baseChart
-                      [type]="'line'"
-                      [data]="chartData()"
-                      [options]="chartOptions()"
-                      [plugins]="chartPlugins"
-                    ></canvas>
-                  </div>
-                } @else {
+                @defer (when hasResult()) {
+                  @if (isBrowser) {
+                    <div class="chart-frame">
+                      <canvas
+                        baseChart
+                        [type]="'line'"
+                        [data]="chartData()"
+                        [options]="chartOptions()"
+                        [plugins]="chartPlugins"
+                      ></canvas>
+                    </div>
+                  } @else {
+                    <div class="chart-frame chart-frame-placeholder">
+                      <span class="chart-summary-label">{{ t('loading_chart') }}</span>
+                    </div>
+                  }
+                } @placeholder {
                   <div class="chart-frame chart-frame-placeholder">
                     <span class="chart-summary-label">{{ t('loading_chart') }}</span>
                   </div>
@@ -355,12 +358,9 @@
               } @else {
                 <div class="chart-empty">
                   <div class="empty-chart-bars" aria-hidden="true">
-                    <div class="empty-bar" style="--bar-h:35%"></div>
-                    <div class="empty-bar" style="--bar-h:55%"></div>
-                    <div class="empty-bar" style="--bar-h:85%"></div>
-                    <div class="empty-bar" style="--bar-h:45%"></div>
-                    <div class="empty-bar" style="--bar-h:70%"></div>
-                    <div class="empty-bar" style="--bar-h:30%"></div>
+                    @for (bar of ['35%', '55%', '85%', '45%', '70%', '30%']; track bar) {
+                      <div class="empty-bar" [style.--bar-h]="bar"></div>
+                    }
                   </div>
                   <h3 class="empty-heading">{{ t('results_placeholder_title') }}</h3>
                   <p class="empty-body">{{ t('results_placeholder_body') }}</p>
