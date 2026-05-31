@@ -4,6 +4,26 @@ const CORS_HEADERS = {
 	'Access-Control-Allow-Headers': 'Content-Type',
 } as const;
 
+const SECURITY_HEADERS = {
+	'X-Content-Type-Options': 'nosniff',
+	'X-Frame-Options': 'DENY',
+	'Content-Security-Policy': "frame-ancestors 'none'",
+} as const;
+
+// Apply security headers to every outgoing response, including static assets
+// and the HTML document served via env.ASSETS.fetch (which bypasses jsonResponse).
+function withSecurityHeaders(response: Response): Response {
+	const headers = new Headers(response.headers);
+	for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+		headers.set(key, value);
+	}
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers,
+	});
+}
+
 function jsonResponse(body: unknown, init?: ResponseInit): Response {
 	const headers = new Headers(init?.headers);
 	headers.set('Content-Type', 'application/json');
@@ -188,16 +208,20 @@ async function handleApiPrices(request: Request, env: CloudflareEnv): Promise<Re
 export default {
 	async fetch(request: Request, env: CloudflareEnv): Promise<Response> {
 		const url = new URL(request.url);
+		let response: Response;
 
 		if (url.pathname === '/api/prices') {
 			if (request.method === 'OPTIONS') {
-				return jsonResponse(null);
+				response = jsonResponse(null);
+			} else if (request.method === 'POST') {
+				response = await handleApiPrices(request, env);
+			} else {
+				response = jsonResponse({ error: 'Method Not Allowed' }, { status: 405 });
 			}
-			if (request.method === 'POST') {
-				return handleApiPrices(request, env);
-			}
+		} else {
+			response = await env.ASSETS.fetch(request);
 		}
 
-		return env.ASSETS.fetch(request);
+		return withSecurityHeaders(response);
 	}
 };
