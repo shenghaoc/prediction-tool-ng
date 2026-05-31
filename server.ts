@@ -14,7 +14,6 @@ export function app(): express.Express {
   server.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
     next();
   });
 
@@ -54,7 +53,21 @@ export function app(): express.Express {
   // Must be after all other routes
   server.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error('Server error:', err.message || err);
-    res.status(500).send('Internal Server Error');
+
+    // If the response has already started (e.g. during streaming), defer to
+    // the default Express error handler instead of throwing ERR_HTTP_HEADERS_SENT.
+    if (res.headersSent) {
+      return next(err);
+    }
+
+    // Preserve client-error statuses classified by Express/middleware
+    // (e.g. malformed URLs surface as 400) instead of masking them as 500.
+    const status = err.status ?? err.statusCode;
+    const resolvedStatus =
+      typeof status === 'number' && status >= 400 && status < 600 ? status : 500;
+    res
+      .status(resolvedStatus)
+      .send(resolvedStatus >= 500 ? 'Internal Server Error' : 'Bad Request');
   });
 
   return server;
