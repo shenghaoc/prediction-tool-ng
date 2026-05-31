@@ -514,8 +514,8 @@
     border-color 200ms ease;
 }
 .btn-reset .shortcut-hint {
-  color: color-mix(in oklab, var(--secondary-foreground) 60%, transparent);
-  border-color: color-mix(in oklab, var(--secondary-foreground) 30%, transparent);
+  color: color-mix(in oklab, var(--foreground) 60%, transparent);
+  border-color: color-mix(in oklab, var(--foreground) 30%, transparent);
 }
 .btn-reset:hover:not(:disabled) {
   transform: translateY(-1px);
