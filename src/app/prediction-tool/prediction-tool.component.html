@@ -226,7 +226,7 @@
                   <span class="price-label">{{ t('prediction') }}</span>
                   @if (hasResult()) {
                     <strong class="price-value has-value">
-                      {{ predictedPrice() | currency: 'SGD' : 'symbol' : '1.0-0' : priceLocale() }}
+                      {{ predictedPrice() | currency: 'SGD' : 'symbol-narrow' : '1.0-0' : priceLocale() }}
                     </strong>
                   } @else if (loading()) {
                     <strong class="price-value awaiting">
@@ -311,16 +311,11 @@
 
                 @defer (on viewport) {
                   @if (isBrowser) {
-                    <div class="chart-frame">
-                      <canvas
-                        #chart
-                        baseChart
-                        [type]="'line'"
-                        [data]="chartData()"
-                        [options]="chartOptions()"
-                        [plugins]="chartPlugins"
-                      ></canvas>
-                    </div>
+                    <app-prediction-chart
+                      [data]="chartData()"
+                      [options]="chartOptions()"
+                      [plugins]="chartPlugins"
+                    />
                   } @else {
                     <div class="chart-frame chart-frame-placeholder">
                       <span class="chart-summary-label">{{ t('loading_chart') }}</span>

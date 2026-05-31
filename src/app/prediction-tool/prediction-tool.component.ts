@@ -26,8 +26,9 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { BaseChartDirective } from 'ng2-charts';
 import type { ChartConfiguration } from 'chart.js';
+
+import { PredictionChartComponent } from './prediction-chart.component';
 
 import {
   flat_model_list,
@@ -107,7 +108,7 @@ const INITIAL_FORM_VALUE: PredictionFormValue = {
     MatFormFieldModule,
     MatSelectModule,
     MatInputModule,
-    BaseChartDirective,
+    PredictionChartComponent,
     CurrencyPipe
   ]
 })
@@ -119,7 +120,6 @@ export class PredictionToolComponent implements OnInit {
   private readonly translationService = inject(TranslationService);
   private readonly fb = inject(FormBuilder);
 
-  protected readonly chart = viewChild<BaseChartDirective>('chart');
   protected readonly resultsAnchor = viewChild<ElementRef<HTMLElement>>('resultsAnchor');
   protected readonly resultsHeadingEl = viewChild<ElementRef<HTMLElement>>('resultsHeading');
 
@@ -454,14 +454,9 @@ export class PredictionToolComponent implements OnInit {
         return;
       }
 
-      if (
-        status === 'resolved' &&
-        this.predictionResource.hasValue() &&
-        request.seq === this.predictionRequest()?.seq
-      ) {
+      if (status === 'resolved' && this.predictionResource.hasValue()) {
         this.hasPrediction.set(true);
         this.errorMessage.set('');
-        this.chart()?.update();
 
         if (request.seq !== this.lastAnnouncedSeq) {
           this.lastAnnouncedSeq = request.seq;
@@ -475,7 +470,7 @@ export class PredictionToolComponent implements OnInit {
         console.error('Prediction request failed', { error, request: request.payload });
         this.errorMessage.set(this.t('error_fetch'));
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   protected onDocumentKeyDown(event: KeyboardEvent): void {
@@ -562,8 +557,9 @@ export class PredictionToolComponent implements OnInit {
     }
 
     this.syncDocumentState();
+    // Re-reading theme colors updates the `themeColors` signal, which recomputes
+    // chartData/chartOptions; the deferred chart reacts to those input changes.
     this.updateChartColorsCache();
-    this.chart()?.update();
   }
 
   protected toggleLanguage(): void {

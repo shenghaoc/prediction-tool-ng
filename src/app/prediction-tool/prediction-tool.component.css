@@ -878,34 +878,8 @@
   height: 12px;
 }
 
-/* ── Chart Frame ────────────────────────────────────────────────── */
-.chart-frame {
-  min-height: 340px;
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  padding: 8px;
-  border-radius: var(--radius-sm, 3px);
-  border: 1px solid var(--border);
-  background: linear-gradient(
-    180deg,
-    color-mix(in oklab, var(--secondary) 20%, transparent) 0%,
-    color-mix(in oklab, var(--secondary) 5%, transparent) 100%
-  );
-  transition:
-    background 200ms ease,
-    border-color 200ms ease;
-}
-
-.chart-frame-placeholder {
-  align-items: center;
-  justify-content: center;
-}
-
-.chart-frame canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
+/* Chart frame styles live in global styles.css so the deferred
+   PredictionChartComponent and the placeholder divs share them. */
 
 /* ── Shortcut Hints ─────────────────────────────────────────────── */
 .shortcut-hint {
