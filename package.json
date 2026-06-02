@@ -35,6 +35,6 @@
     "@vitest/browser": "^4.1.8",
     "@vitest/browser-playwright": "^4.0.8",
     "typescript": "~5.9.3",
-    "wrangler": "^4.95.0"
+    "wrangler": "^4.97.0"
   }
 }
