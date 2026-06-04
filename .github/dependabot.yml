@@ -15,6 +15,7 @@ updates:
         # the peer conflict and a lone TypeScript PR is unmergeable on its own.
         patterns:
           - '@angular/*'
+          - '@angular-devkit/*'
           - 'typescript'
           - 'tslib'
       types:
