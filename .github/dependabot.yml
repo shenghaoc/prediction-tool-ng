@@ -9,18 +9,23 @@ updates:
       interval: "monthly"
     groups:
       angular:
+        # Angular pins a narrow TypeScript peer range (e.g. @angular/compiler-cli@22
+        # requires typescript >=6.0 <6.1), so TypeScript and tslib must be bumped in
+        # the same PR as @angular/* — otherwise an Angular-major PR fails `npm ci` on
+        # the peer conflict and a lone TypeScript PR is unmergeable on its own.
         patterns:
           - '@angular/*'
-      typescript:
-        patterns:
+          - '@angular-devkit/*'
           - 'typescript'
           - 'tslib'
+      types:
+        patterns:
           - '@types/*'
       testing:
         patterns:
-          - 'jasmine-core'
-          - 'karma'
-          - 'karma-*'
+          - 'vitest'
+          - '@vitest/*'
+          - '@playwright/*'
       charting:
         patterns:
           - 'chart.js'
