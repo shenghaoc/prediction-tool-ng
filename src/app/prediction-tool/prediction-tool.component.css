@@ -1074,7 +1074,8 @@
   /* Prevent iOS Safari from zooming into focused inputs (font-size < 16px triggers zoom) */
   .field-select,
   .field-input,
-  .material-form-grid .mat-mdc-input-element {
+  .material-form-grid .mat-mdc-input-element,
+  .material-form-grid .mat-mdc-select-value {
     font-size: 1rem;
   }
 }
