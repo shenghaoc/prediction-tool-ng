@@ -347,87 +347,6 @@
   gap: 6px;
 }
 
-.field-label {
-  display: block;
-  color: var(--foreground);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: color 200ms ease;
-}
-
-.field-select,
-.field-input {
-  width: 100%;
-  min-height: var(--height-field, 32px);
-  padding: 0 32px 0 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm, 3px);
-  background: var(--card);
-  color: var(--foreground);
-  font: inherit;
-  font-weight: 500;
-  font-size: 0.875rem;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  transition:
-    border-color 200ms ease,
-    box-shadow 200ms ease;
-}
-
-.field-select {
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-}
-
-.field-input {
-  cursor: text;
-  padding: 0 10px;
-}
-
-.field-select:focus,
-.field-input:focus {
-  outline: none;
-  border-color: color-mix(in oklab, var(--primary) 50%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 18%, transparent);
-}
-
-.field-input::placeholder {
-  color: var(--muted-foreground);
-  font-weight: 400;
-}
-
-/* Unit input wrapper (legacy — kept for non-replaced inputs) */
-.unit-wrap {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.unit-wrap .field-input {
-  border-radius: var(--radius-sm, 3px) 0 0 var(--radius-sm, 3px);
-}
-
-.unit-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 12px;
-  border: 1px solid var(--border);
-  border-left: none;
-  border-radius: 0 var(--radius-sm, 3px) var(--radius-sm, 3px) 0;
-  background: var(--muted);
-  color: var(--muted-foreground);
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition:
-    background 200ms ease,
-    border-color 200ms ease,
-    color 200ms ease;
-}
 
 .field-error {
   display: block;
@@ -1071,10 +990,11 @@
     grid-template-columns: 1fr;
   }
 
-  /* Prevent iOS Safari from zooming into focused inputs (font-size < 16px triggers zoom) */
-  .field-select,
-  .field-input,
+  /* Prevent iOS Safari from zooming into focused inputs (font-size < 16px triggers zoom).
+     Target both the visible text and the focusable [role="combobox"] wrapper so iOS
+     reads the correct font-size before deciding whether to zoom. */
   .material-form-grid .mat-mdc-input-element,
+  .material-form-grid .mat-mdc-select,
   .material-form-grid .mat-mdc-select-value {
     font-size: 1rem;
   }
