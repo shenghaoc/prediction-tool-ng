@@ -253,9 +253,15 @@ input[type='number'] {
 
 /* ── Reduced motion ─────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .animate-settle,
-  .animate-glow {
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -283,6 +289,17 @@ input[type='number'] {
 .chart-frame-placeholder {
   align-items: center;
   justify-content: center;
+}
+
+/* ── Mobile tokens and chart height ──────────────────────────────── */
+@media (max-width: 768px) {
+  :root {
+    --height-button: 44px;
+  }
+
+  .chart-frame {
+    min-height: 220px;
+  }
 }
 
 .chart-frame canvas {
